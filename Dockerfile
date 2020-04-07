@@ -1,4 +1,5 @@
 FROM golang:1.14-alpine AS build
+VOLUME [ "/bot" ]
 
 # Install git
 RUN apk add --no-cache git mercurial
