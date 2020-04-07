@@ -33,8 +33,10 @@ func main() {
 	}
 
 	// Maintain connection until a SIGTERM, then cleanly exit
+	fmt.Println("Bot running")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
+	fmt.Println("Cleanly exiting")
 	session.Close()
 }
