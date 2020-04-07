@@ -1,15 +1,24 @@
-FROM golang:1.14-alpine AS build
-ARG PRODUCTION
-VOLUME [ "/bot" ]
-
-# Install git
-RUN apk add --no-cache git mercurial
-
-RUN [[ "${PRODUCTION}" != "1" ]] && \ 
-    export GO111MODULE=on && go get -u -v github.com/cortesi/modd/cmd/modd
+FROM golang:1.14-alpine AS dev
 
 WORKDIR /bot
-COPY . .
-RUN go get -v && go build
 
-CMD [ "/bot/discord-bot" ]
+RUN GO111MODULE=on go get github.com/cortesi/modd/cmd/modd
+
+COPY go.mod .
+COPY go.sum .
+
+RUN go mod download
+
+COPY . .
+
+RUN go install github.com/UCCNetsoc/discord-bot
+
+CMD [ "go", "run", "*.go" ]
+
+FROM alpine
+
+WORKDIR /bin
+
+COPY --from=dev /go/bin/discord-bot ./discord-bot
+
+CMD [ "discord-bot" ]
