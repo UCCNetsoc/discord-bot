@@ -37,11 +37,6 @@ func main() {
 
 	// Consul config
 	consulConfig := api.DefaultConfig()
-	if production {
-		consulConfig.Scheme = "https"
-	} else {
-		consulConfig.Scheme = "http"
-	}
 	var err error
 	consulConfig.Address, err = getEnv("CONSUL_ADDRESS")
 	exitError(err)
