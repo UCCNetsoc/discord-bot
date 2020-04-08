@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -25,16 +26,14 @@ var (
 func main() {
 	config = &Config{}
 	// Check for flags
-	for _, flag := range os.Args {
-		if flag == "-p" {
-			production = true
-		}
-	}
+	production = *flag.Bool("p", false, "enables production with json logging")
+	flag.Parse()
 	if production {
 		log.InitJSONLogger(&log.Config{Output: os.Stdout})
 	} else {
 		log.InitSimpleLogger(&log.Config{Output: os.Stdout})
 	}
+	readConfig()
 
 	// Discord connection
 	token, err := getEnv("DISCORD_TOKEN")
@@ -64,6 +63,7 @@ func readConfig() {
 	comitteeServer, _, err := kv.Get("COMMITTEE_SERVER", nil)
 	if err != nil {
 		log.Error(err.Error())
+		return
 	}
 	config.CommitteeServer = string(comitteeServer.Value)
 
@@ -71,6 +71,7 @@ func readConfig() {
 	publicServer, _, err := kv.Get("PUBLIC_SERVER", nil)
 	if err != nil {
 		log.Error(err.Error())
+		return
 	}
 	config.PublicServer = string(publicServer.Value)
 
