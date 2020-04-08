@@ -89,9 +89,7 @@ func readConfig(consulConfig *api.Config) {
 			return
 		}
 		// Decode base64 Value
-		decoded, err := base64.RawStdEncoding.DecodeString(
-			structData.Value[:len(structData.Value)-1],
-		)
+		decoded, err := base64.StdEncoding.DecodeString(structData.Value)
 		if err != nil {
 			log.Error(err.Error())
 		}
