@@ -8,11 +8,22 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
+	"github.com/hashicorp/consul/api"
 )
 
-var production bool
+// Config represents the config pulled from Consul
+type Config struct {
+	PublicServer,
+	CommitteeServer string
+}
+
+var (
+	config     *Config
+	production bool
+)
 
 func main() {
+	config = &Config{}
 	// Check for flags
 	for _, flag := range os.Args {
 		if flag == "-p" {
@@ -41,6 +52,29 @@ func main() {
 	<-sc
 	log.Info("Cleanly exiting")
 	session.Close()
+}
+
+func readConfig() {
+	// Connect to consul
+	client, err := api.NewClient(api.DefaultConfig())
+	exitError(err)
+	kv := client.KV()
+
+	// Get Commmittee Server
+	comitteeServer, _, err := kv.Get("COMMITTEE_SERVER", nil)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	config.CommitteeServer = string(comitteeServer.Value)
+
+	// Get Public Server
+	publicServer, _, err := kv.Get("PUBLIC_SERVER", nil)
+	if err != nil {
+		log.Error(err.Error())
+	}
+	config.PublicServer = string(publicServer.Value)
+
+	log.Info("Successfully read config from consul")
 }
 
 func getEnv(key string) (string, error) {
