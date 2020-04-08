@@ -81,10 +81,6 @@ func readConfig(consulConfig *api.Config) {
 			log.Error("servers key doesnt exist")
 			return
 		}
-		// Decode base64 Value
-		if err != nil {
-			log.Error(err.Error())
-		}
 		err = json.Unmarshal(structData.Value, config)
 		if err != nil {
 			log.Error(err.Error())
