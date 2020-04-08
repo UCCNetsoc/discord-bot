@@ -63,11 +63,16 @@ func main() {
 }
 
 func readConfig(consulConfig *api.Config) {
+	var err error
 	// Connect to consul
 	// Listen for consul updates
 	params := map[string]interface{}{
 		"type": "key",
 		"key":  "discordbot/servers",
+	}
+	if production {
+		params["token"], err = getEnv("CONSUL_TOKEN")
+		exitError(err)
 	}
 	watch, err := consulwatch.Parse(params)
 	exitError(err)
