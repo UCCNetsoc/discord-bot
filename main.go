@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/hashicorp/consul/api"
+	consulwatch "github.com/hashicorp/consul/api/watch"
 )
 
 // Config represents the config pulled from Consul
@@ -40,6 +42,7 @@ func main() {
 	var err error
 	consulConfig.Address, err = getEnv("CONSUL_ADDRESS")
 	exitError(err)
+
 	readConfig(consulConfig)
 
 	// Discord connection
@@ -62,28 +65,40 @@ func main() {
 
 func readConfig(consulConfig *api.Config) {
 	// Connect to consul
-	client, err := api.NewClient(consulConfig)
+	// Listen for consul updates
+	params := map[string]interface{}{
+		"type": "key",
+		"key":  "servers",
+	}
+	watch, err := consulwatch.Parse(params)
 	exitError(err)
-	kv := client.KV()
-
-	// Get Commmittee Server
-	servers, _, err := kv.Get("servers", nil)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-	if servers != nil {
-		err = json.Unmarshal(servers.Value, config)
+	watch.Handler = func(idx uint64, data interface{}) {
+		// Serialize data
+		buf, err := json.MarshalIndent(data, "", "    ")
 		if err != nil {
-			log.Error("Consul servers malformed entry")
+			log.Error(err.Error())
 		}
-		log.WithFields(log.Fields{
-			"key":   servers.Key,
-			"value": string(servers.Value),
-		}).Info("Found KV pair in consul")
-	} else {
-		log.Error("No Consul entry for servers")
+		// Get it's Value
+		structData := &struct{ Value string }{}
+		err = json.Unmarshal(buf, structData)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		// Decode base64 Value
+		decoded, err := base64.RawStdEncoding.DecodeString(
+			structData.Value[:len(structData.Value)-1],
+		)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		err = json.Unmarshal(decoded, config)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		log.WithFields(log.Fields{"response": string(buf), "value": string(decoded)}).Info("Consul updated")
+
 	}
+	watch.Run(consulConfig.Address)
 
 	log.Info("Successfully read config from consul")
 }
