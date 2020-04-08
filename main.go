@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -18,6 +19,8 @@ func getEnv(key string) (string, error) {
 }
 
 func main() {
+	log.InitSimpleLogger(&log.Config{Output: os.Stdout})
+
 	token, err := getEnv("DISCORD_TOKEN")
 	if err != nil {
 		panic(err)
@@ -33,10 +36,10 @@ func main() {
 	}
 
 	// Maintain connection until a SIGTERM, then cleanly exit
-	fmt.Println("Bot running")
+	log.Info("Bot is Running")
 	sc := make(chan os.Signal, 1)
 	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-sc
-	fmt.Println("Cleanly exiting")
+	log.Info("Cleanly exiting")
 	session.Close()
 }
