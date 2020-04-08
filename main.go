@@ -98,7 +98,7 @@ func readConfig(consulConfig *api.Config) {
 		log.WithFields(log.Fields{"response": string(buf), "value": string(decoded)}).Info("Consul updated")
 
 	}
-	watch.Run(consulConfig.Address)
+	go watch.Run(consulConfig.Address)
 
 	log.Info("Successfully read config from consul")
 }
