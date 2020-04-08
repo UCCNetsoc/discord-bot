@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"os"
@@ -14,8 +15,8 @@ import (
 
 // Config represents the config pulled from Consul
 type Config struct {
-	PublicServer,
-	CommitteeServer string
+	PublicServer    string `json:"public"`
+	CommitteeServer string `json:"comittee"`
 }
 
 var (
@@ -71,35 +72,22 @@ func readConfig(consulConfig *api.Config) {
 	kv := client.KV()
 
 	// Get Commmittee Server
-	committeeServer, _, err := kv.Get("COMMITTEE_SERVER", nil)
+	servers, _, err := kv.Get("servers", nil)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
-	if committeeServer != nil {
-		config.CommitteeServer = string(committeeServer.Value)
+	if servers != nil {
+		err = json.Unmarshal(servers.Value, config)
+		if err != nil {
+			log.Error("Consul servers malformed entry")
+		}
 		log.WithFields(log.Fields{
-			"key":   committeeServer.Key,
-			"value": string(committeeServer.Value),
+			"key":   servers.Key,
+			"value": string(servers.Value),
 		}).Info("Found KV pair in consul")
 	} else {
-		log.Error("No Consul entry for COMMITTEE_SERVER")
-	}
-
-	// Get Public Server
-	publicServer, _, err := kv.Get("PUBLIC_SERVER", nil)
-	if err != nil {
-		log.Error(err.Error())
-		return
-	}
-	if publicServer != nil {
-		config.PublicServer = string(publicServer.Value)
-		log.WithFields(log.Fields{
-			"key":   publicServer.Key,
-			"value": string(publicServer.Value),
-		}).Info("Found KV pair in consul")
-	} else {
-		log.Error("No Consul entry for PUBLIC_SERVER")
+		log.Error("No Consul entry for servers")
 	}
 
 	log.Info("Successfully read config from consul")
