@@ -16,7 +16,7 @@ import (
 // Config represents the config pulled from Consul
 type Config struct {
 	PublicServer    string `json:"public"`
-	CommitteeServer string `json:"comittee"`
+	CommitteeServer string `json:"committee"`
 }
 
 var (
