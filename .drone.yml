@@ -17,7 +17,7 @@ steps:
         - "${DRONE_COMMIT_SHA:0:7)_dev-env"
         - dev-env
       target: dev
-      repo: docker.netsoc.co/discord-bot
+      repo: docker.netsoc.co/public/discord-bot
       registry: docker.netsoc.co
       username:
           from_secret: registry_pub_user
