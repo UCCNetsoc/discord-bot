@@ -71,12 +71,20 @@ func readConfig(consulConfig *api.Config) {
 	kv := client.KV()
 
 	// Get Commmittee Server
-	comitteeServer, _, err := kv.Get("COMMITTEE_SERVER", nil)
+	committeeServer, _, err := kv.Get("COMMITTEE_SERVER", nil)
 	if err != nil {
 		log.Error(err.Error())
 		return
 	}
-	config.CommitteeServer = string(comitteeServer.Value)
+	if committeeServer != nil {
+		config.CommitteeServer = string(committeeServer.Value)
+		log.WithFields(log.Fields{
+			"key":   committeeServer.Key,
+			"value": committeeServer.Value,
+		}).Info("Found KV pair in consul")
+	} else {
+		log.Error("No Consul entry for COMMITTEE_SERVER")
+	}
 
 	// Get Public Server
 	publicServer, _, err := kv.Get("PUBLIC_SERVER", nil)
@@ -84,7 +92,15 @@ func readConfig(consulConfig *api.Config) {
 		log.Error(err.Error())
 		return
 	}
-	config.PublicServer = string(publicServer.Value)
+	if publicServer != nil {
+		config.PublicServer = string(publicServer.Value)
+		log.WithFields(log.Fields{
+			"key":   publicServer.Key,
+			"value": publicServer.Value,
+		}).Info("Found KV pair in consul")
+	} else {
+		log.Error("No Consul entry for PUBLIC_SERVER")
+	}
 
 	log.Info("Successfully read config from consul")
 }
