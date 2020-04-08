@@ -21,4 +21,4 @@ WORKDIR /bin
 
 COPY --from=dev /go/bin/discord-bot ./discord-bot
 
-CMD [ "discord-bot" ]
+CMD [ "discord-bot", "-p" ]

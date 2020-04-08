@@ -10,9 +10,22 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func main() {
-	log.InitSimpleLogger(&log.Config{Output: os.Stdout})
+var production bool
 
+func main() {
+	// Check for flags
+	for _, flag := range os.Args {
+		if flag == "-p" {
+			production = true
+		}
+	}
+	if production {
+		log.InitJSONLogger(&log.Config{Output: os.Stdout})
+	} else {
+		log.InitSimpleLogger(&log.Config{Output: os.Stdout})
+	}
+
+	// Discord connection
 	token, err := getEnv("DISCORD_TOKEN")
 	exitError(err)
 	session, err := discordgo.New("Bot " + token)
