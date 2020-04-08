@@ -33,7 +33,18 @@ func main() {
 	} else {
 		log.InitSimpleLogger(&log.Config{Output: os.Stdout})
 	}
-	readConfig()
+
+	// Consul config
+	consulConfig := api.DefaultConfig()
+	if production {
+		consulConfig.Scheme = "https"
+	} else {
+		consulConfig.Scheme = "http"
+	}
+	var err error
+	consulConfig.Address, err = getEnv("CONSUL_ADDRESS")
+	exitError(err)
+	readConfig(consulConfig)
 
 	// Discord connection
 	token, err := getEnv("DISCORD_TOKEN")
@@ -53,9 +64,9 @@ func main() {
 	session.Close()
 }
 
-func readConfig() {
+func readConfig(consulConfig *api.Config) {
 	// Connect to consul
-	client, err := api.NewClient(api.DefaultConfig())
+	client, err := api.NewClient(consulConfig)
 	exitError(err)
 	kv := client.KV()
 
