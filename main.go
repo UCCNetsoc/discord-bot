@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -73,36 +72,27 @@ func readConfig(consulConfig *api.Config) {
 	watch, err := consulwatch.Parse(params)
 	exitError(err)
 	watch.Handler = func(idx uint64, data interface{}) {
-		// Serialize data
-		buf, err := json.MarshalIndent(data, "", "    ")
-		if err != nil {
-			log.Error(err.Error())
-		}
-		// Get it's Value
-		structData := &struct{ Value string }{}
-		err = json.Unmarshal(buf, structData)
-		if err != nil {
-			log.Error(err.Error())
+		structData, ok := data.(*api.KVPair)
+		if !ok {
+			log.Error("KV malformed")
+			return
 		}
 		if len(structData.Value) == 0 {
 			log.Error("servers key doesnt exist")
 			return
 		}
 		// Decode base64 Value
-		decoded, err := base64.StdEncoding.DecodeString(structData.Value)
 		if err != nil {
 			log.Error(err.Error())
 		}
-		err = json.Unmarshal(decoded, config)
+		err = json.Unmarshal(structData.Value, config)
 		if err != nil {
 			log.Error(err.Error())
 		}
-		log.WithFields(log.Fields{"response": string(buf), "value": string(decoded)}).Info("Consul updated")
+		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
 
 	}
 	go watch.Run(consulConfig.Address)
-
-	log.Info("Successfully read config from consul")
 }
 
 func getEnv(key string) (string, error) {
