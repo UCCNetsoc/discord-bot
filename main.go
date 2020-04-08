@@ -10,30 +10,16 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func getEnv(key string) (string, error) {
-	val, ok := os.LookupEnv(key)
-	if !ok {
-		return "", fmt.Errorf("Error finding %s", key)
-	}
-	return val, nil
-}
-
 func main() {
 	log.InitSimpleLogger(&log.Config{Output: os.Stdout})
 
 	token, err := getEnv("DISCORD_TOKEN")
-	if err != nil {
-		panic(err)
-	}
+	exitError(err)
 	session, err := discordgo.New("Bot " + token)
-	if err != nil {
-		panic("Couldn't init discord connection")
-	}
+	exitError(err)
 	// Open websocket
 	err = session.Open()
-	if err != nil {
-		panic(err)
-	}
+	exitError(err)
 
 	// Maintain connection until a SIGTERM, then cleanly exit
 	log.Info("Bot is Running")
@@ -42,4 +28,19 @@ func main() {
 	<-sc
 	log.Info("Cleanly exiting")
 	session.Close()
+}
+
+func getEnv(key string) (string, error) {
+	val, ok := os.LookupEnv(key)
+	if !ok {
+		return "", fmt.Errorf("Error finding %s", key)
+	}
+	return val, nil
+}
+
+func exitError(err error) {
+	if err != nil {
+		log.Error(err.Error())
+		os.Exit(1)
+	}
 }
