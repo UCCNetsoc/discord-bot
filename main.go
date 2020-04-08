@@ -80,7 +80,7 @@ func readConfig(consulConfig *api.Config) {
 		config.CommitteeServer = string(committeeServer.Value)
 		log.WithFields(log.Fields{
 			"key":   committeeServer.Key,
-			"value": committeeServer.Value,
+			"value": string(committeeServer.Value),
 		}).Info("Found KV pair in consul")
 	} else {
 		log.Error("No Consul entry for COMMITTEE_SERVER")
@@ -96,7 +96,7 @@ func readConfig(consulConfig *api.Config) {
 		config.PublicServer = string(publicServer.Value)
 		log.WithFields(log.Fields{
 			"key":   publicServer.Key,
-			"value": publicServer.Value,
+			"value": string(publicServer.Value),
 		}).Info("Found KV pair in consul")
 	} else {
 		log.Error("No Consul entry for PUBLIC_SERVER")
