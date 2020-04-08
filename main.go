@@ -68,7 +68,7 @@ func readConfig(consulConfig *api.Config) {
 	// Listen for consul updates
 	params := map[string]interface{}{
 		"type": "key",
-		"key":  "servers",
+		"key":  "discordbot/servers",
 	}
 	watch, err := consulwatch.Parse(params)
 	exitError(err)
@@ -83,6 +83,10 @@ func readConfig(consulConfig *api.Config) {
 		err = json.Unmarshal(buf, structData)
 		if err != nil {
 			log.Error(err.Error())
+		}
+		if len(structData.Value) == 0 {
+			log.Error("servers key doesnt exist")
+			return
 		}
 		// Decode base64 Value
 		decoded, err := base64.RawStdEncoding.DecodeString(
