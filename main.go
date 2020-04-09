@@ -70,10 +70,7 @@ func readConfig(consulConfig *api.Config) {
 		"type": "key",
 		"key":  "discordbot/servers",
 	}
-	if production {
-		params["token"], err = getEnv("CONSUL_TOKEN")
-		exitError(err)
-	}
+	params["token"] = os.Getenv("CONSUL_TOKEN")
 	watch, err := consulwatch.Parse(params)
 	exitError(err)
 	watch.Handler = func(idx uint64, data interface{}) {
