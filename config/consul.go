@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"os"
 
 	"github.com/Strum355/log"
 	"github.com/hashicorp/consul/api"
@@ -26,7 +25,7 @@ func readFromConsul() error {
 		"type": "key",
 		"key":  "discordbot/servers",
 	}
-	params["token"] = os.Getenv("CONSUL_TOKEN")
+	params["token"] = viper.GetString("consul.token")
 	watch, err := consulwatch.Parse(params)
 	if err != nil {
 		return err
