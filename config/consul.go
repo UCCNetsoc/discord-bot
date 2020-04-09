@@ -22,10 +22,10 @@ func readFromConsul() error {
 
 	// Servers
 	params := map[string]interface{}{
-		"type": "key",
-		"key":  "discordbot/servers",
+		"type":  "key",
+		"key":   "discordbot/servers",
+		"token": viper.GetString("consul.token"),
 	}
-	params["token"] = viper.GetString("consul.token")
 	watch, err := consulwatch.Parse(params)
 	if err != nil {
 		return err
