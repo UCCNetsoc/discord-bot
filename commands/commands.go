@@ -84,9 +84,6 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, "Please use a valid UCC email address")
 			return
 		}
-		if err != nil {
-			panic(err)
-		}
 		rand.Seed(time.Now().UnixNano())
 		// Generate phrase
 		randomCode := petname.Generate(3, "-")
