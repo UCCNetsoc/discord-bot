@@ -27,10 +27,13 @@ func Register(s *discordgo.Session) {
 
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Type == discordgo.MessageTypeGuildMemberJoin && viper.GetBool("discord.autoregister") {
-		// Handle users joining by auto registering them
-		serverRegister(s, m)
-		return
+	if m.Type == discordgo.MessageTypeGuildMemberJoin {
+		// Handle join messages
+		if viper.GetBool("discord.autoregister") {
+			// Handle users joining by auto registering them
+			serverRegister(s, m)
+			return
+		}
 	}
 	if m.Author.Bot {
 		return

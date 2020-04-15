@@ -49,5 +49,35 @@ func readFromConsul() error {
 
 	}
 	go watch.Run(viper.GetString("consul.address"))
+
+	// Welcome Messages
+	paramsWelcome := map[string]interface{}{
+		"type":  "key",
+		"key":   "discordbot/welcomemessages",
+		"token": viper.GetString("consul.token"),
+	}
+	watchWelcome, err := consulwatch.Parse(paramsWelcome)
+	if err != nil {
+		return err
+	}
+	watchWelcome.Handler = func(idx uint64, data interface{}) {
+		messages := viper.Get("discord.welcomemessages").(*[]string)
+		structData, ok := data.(*api.KVPair)
+		if !ok {
+			log.Error("KV malformed")
+			return
+		}
+		if len(structData.Value) == 0 {
+			log.Error("servers key doesnt exist")
+			return
+		}
+		err = json.Unmarshal(structData.Value, messages)
+		if err != nil {
+			log.Error(err.Error())
+		}
+		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
+
+	}
+	go watchWelcome.Run(viper.GetString("consul.address"))
 	return nil
 }

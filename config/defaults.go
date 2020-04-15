@@ -8,6 +8,7 @@ func initDefaults() {
 	// Discord
 	viper.SetDefault("discord.token", "") // GitHub scrapers be like -.-
 	viper.SetDefault("discord.servers", &Servers{})
+	viper.SetDefault("discord.welcomemessages", &[]string{})
 	viper.SetDefault("discord.roles", "")
 	viper.SetDefault("discord.autoregister", true)
 	// Consul
