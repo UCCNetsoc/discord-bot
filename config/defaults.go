@@ -9,6 +9,7 @@ func initDefaults() {
 	viper.SetDefault("discord.token", "") // GitHub scrapers be like -.-
 	viper.SetDefault("discord.servers", &Servers{})
 	viper.SetDefault("discord.roles", "")
+	viper.SetDefault("discord.autoregister", true)
 	// Consul
 	viper.SetDefault("consul.address", "consul:8500")
 	viper.SetDefault("consul.token", "")

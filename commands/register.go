@@ -16,7 +16,7 @@ func command(name string, helpMessage string, function func(*discordgo.Session, 
 	commandsMap[name] = function
 }
 
-//Register commands
+// Register commands
 func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping)
 	command("help", "displays this message", help)
@@ -27,6 +27,11 @@ func Register(s *discordgo.Session) {
 
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	if m.Type == discordgo.MessageTypeGuildMemberJoin && viper.GetBool("discord.autoregister") {
+		// Handle users joining by auto registering them
+		serverRegister(s, m)
+		return
+	}
 	if m.Author.Bot {
 		return
 	}
