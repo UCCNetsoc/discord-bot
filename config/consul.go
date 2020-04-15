@@ -43,7 +43,7 @@ func readFromConsul() error {
 		}
 		err = json.Unmarshal(structData.Value, servers)
 		if err != nil {
-			log.Error(err.Error())
+			log.WithError(err).Error("Failed to unmarshal " + string(structData.Value) + " to Servers struct")
 		}
 		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
 
@@ -73,7 +73,7 @@ func readFromConsul() error {
 		}
 		err = json.Unmarshal(structData.Value, messages)
 		if err != nil {
-			log.Error(err.Error())
+			log.WithError(err).Error("Failed to unmarshal " + string(structData.Value) + " to Servers struct")
 		}
 		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
 

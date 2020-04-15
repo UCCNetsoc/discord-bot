@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
 	"strings"
 	"time"
 
@@ -24,7 +25,7 @@ var verifyCodes = make(map[string]string)
 func ping(s *discordgo.Session, m *discordgo.MessageCreate) {
 	_, err := s.ChannelMessageSend(m.ChannelID, "pong")
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to send pong message")
 		return
 	}
 }
@@ -37,7 +38,7 @@ func help(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	_, err := s.ChannelMessageSend(m.ChannelID, out+"```")
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to send help message")
 		return
 	}
 }
@@ -53,14 +54,23 @@ func serverRegister(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to create DM channel")
 		return
 	}
 
 	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
 }
 
-func serverJoin(s *discordgo.Session, m *discordgo.MessageCreate) {
+func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	servers := viper.Get("discord.servers").(*config.Servers)
+	publicServer, err := s.Guild(servers.PublicServer)
+	if err != nil {
+		log.WithError(err).Error("Failed to get Public Server guild")
+		return
+	}
+	if m.GuildID != publicServer.ID {
+		return
+	}
 	// Handle join messages
 	messages := *viper.Get("discord.welcomemessages").(*[]string)
 	if len(messages) > 0 {
@@ -72,7 +82,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.MessageCreate) {
 		welcomeID := guild.SystemChannelID
 		if len(welcomeID) > 0 {
 			// Send welcome message
-			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Author.Mention()))
+			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
 			if viper.GetBool("discord.autoregister") {
 				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!")
 			}
@@ -82,7 +92,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	if viper.GetBool("discord.autoregister") {
 		// Handle users joining by auto registering them
-		serverRegister(s, m)
+		serverRegister(s, &discordgo.MessageCreate{Message: &discordgo.Message{Author: m.User}})
 		return
 	}
 }
@@ -122,7 +132,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"Please message the following token to the Netsoc Bot to gain access to the Discord Server:\n\n"+
 				randomCode+"\n\nIf you did not request access to the Netsoc Discord Server, ignore this message.")
 		if err != nil {
-			log.Error(err.Error())
+			log.WithError(err).Error("Failed to send email")
 			s.ChannelMessageSend(m.ChannelID, "Failed to send email. Please try again later")
 			return
 		}
@@ -130,7 +140,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			verifyCodes[m.Author.ID] = randomCode
 			s.ChannelMessageSend(m.ChannelID, "Please reply with the token that has been emailed to you")
 		} else {
-			log.Error(response.Body)
+			log.Error("Sendgrid returned status " + strconv.Itoa(response.StatusCode) + " reponse body: " + response.Body)
 			s.ChannelMessageSend(m.ChannelID, "Failed to send email. Please try again later")
 		}
 		return
@@ -147,7 +157,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	guild, err := s.Guild(servers.PublicServer)
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
 
@@ -158,7 +168,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			for _, roleID := range roles {
 				err = s.GuildMemberRoleAdd(guild.ID, m.Author.ID, roleID)
 				if err != nil {
-					log.Error(err.Error())
+					log.WithError(err).Error("Failed to add role " + roleID + " to user " + m.Author.ID + " in guild " + guild.ID)
 					s.ChannelMessageSend(m.ChannelID, "Failed to register for the server. Please contact the owners of the server")
 					return
 				}

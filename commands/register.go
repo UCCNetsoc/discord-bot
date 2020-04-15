@@ -23,13 +23,11 @@ func Register(s *discordgo.Session) {
 	command("register", "registers you as a member of the server", serverRegister)
 
 	s.AddHandler(messageCreate)
+	s.AddHandler(serverJoin)
 }
 
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Type == discordgo.MessageTypeGuildMemberJoin {
-		serverJoin(s, m)
-	}
 	if m.Author.Bot {
 		return
 	}
@@ -42,7 +40,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to create DM channel")
 		return
 	}
 	// DM

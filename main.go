@@ -49,7 +49,7 @@ func main() {
 
 func exitError(err error) {
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to start bot")
 		os.Exit(1)
 	}
 }
