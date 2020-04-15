@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -57,6 +58,31 @@ func serverRegister(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
+}
+
+func serverJoin(s *discordgo.Session, m *discordgo.MessageCreate) {
+	// Handle join messages
+	messages := *viper.Get("discord.welcomemessages").(*[]string)
+	if len(messages) > 0 {
+		i := rand.Intn(len(messages))
+		guild, err := s.Guild(m.GuildID)
+		if err != nil {
+			log.WithError(err).Error("Couldnt find guild for welcome")
+		}
+		welcomeID := guild.SystemChannelID
+		if len(welcomeID) > 0 {
+			// Send welcome message
+			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Author.Mention()))
+			s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!")
+		}
+
+	}
+
+	if viper.GetBool("discord.autoregister") {
+		// Handle users joining by auto registering them
+		serverRegister(s, m)
+		return
+	}
 }
 
 // dm commands
