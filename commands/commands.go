@@ -73,7 +73,9 @@ func serverJoin(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if len(welcomeID) > 0 {
 			// Send welcome message
 			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Author.Mention()))
-			s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!")
+			if viper.GetBool("discord.autoregister") {
+				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!")
+			}
 		}
 
 	}
