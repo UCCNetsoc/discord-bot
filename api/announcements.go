@@ -22,6 +22,7 @@ type Announcement struct {
 func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, string) {
 	// In the correct channel
 	content := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"announce")
+	content = strings.Trim(content, " ")
 	if len(content) == 0 {
 		return nil, fmt.Sprintf("Error parsing command\n```%s```", help)
 	}
