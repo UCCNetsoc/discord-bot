@@ -21,8 +21,8 @@ type Announcement struct {
 // ParseAnnouncement Return an annoucement from a message
 func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, string) {
 	// In the correct channel
-	content := strings.TrimPrefix(viper.GetString("bot.prefix")+"announce", m.Content)
-	if len(content) > 0 {
+	content := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"announce")
+	if len(content) == 0 {
 		return nil, fmt.Sprintf("Error parsing command\n```%s```", help)
 	}
 	var image *http.Response

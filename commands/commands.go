@@ -130,6 +130,27 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+		announcement, errMsg := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
+		if len(errMsg) != 0 {
+			s.ChannelMessageSend(m.ChannelID, errMsg)
+			return
+		}
+		if announcement.Image != nil {
+			s.ChannelFileSendWithMessage(
+				channels.PublicAnnouncements,
+				fmt.Sprintf("@everyone\n%s", announcement.Content),
+				"poster.jpg",
+				announcement.Image.Body,
+			)
+		} else {
+			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("@everyone\n%s", announcement.Content))
+		}
+	}
+}
+
 // dm commands
 func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	word := strings.Split(m.Content, " ")[0]

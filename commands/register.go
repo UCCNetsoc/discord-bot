@@ -33,6 +33,12 @@ func Register(s *discordgo.Session) {
 		addEvent,
 		true,
 	)
+	command(
+		"announce",
+		fmt.Sprintf("send a message in the format: \n\t!announce TEXT\n\tCharacter limit of %d", viper.GetInt("discord.charlimit")),
+		addAnnouncement,
+		true,
+	)
 
 	s.AddHandler(messageCreate)
 	s.AddHandler(serverJoin)

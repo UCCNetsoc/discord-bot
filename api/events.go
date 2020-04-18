@@ -8,6 +8,7 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
+	"github.com/spf13/viper"
 )
 
 // Event for use in api and bot
@@ -33,6 +34,10 @@ func ParseEvent(m *discordgo.MessageCreate, help string) (*Event, string) {
 	title := params[1]
 	date := params[3]
 	description := params[5]
+	limit := viper.GetInt("discord.charlimit")
+	if len(description) > limit {
+		return nil, fmt.Sprintf("Description exceeds %d characters", limit)
+	}
 	dateTime, err := time.Parse(layoutISO, date)
 	if err != nil {
 		return nil, "Error parsing date. Should be in the format yyyy-mm-dd"
