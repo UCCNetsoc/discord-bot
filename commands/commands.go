@@ -22,6 +22,9 @@ import (
 var registering = make([]string, 0)
 var verifyCodes = make(map[string]string)
 
+const layoutISO = "2006-01-02"
+const layoutIE = "02/01/06"
+
 // ping command
 func ping(s *discordgo.Session, m *discordgo.MessageCreate) {
 	_, err := s.ChannelMessageSend(m.ChannelID, "pong")
@@ -108,8 +111,7 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		// In the correct channel
 		params := strings.Split(m.Content, "\"")
-		fmt.Println(len(params))
-		if len(params) != 5 {
+		if len(params) != 7 {
 			s.ChannelMessageSend(m.ChannelID,
 				fmt.Sprintf("Error parsing command\n```%s```", committeeHelpStrings["event"]),
 			)
@@ -119,8 +121,14 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 			s.ChannelMessageSend(m.ChannelID, "No image attached")
 			return
 		}
-		// title := params[1]
-		// description := params[3]
+		title := params[1]
+		date := params[3]
+		description := params[5]
+		dateTime, err := time.Parse(layoutISO, date)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error parsing date. Should be in the format yyyy-mm-dd")
+			return
+		}
 		image := m.Attachments[0]
 		imageReader, err := http.Get(image.URL)
 		if err != nil {
@@ -129,7 +137,12 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 		}
 		s.ChannelFileSendWithMessage(
 			channels.PublicAnnouncements,
-			fmt.Sprintf("Hey @everyone, we have a new upcoming event on"),
+			fmt.Sprintf(
+				"Hey @everyone, we have a new upcoming event on *%s*:\n**%s**\n%s",
+				dateTime.Format(layoutIE),
+				title,
+				description,
+			),
 			"poster.jpg",
 			imageReader.Body,
 		)

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -26,7 +27,12 @@ func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
-	command("event", "send a message in the format: \n\t!event \"title\" \"description\" \nand make sure to have an image attached too.", addEvent, true)
+	command(
+		"event",
+		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"mm/dd/yyyy\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
+		addEvent,
+		true,
+	)
 
 	s.AddHandler(messageCreate)
 	s.AddHandler(serverJoin)
