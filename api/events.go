@@ -1,4 +1,4 @@
-package events
+package api
 
 import (
 	"fmt"

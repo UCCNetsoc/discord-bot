@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
-	"github.com/UCCNetsoc/discord-bot/events"
 	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/Strum355/log"
@@ -108,7 +108,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
-		event, errMsg := events.ParseEvent(m, committeeHelpStrings["event"])
+		event, errMsg := api.ParseEvent(m, committeeHelpStrings["event"])
 		if len(errMsg) != 0 {
 			s.ChannelMessageSend(m.ChannelID, errMsg)
 			return
