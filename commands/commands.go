@@ -3,12 +3,12 @@ package commands
 import (
 	"fmt"
 	"math/rand"
-	"net/http"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/events"
 	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/Strum355/log"
@@ -22,7 +22,6 @@ import (
 var registering = make([]string, 0)
 var verifyCodes = make(map[string]string)
 
-const layoutISO = "2006-01-02"
 const layoutIE = "02/01/06"
 
 // ping command
@@ -109,42 +108,21 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
-		// In the correct channel
-		params := strings.Split(m.Content, "\"")
-		if len(params) != 7 {
-			s.ChannelMessageSend(m.ChannelID,
-				fmt.Sprintf("Error parsing command\n```%s```", committeeHelpStrings["event"]),
-			)
-			return
-		}
-		if len(m.Attachments) != 1 || m.Attachments[0].Width == 0 {
-			s.ChannelMessageSend(m.ChannelID, "No image attached")
-			return
-		}
-		title := params[1]
-		date := params[3]
-		description := params[5]
-		dateTime, err := time.Parse(layoutISO, date)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error parsing date. Should be in the format yyyy-mm-dd")
-			return
-		}
-		image := m.Attachments[0]
-		imageReader, err := http.Get(image.URL)
-		if err != nil {
-			log.Error(err.Error())
+		event, errMsg := events.ParseEvent(m, committeeHelpStrings["event"])
+		if len(errMsg) != 0 {
+			s.ChannelMessageSend(m.ChannelID, errMsg)
 			return
 		}
 		s.ChannelFileSendWithMessage(
 			channels.PublicAnnouncements,
 			fmt.Sprintf(
 				"Hey @everyone, we have a new upcoming event on *%s*:\n**%s**\n%s",
-				dateTime.Format(layoutIE),
-				title,
-				description,
+				event.Date.Format(layoutIE),
+				event.Title,
+				event.Description,
 			),
 			"poster.jpg",
-			imageReader.Body,
+			event.Image.Body,
 		)
 
 	} else {
