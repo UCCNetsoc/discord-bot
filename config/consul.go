@@ -15,6 +15,12 @@ type Servers struct {
 	CommitteeServer string `json:"committee"`
 }
 
+// Channels required for events
+type Channels struct {
+	PublicAnnouncements string `json:"public_announcements"` // On public server
+	PrivateEvents       string `json:"private_events"`       // On committee server
+}
+
 func readFromConsul() error {
 	var err error
 	// Connect to consul
@@ -79,5 +85,35 @@ func readFromConsul() error {
 
 	}
 	go watchWelcome.Run(viper.GetString("consul.address"))
+
+	// Channels watcher
+	paramsChannels := map[string]interface{}{
+		"type":  "key",
+		"key":   "discordbot/channels",
+		"token": viper.GetString("consul.token"),
+	}
+	watchChannels, err := consulwatch.Parse(paramsChannels)
+	if err != nil {
+		return err
+	}
+	watchChannels.Handler = func(idx uint64, data interface{}) {
+		channels := viper.Get("discord.channels").(*Channels)
+		structData, ok := data.(*api.KVPair)
+		if !ok {
+			log.Error("KV malformed")
+			return
+		}
+		if len(structData.Value) == 0 {
+			log.Error("servers key doesnt exist")
+			return
+		}
+		err = json.Unmarshal(structData.Value, channels)
+		if err != nil {
+			log.WithError(err).Error("Failed to unmarshal " + string(structData.Value) + " to Servers struct")
+		}
+		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
+
+	}
+	go watchChannels.Run(viper.GetString("consul.address"))
 	return nil
 }

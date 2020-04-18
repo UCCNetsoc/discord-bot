@@ -11,6 +11,7 @@ func initDefaults() {
 	viper.SetDefault("discord.welcomemessages", &[]string{})
 	viper.SetDefault("discord.roles", "")
 	viper.SetDefault("discord.autoregister", true)
+	viper.SetDefault("discord.channels", &Channels{})
 	// Consul
 	viper.SetDefault("consul.address", "consul:8500")
 	viper.SetDefault("consul.token", "")
