@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -103,7 +104,39 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 }
 
 func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+		// In the correct channel
+		params := strings.Split(m.Content, "\"")
+		fmt.Println(len(params))
+		if len(params) != 5 {
+			s.ChannelMessageSend(m.ChannelID,
+				fmt.Sprintf("Error parsing command\n```%s```", committeeHelpStrings["event"]),
+			)
+			return
+		}
+		if len(m.Attachments) != 1 || m.Attachments[0].Width == 0 {
+			s.ChannelMessageSend(m.ChannelID, "No image attached")
+			return
+		}
+		// title := params[1]
+		// description := params[3]
+		image := m.Attachments[0]
+		imageReader, err := http.Get(image.URL)
+		if err != nil {
+			log.Error(err.Error())
+			return
+		}
+		s.ChannelFileSendWithMessage(
+			channels.PublicAnnouncements,
+			fmt.Sprintf("Hey @everyone, we have a new upcoming event on"),
+			"poster.jpg",
+			imageReader.Body,
+		)
 
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
+	}
 }
 
 // dm commands
