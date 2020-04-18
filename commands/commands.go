@@ -36,6 +36,11 @@ func help(s *discordgo.Session, m *discordgo.MessageCreate) {
 	for k, v := range helpStrings {
 		out += k + ": " + v + "\n"
 	}
+	if isCommittee(m) {
+		for k, v := range committeeHelpStrings {
+			out += k + ": " + v + "\n"
+		}
+	}
 	_, err := s.ChannelMessageSend(m.ChannelID, out+"```")
 	if err != nil {
 		log.WithError(err).Error("Failed to send help message")
@@ -95,6 +100,10 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		serverRegister(s, &discordgo.MessageCreate{Message: &discordgo.Message{Author: m.User}})
 		return
 	}
+}
+
+func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
+
 }
 
 // dm commands
@@ -190,4 +199,8 @@ func sendEmail(from string, to string, subject string, content string) (*rest.Re
 	client := sendgrid.NewSendClient(viper.GetString("sendgrid.token"))
 	response, err := client.Send(message)
 	return response, err
+}
+
+func isCommittee(m *discordgo.MessageCreate) bool {
+	return m.GuildID == (viper.Get("discord.servers").(*config.Servers).CommitteeServer)
 }

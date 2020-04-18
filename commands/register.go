@@ -9,18 +9,24 @@ import (
 )
 
 var helpStrings = make(map[string]string)
+var committeeHelpStrings = make(map[string]string)
 var commandsMap = make(map[string]func(*discordgo.Session, *discordgo.MessageCreate))
 
-func command(name string, helpMessage string, function func(*discordgo.Session, *discordgo.MessageCreate)) {
-	helpStrings[name] = helpMessage
+func command(name string, helpMessage string, function func(*discordgo.Session, *discordgo.MessageCreate), committee bool) {
+	if committee {
+		committeeHelpStrings[name] = helpMessage
+	} else {
+		helpStrings[name] = helpMessage
+	}
 	commandsMap[name] = function
 }
 
 // Register commands
 func Register(s *discordgo.Session) {
-	command("ping", "pong!", ping)
-	command("help", "displays this message", help)
-	command("register", "registers you as a member of the server", serverRegister)
+	command("ping", "pong!", ping, false)
+	command("help", "displays this message", help, false)
+	command("register", "registers you as a member of the server", serverRegister, false)
+	command("event", "send a message in the format: \n\t!event \"title\" \"description\" \nand make sure to have an image attached too.", addEvent, true)
 
 	s.AddHandler(messageCreate)
 	s.AddHandler(serverJoin)
