@@ -19,12 +19,12 @@ type Announcement struct {
 }
 
 // ParseAnnouncement Return an annoucement from a message
-func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, string) {
+func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, error) {
 	// In the correct channel
 	content := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"announce")
 	content = strings.Trim(content, " ")
 	if len(content) == 0 {
-		return nil, fmt.Sprintf("Error parsing command\n```%s```", help)
+		return nil, fmt.Errorf("Error parsing command\n```%s```", help)
 	}
 	var image *http.Response
 	var err error
@@ -32,17 +32,17 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 		image, err = http.Get(m.Attachments[0].URL)
 		if err != nil {
 			log.Error(err.Error())
-			return nil, ""
+			return nil, fmt.Errorf("Error parsing image")
 		}
 	}
 	date, err := m.Timestamp.Parse()
 	if err != nil {
 		log.Error(err.Error())
-		return nil, ""
+		return nil, fmt.Errorf("Error coverting date")
 	}
 	return &Announcement{
 		date,
 		content,
 		image,
-	}, ""
+	}, nil
 }

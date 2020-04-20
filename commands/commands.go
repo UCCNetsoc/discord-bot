@@ -108,9 +108,9 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
-		event, errMsg := api.ParseEvent(m, committeeHelpStrings["event"])
-		if len(errMsg) != 0 {
-			s.ChannelMessageSend(m.ChannelID, errMsg)
+		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
 		s.ChannelFileSendWithMessage(
@@ -133,9 +133,9 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
-		announcement, errMsg := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
-		if len(errMsg) != 0 {
-			s.ChannelMessageSend(m.ChannelID, errMsg)
+		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, err.Error())
 			return
 		}
 		if announcement.Image != nil {
