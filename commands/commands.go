@@ -190,7 +190,7 @@ func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
 					for _, publicMessage := range public {
 						if content == publicMessage.Content {
 							s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
-							s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+content)
+							s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+fmt.Sprintf("**%s**\n%s", event.Title, event.Description))
 							return
 						}
 					}
