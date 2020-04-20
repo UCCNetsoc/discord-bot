@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
@@ -55,20 +54,17 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.Bot {
 		return
 	}
+
+	// DM
+	if len(m.GuildID) == 0 {
+		dmCommands(s, m)
+		return
+	}
+
 	for k, v := range commandsMap {
 		if !(m.Content == viper.GetString("bot.prefix")+k || strings.HasPrefix(m.Content, viper.GetString("bot.prefix")+k+" ")) {
 			continue
 		}
 		v(s, m)
-	}
-
-	channel, err := s.UserChannelCreate(m.Author.ID)
-	if err != nil {
-		log.WithError(err).Error("Failed to create DM channel")
-		return
-	}
-	// DM
-	if channel.ID == m.ChannelID {
-		dmCommands(s, m)
 	}
 }
