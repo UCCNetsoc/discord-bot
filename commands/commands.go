@@ -153,7 +153,7 @@ func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 // dm commands
 func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
-	word := strings.Split(m.Content, " ")[0]
+	userInput := strings.Split(m.Content, " ")[0]
 
 	found := -1
 
@@ -172,7 +172,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	// If no verification code has been sent yet
 	if _, ok := verifyCodes[m.Author.ID]; !ok {
 		// Check for umail account
-		if !strings.HasSuffix(word, "@umail.ucc.ie") {
+		if !strings.HasSuffix(userInput, "@umail.ucc.ie") {
 			s.ChannelMessageSend(m.ChannelID, "Please use a valid UCC email address")
 			return
 		}
@@ -181,7 +181,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 		randomCode := petname.Generate(3, "-")
 		// Send email
 		response, err := sendEmail("server.registration@netsoc.co",
-			word,
+			userInput,
 			"Netsoc Discord Verification",
 			"Please message the following token to the Netsoc Bot to gain access to the Discord Server:\n\n"+
 				randomCode+"\n\nIf you did not request access to the Netsoc Discord Server, ignore this message.")
@@ -201,7 +201,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 
 	// If code sent doesnt equal verification code
-	if word != verifyCodes[m.Author.ID] {
+	if userInput != verifyCodes[m.Author.ID] {
 		s.ChannelMessageSend(m.ChannelID, "Incorrect token. Please try again")
 		return
 	}
