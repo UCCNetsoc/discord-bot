@@ -29,7 +29,7 @@ func Register(s *discordgo.Session) {
 	command("register", "registers you as a member of the server", serverRegister, false)
 	command(
 		"event",
-		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"mm/dd/yyyy\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
+		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
 		addEvent,
 		true,
 	)
@@ -41,7 +41,7 @@ func Register(s *discordgo.Session) {
 	)
 	command(
 		"recall",
-		fmt.Sprintf("Recall the last announcement or event"),
+		fmt.Sprintf("PERMANENTLY DELETE the last announcement or event."),
 		recall,
 		true,
 	)

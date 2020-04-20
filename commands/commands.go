@@ -151,6 +151,7 @@ func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+// recall events and announcements
 func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
@@ -162,20 +163,39 @@ func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
 		if err != nil {
 			log.WithError(err).Error("Error getting channel private")
 		}
-		fmt.Println(len(private))
 		for _, message := range private {
 			if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"announce"+" ") {
 				content := strings.TrimPrefix(message.Content, viper.GetString("bot.prefix")+"announce"+" ")
-				fmt.Println("priv " + content)
 				s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
 				for _, publicMessage := range public {
 					publicContent := strings.Trim(strings.Join(strings.Split(publicMessage.Content, "\n")[1:], "\n"), " ")
-					fmt.Println("pub " + publicContent)
 					if publicContent == content {
 						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+						s.ChannelMessageSend(m.ChannelID, "Successfully recalled announcement\n*"+publicContent+"*")
 						return
 					}
 				}
+			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"event"+" ") {
+				create := &discordgo.MessageCreate{Message: message}
+				event, err := api.ParseEvent(create, committeeHelpStrings["event"])
+				if err == nil {
+					// Found event
+					s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
+					content := fmt.Sprintf(
+						"Hey @everyone, we have a new upcoming event on *%s*:\n**%s**\n%s",
+						event.Date.Format(layoutIE),
+						event.Title,
+						event.Description,
+					)
+					for _, publicMessage := range public {
+						if content == publicMessage.Content {
+							s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+							s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+content)
+							return
+						}
+					}
+				}
+
 			}
 		}
 	}
