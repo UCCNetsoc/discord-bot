@@ -58,7 +58,7 @@ func createConsulWatcher(consulKey, viperKey string) error {
 	}
 
 	watch.Handler = func(idx uint64, data interface{}) {
-		channels := viper.Get(viperKey).(*Channels)
+		channels := viper.Get(viperKey)
 		structData, ok := data.(*api.KVPair)
 		if !ok {
 			log.WithFields(log.Fields{
