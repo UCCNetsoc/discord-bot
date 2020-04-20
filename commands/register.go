@@ -54,17 +54,24 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.Bot {
 		return
 	}
-
-	// DM
+	// Check if its a DM
 	if len(m.GuildID) == 0 {
 		dmCommands(s, m)
 		return
 	}
 
-	for k, v := range commandsMap {
-		if !(m.Content == viper.GetString("bot.prefix")+k || strings.HasPrefix(m.Content, viper.GetString("bot.prefix")+k+" ")) {
-			continue
-		}
-		v(s, m)
+	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
+		return
 	}
+
+	body := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix"))
+
+	commandStr := strings.Fields(body)[0]
+
+	// if command is a normal command
+	if command, ok := commandsMap[commandStr]; ok {
+		command(s, m)
+		return
+	}
+
 }
