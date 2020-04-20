@@ -86,13 +86,16 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		guild, err := s.Guild(m.GuildID)
 		if err != nil {
 			log.WithError(err).Error("Couldnt find guild for welcome")
+			return
 		}
 		welcomeID := guild.SystemChannelID
 		if len(welcomeID) > 0 {
 			// Send welcome message
 			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
 			if viper.GetBool("discord.autoregister") {
-				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!")
+				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+			} else {
+				s.ChannelMessageSend(welcomeID, "Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			}
 		}
 
@@ -148,6 +151,8 @@ func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 		} else {
 			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("@everyone\n%s", announcement.Content))
 		}
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
 	}
 }
 
