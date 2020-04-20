@@ -39,6 +39,12 @@ func Register(s *discordgo.Session) {
 		addAnnouncement,
 		true,
 	)
+	command(
+		"recall",
+		fmt.Sprintf("Recall the last announcement or event"),
+		recall,
+		true,
+	)
 
 	s.AddHandler(messageCreate)
 	s.AddHandler(serverJoin)

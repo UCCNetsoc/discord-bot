@@ -151,6 +151,36 @@ func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
+func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+		public, err := s.ChannelMessages(channels.PublicAnnouncements, 100, "", "", "")
+		if err != nil {
+			log.WithError(err).Error("Error getting channel public")
+		}
+		private, err := s.ChannelMessages(channels.PrivateEvents, 100, "", "", "")
+		if err != nil {
+			log.WithError(err).Error("Error getting channel private")
+		}
+		fmt.Println(len(private))
+		for _, message := range private {
+			if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"announce"+" ") {
+				content := strings.TrimPrefix(message.Content, viper.GetString("bot.prefix")+"announce"+" ")
+				fmt.Println("priv " + content)
+				s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
+				for _, publicMessage := range public {
+					publicContent := strings.Trim(strings.Join(strings.Split(publicMessage.Content, "\n")[1:], "\n"), " ")
+					fmt.Println("pub " + publicContent)
+					if publicContent == content {
+						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+						return
+					}
+				}
+			}
+		}
+	}
+}
+
 // dm commands
 func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	userInput := strings.Split(m.Content, " ")[0]
