@@ -13,9 +13,6 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
-	"github.com/sendgrid/rest"
-	"github.com/sendgrid/sendgrid-go"
-	"github.com/sendgrid/sendgrid-go/helpers/mail"
 	"github.com/spf13/viper"
 )
 
@@ -80,7 +77,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		return
 	}
 	// Handle join messages
-	messages := viper.Get("discord.welcomemessages").([]string)
+	messages := viper.Get("discord.welcome_messages").([]string)
 	if len(messages) > 0 {
 		i := rand.Intn(len(messages))
 		guild, err := s.Guild(m.GuildID)
@@ -290,17 +287,4 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 	registering[found] = registering[len(registering)-1]
 	registering[len(registering)-1] = ""
 	registering = registering[:len(registering)-1]
-}
-
-func sendEmail(from string, to string, subject string, content string) (*rest.Response, error) {
-	fromAddress := mail.NewEmail(from, from)
-	toAddress := mail.NewEmail(to, to)
-	message := mail.NewSingleEmail(fromAddress, subject, toAddress, content, content)
-	client := sendgrid.NewSendClient(viper.GetString("sendgrid.token"))
-	response, err := client.Send(message)
-	return response, err
-}
-
-func isCommittee(m *discordgo.MessageCreate) bool {
-	return m.GuildID == (viper.Get("discord.servers").(*config.Servers).CommitteeServer)
 }
