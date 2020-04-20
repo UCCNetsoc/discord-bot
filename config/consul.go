@@ -67,7 +67,7 @@ func readFromConsul() error {
 		return err
 	}
 	watchWelcome.Handler = func(idx uint64, data interface{}) {
-		messages := viper.Get("discord.welcomemessages").(*[]string)
+		messages := viper.Get("discord.welcomemessages").([]string)
 		structData, ok := data.(*api.KVPair)
 		if !ok {
 			log.Error("KV malformed")
@@ -77,7 +77,7 @@ func readFromConsul() error {
 			log.Error("servers key doesnt exist")
 			return
 		}
-		err = json.Unmarshal(structData.Value, messages)
+		err = json.Unmarshal(structData.Value, &messages)
 		if err != nil {
 			log.WithError(err).Error("Failed to unmarshal " + string(structData.Value) + " to Servers struct")
 		}

@@ -80,7 +80,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		return
 	}
 	// Handle join messages
-	messages := *viper.Get("discord.welcomemessages").(*[]string)
+	messages := viper.Get("discord.welcomemessages").([]string)
 	if len(messages) > 0 {
 		i := rand.Intn(len(messages))
 		guild, err := s.Guild(m.GuildID)
