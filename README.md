@@ -32,3 +32,7 @@ For that reason we decided to reimplement the bot with the ability to watch/read
   ```
   
 4. cd into the `dev-env` and run `./dev-env up discord-bot consul`.
+5. Go to consul at http://localhost:8500 and set the following K/Vs in `discordbot/`:
+    - `channels`: `{"public_announcements": "id", "private_events": "id"}`
+    - `servers`: `{"public": "id", "committee": "id"}`
+    - `welcome_messages`: `["Hi %s, whats up?", "Yo %s"]`
