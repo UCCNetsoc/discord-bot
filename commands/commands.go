@@ -67,7 +67,12 @@ func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
 }
 
-func serverJoin(ctx context.Context, s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+	ctx := context.WithValue(context.Background(), logKey, log.Fields{
+		"user_id":  m.User.ID,
+		"guild_id": m.GuildID,
+	})
+
 	servers := viper.Get("discord.servers").(*config.Servers)
 	publicServer, err := s.Guild(servers.PublicServer)
 	if err != nil {
