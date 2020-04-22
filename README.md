@@ -23,12 +23,12 @@ For that reason we decided to reimplement the bot with the ability to watch/read
 3. cd into `dev-env/discord-bot` and make a file called `docker-compose.override.yml`. Ensure it contains the following:
   ```yml
   version: "3.7"
-services:
-  discord-bot:
-    environment:
-      - DISCORD_TOKEN=Put discord token here
-    volumes:
-      - /path/to/discord-bot/repo:/bot
+  services:
+    discord-bot:
+      environment:
+        - DISCORD_TOKEN=Put discord token here
+      volumes:
+        - /path/to/discord-bot/repo:/bot
   ```
   
 4. cd into the `dev-env` and run `./dev-env up discord-bot consul`.
