@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/Strum355/log"
 	"github.com/hashicorp/consul/api"
@@ -15,39 +16,83 @@ type Servers struct {
 	CommitteeServer string `json:"committee"`
 }
 
+// Channels required for events
+type Channels struct {
+	PublicAnnouncements string `json:"public_announcements"` // On public server
+	PrivateEvents       string `json:"private_events"`       // On committee server
+}
+
 func readFromConsul() error {
-	var err error
 	// Connect to consul
 	// Listen for consul updates
 
-	// Servers
+	err := createConsulWatcher("servers", "discord.servers")
+	if err != nil {
+		return fmt.Errorf("error creating watcher for 'discord.servers': %w", err)
+	}
+
+	err = createConsulWatcher("welcome_messages", "discord.welcome_messages")
+	if err != nil {
+		return fmt.Errorf("error creating watcher for 'discord.welcome_messages': %w", err)
+	}
+
+	err = createConsulWatcher("channels", "discord.channels")
+	if err != nil {
+		return fmt.Errorf("error creating watcher for 'discord.channels': %w", err)
+	}
+
+	return nil
+}
+
+func createConsulWatcher(consulKey, viperKey string) error {
+	consulKey = "discordbot/" + consulKey
+	// Channels watcher
 	params := map[string]interface{}{
 		"type":  "key",
-		"key":   "discordbot/servers",
+		"key":   consulKey,
 		"token": viper.GetString("consul.token"),
 	}
 	watch, err := consulwatch.Parse(params)
 	if err != nil {
 		return err
 	}
+
 	watch.Handler = func(idx uint64, data interface{}) {
-		servers := viper.Get("discord.servers").(*Servers)
+		channels := viper.Get(viperKey)
 		structData, ok := data.(*api.KVPair)
 		if !ok {
-			log.Error("KV malformed")
+			log.WithFields(log.Fields{
+				"type":       fmt.Sprintf("%T", data),
+				"viper_key":  viperKey,
+				"consul_key": consulKey,
+			}).Error("KV malformed")
 			return
 		}
+
 		if len(structData.Value) == 0 {
 			log.Error("servers key doesnt exist")
 			return
 		}
-		err = json.Unmarshal(structData.Value, servers)
+		err = json.Unmarshal(structData.Value, channels)
 		if err != nil {
-			log.Error(err.Error())
+			log.WithFields(log.Fields{
+				"data":       string(structData.Value),
+				"type":       fmt.Sprintf("%T", viper.Get(viperKey)),
+				"viper_key":  viperKey,
+				"consul_key": consulKey,
+			}).WithError(err).Error("Failed to unmarshal Consul data")
 		}
 		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
 
 	}
-	go watch.Run(viper.GetString("consul.address"))
+	go func() {
+		err := watch.Run(viper.GetString("consul.address"))
+		if err != nil {
+			log.WithFields(log.Fields{
+				"viper_key":  viperKey,
+				"consul_key": consulKey,
+			}).WithError(err).Error("consul watcher error")
+		}
+	}()
 	return nil
 }

@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/UCCNetsoc/discord-bot/commands"
+
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
@@ -33,6 +35,7 @@ func main() {
 	exitError(err)
 	// Open websocket
 	err = session.Open()
+	commands.Register(session)
 	exitError(err)
 
 	// Maintain connection until a SIGTERM, then cleanly exit
@@ -46,7 +49,7 @@ func main() {
 
 func exitError(err error) {
 	if err != nil {
-		log.Error(err.Error())
+		log.WithError(err).Error("Failed to start bot")
 		os.Exit(1)
 	}
 }
