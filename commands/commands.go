@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"strconv"
@@ -22,16 +23,16 @@ var verifyCodes = make(map[string]string)
 const layoutIE = "02/01/06"
 
 // ping command
-func ping(s *discordgo.Session, m *discordgo.MessageCreate) {
+func ping(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	_, err := s.ChannelMessageSend(m.ChannelID, "pong")
 	if err != nil {
-		log.WithError(err).Error("Failed to send pong message")
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to send pong message")
 		return
 	}
 }
 
 // help command
-func help(s *discordgo.Session, m *discordgo.MessageCreate) {
+func help(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	out := "```"
 	for k, v := range helpStrings {
 		out += k + ": " + v + "\n"
@@ -43,13 +44,13 @@ func help(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 	_, err := s.ChannelMessageSend(m.ChannelID, out+"```")
 	if err != nil {
-		log.WithError(err).Error("Failed to send help message")
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to send help message")
 		return
 	}
 }
 
 // register command
-func serverRegister(s *discordgo.Session, m *discordgo.MessageCreate) {
+func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	for _, a := range registering {
 		if a == m.Author.ID {
 			return
@@ -59,18 +60,18 @@ func serverRegister(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
-		log.WithError(err).Error("Failed to create DM channel")
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to create DM channel")
 		return
 	}
 
 	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
 }
 
-func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
+func serverJoin(ctx context.Context, s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 	servers := viper.Get("discord.servers").(*config.Servers)
 	publicServer, err := s.Guild(servers.PublicServer)
 	if err != nil {
-		log.WithError(err).Error("Failed to get Public Server guild")
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
 	if m.GuildID != publicServer.ID {
@@ -82,7 +83,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		i := rand.Intn(len(messages))
 		guild, err := s.Guild(m.GuildID)
 		if err != nil {
-			log.WithError(err).Error("Couldnt find guild for welcome")
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Couldnt find guild for welcome")
 			return
 		}
 		welcomeID := guild.SystemChannelID
@@ -100,17 +101,18 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 
 	if viper.GetBool("discord.autoregister") {
 		// Handle users joining by auto registering them
-		serverRegister(s, &discordgo.MessageCreate{Message: &discordgo.Message{Author: m.User}})
+		serverRegister(ctx, s, &discordgo.MessageCreate{Message: &discordgo.Message{Author: m.User}})
 		return
 	}
 }
 
-func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
+func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("failed to parse event")
+			s.ChannelMessageSend(m.ChannelID, "Failed to parse event: "+err.Error())
 			return
 		}
 		s.ChannelFileSendWithMessage(
@@ -130,14 +132,16 @@ func addEvent(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
+func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, err.Error())
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("error sending announcement")
+			s.ChannelMessageSend(m.ChannelID, "Error sending announcement: "+err.Error())
 			return
 		}
+
 		if announcement.Image != nil {
 			s.ChannelFileSendWithMessage(
 				channels.PublicAnnouncements,
@@ -154,16 +158,16 @@ func addAnnouncement(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 // recall events and announcements
-func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
+func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		public, err := s.ChannelMessages(channels.PublicAnnouncements, 100, "", "", "")
 		if err != nil {
-			log.WithError(err).Error("Error getting channel public")
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel public")
 		}
 		private, err := s.ChannelMessages(channels.PrivateEvents, 100, "", "", "")
 		if err != nil {
-			log.WithError(err).Error("Error getting channel private")
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel private")
 		}
 		for _, message := range private {
 			if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"announce"+" ") {
@@ -180,31 +184,32 @@ func recall(s *discordgo.Session, m *discordgo.MessageCreate) {
 			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"event"+" ") {
 				create := &discordgo.MessageCreate{Message: message}
 				event, err := api.ParseEvent(create, committeeHelpStrings["event"])
-				if err == nil {
-					// Found event
-					s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
-					content := fmt.Sprintf(
-						"Hey @everyone, we have a new upcoming event on *%s*:\n**%s**\n%s",
-						event.Date.Format(layoutIE),
-						event.Title,
-						event.Description,
-					)
-					for _, publicMessage := range public {
-						if content == publicMessage.Content {
-							s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
-							s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+fmt.Sprintf("**%s**\n%s", event.Title, event.Description))
-							return
-						}
+				if err != nil {
+					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("failed to parse event")
+					continue
+				}
+				// Found event
+				s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
+				content := fmt.Sprintf(
+					"Hey @everyone, we have a new upcoming event on *%s*:\n**%s**\n%s",
+					event.Date.Format(layoutIE),
+					event.Title,
+					event.Description,
+				)
+				for _, publicMessage := range public {
+					if content == publicMessage.Content {
+						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+						s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+fmt.Sprintf("**%s**\n%s", event.Title, event.Description))
+						return
 					}
 				}
-
 			}
 		}
 	}
 }
 
 // dm commands
-func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
+func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	userInput := strings.Split(m.Content, " ")[0]
 
 	found := -1
@@ -238,7 +243,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"Please message the following token to the Netsoc Bot to gain access to the Discord Server:\n\n"+
 				randomCode+"\n\nIf you did not request access to the Netsoc Discord Server, ignore this message.")
 		if err != nil {
-			log.WithError(err).Error("Failed to send email")
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to send email")
 			s.ChannelMessageSend(m.ChannelID, "Failed to send email. Please try again later")
 			return
 		}
@@ -246,7 +251,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			verifyCodes[m.Author.ID] = randomCode
 			s.ChannelMessageSend(m.ChannelID, "Please reply with the token that has been emailed to you")
 		} else {
-			log.Error("Sendgrid returned status " + strconv.Itoa(response.StatusCode) + " reponse body: " + response.Body)
+			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Sendgrid returned status " + strconv.Itoa(response.StatusCode) + " reponse body: " + response.Body)
 			s.ChannelMessageSend(m.ChannelID, "Failed to send email. Please try again later")
 		}
 		return
@@ -263,7 +268,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	guild, err := s.Guild(servers.PublicServer)
 	if err != nil {
-		log.WithError(err).Error("Failed to get Public Server guild")
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
 
@@ -274,7 +279,7 @@ func dmCommands(s *discordgo.Session, m *discordgo.MessageCreate) {
 			for _, roleID := range roles {
 				err = s.GuildMemberRoleAdd(guild.ID, m.Author.ID, roleID)
 				if err != nil {
-					log.WithError(err).Error("Failed to add role " + roleID + " to user " + m.Author.ID + " in guild " + guild.ID)
+					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to add role " + roleID + " to user " + m.Author.ID + " in guild " + guild.ID)
 					s.ChannelMessageSend(m.ChannelID, "Failed to register for the server. Please contact the owners of the server")
 					return
 				}

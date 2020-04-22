@@ -1,18 +1,24 @@
 package commands
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
+	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
 
+const logKey = "_logger"
+
 var helpStrings = make(map[string]string)
 var committeeHelpStrings = make(map[string]string)
-var commandsMap = make(map[string]func(*discordgo.Session, *discordgo.MessageCreate))
+var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
 
-func command(name string, helpMessage string, function func(*discordgo.Session, *discordgo.MessageCreate), committee bool) {
+type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
+
+func command(name string, helpMessage string, function commandFunc, committee bool) {
 	if committee {
 		committeeHelpStrings[name] = helpMessage
 	} else {
@@ -54,9 +60,18 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.Bot {
 		return
 	}
+
+	ctx := context.Background()
+
 	// Check if its a DM
 	if len(m.GuildID) == 0 {
-		dmCommands(s, m)
+		ctx := context.WithValue(ctx, logKey, log.Fields{
+			"author_id":  m.Author.ID,
+			"channel_id": m.ChannelID,
+			"guild_id":   "DM",
+		})
+
+		dmCommands(ctx, s, m)
 		return
 	}
 
@@ -70,8 +85,14 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
-		command(s, m)
+		ctx := context.WithValue(ctx, logKey, log.Fields{
+			"author_id":  m.Author.ID,
+			"channel_id": m.ChannelID,
+			"guild_id":   "DM",
+			"body":       body,
+		})
+
+		command(ctx, s, m)
 		return
 	}
-
 }

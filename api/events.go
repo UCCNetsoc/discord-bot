@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
@@ -45,8 +44,7 @@ func ParseEvent(m *discordgo.MessageCreate, help string) (*Event, error) {
 	image := m.Attachments[0]
 	imageReader, err := http.Get(image.URL)
 	if err != nil {
-		log.Error(err.Error())
-		return nil, fmt.Errorf("Error parsing image")
+		return nil, fmt.Errorf("Error parsing image: %w", err)
 	}
 
 	return &Event{

@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
@@ -35,14 +34,12 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 	if len(m.Attachments) > 0 && m.Attachments[0].Width > 0 {
 		image, err = http.Get(m.Attachments[0].URL)
 		if err != nil {
-			log.Error(err.Error())
-			return nil, fmt.Errorf("Error parsing image")
+			return nil, fmt.Errorf("Error parsing image: %w", err)
 		}
 	}
 	date, err := m.Timestamp.Parse()
 	if err != nil {
-		log.Error(err.Error())
-		return nil, fmt.Errorf("Error coverting date")
+		return nil, fmt.Errorf("Error coverting date: %w", err)
 	}
 	return &Announcement{
 		date,
