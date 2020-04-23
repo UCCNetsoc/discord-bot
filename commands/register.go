@@ -45,6 +45,12 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 	command(
+		"sannounce",
+		fmt.Sprintf("silent announce. send a message in the format: \n\t!announce TEXT\n\tCharacter limit of %d. This version doesn't @ everyone.", viper.GetInt("discord.charlimit")),
+		addAnnouncementSilent,
+		true,
+	)
+	command(
 		"recall",
 		fmt.Sprintf("PERMANENTLY DELETE the last announcement or event."),
 		recall,

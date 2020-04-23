@@ -138,6 +138,12 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 }
 
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	announcement(ctx, s, m, "@everyone\n")
+}
+func addAnnouncementSilent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	announcement(ctx, s, m, "")
+}
+func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
@@ -150,12 +156,12 @@ func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 		if announcement.Image != nil {
 			s.ChannelFileSendWithMessage(
 				channels.PublicAnnouncements,
-				fmt.Sprintf("@everyone\n%s", announcement.Content),
+				fmt.Sprintf("%s%s", mention, announcement.Content),
 				"poster.jpg",
 				announcement.Image.Body,
 			)
 		} else {
-			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("@everyone\n%s", announcement.Content))
+			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("%s%s", mention, announcement.Content))
 		}
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
