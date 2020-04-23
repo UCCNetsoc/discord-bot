@@ -277,20 +277,14 @@ func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		return
 	}
 
-	for _, member := range guild.Members {
-		// If member is in public server
-		if member.User.ID == m.Author.ID {
-			// Add each role
-			for _, roleID := range roles {
-				err = s.GuildMemberRoleAdd(guild.ID, m.Author.ID, roleID)
-				if err != nil {
-					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to add role " + roleID + " to user " + m.Author.ID + " in guild " + guild.ID)
-					s.ChannelMessageSend(m.ChannelID, "Failed to register for the server. Please contact the owners of the server")
-					return
-				}
-			}
+	// Add each role
+	for _, roleID := range roles {
+		err = s.GuildMemberRoleAdd(guild.ID, m.Author.ID, roleID)
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Failed to add role " + roleID + " to user " + m.Author.ID + " in guild " + guild.ID)
+			s.ChannelMessageSend(m.ChannelID, "Failed to register for the server. Please contact the owners of the server")
+			return
 		}
-		break
 	}
 	delete(verifyCodes, m.Author.ID) // Remove verify code
 	// Successfully registered
