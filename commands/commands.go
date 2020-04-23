@@ -232,6 +232,10 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	var mention *discordgo.User
+	if len(m.Mentions) > 0 {
+		mention = m.Mentions[0]
+	}
 	servers := viper.Get("discord.servers").(*config.Servers)
 	guild, err := s.Guild(servers.PublicServer)
 	if err != nil {
@@ -240,6 +244,10 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 	}
 
 	allChannels := guild.Channels
+attempt:
+	if len(allChannels) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+	}
 	var channels []*discordgo.Channel
 	// Get all text channels
 	for _, channel := range allChannels {
@@ -247,13 +255,29 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			channels = append(channels, channel)
 		}
 	}
-	channel := channels[rand.Intn(len(channels))]
+	i := rand.Intn(len(channels))
+	channel := channels[i]
 	messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
 	if err != nil {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
 		return
 	}
-	fmt.Println(len(messages))
+	if mention != nil {
+		var userMessages []*discordgo.Message
+		for _, message := range messages {
+			if message.Author.ID == mention.ID {
+				userMessages = append(userMessages, message)
+			}
+		}
+		if len(userMessages) == 0 {
+			// If no messages by user, delete channel and try again
+			allChannels[i] = allChannels[len(allChannels)-1]
+			allChannels[len(allChannels)-1] = nil
+			allChannels = allChannels[:len(allChannels)-1]
+			goto attempt
+		}
+		messages = userMessages
+	}
 	if len(messages) == 0 {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 		return
