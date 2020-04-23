@@ -192,6 +192,18 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 						return
 					}
 				}
+
+			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"sannounce"+" ") {
+				content := strings.TrimPrefix(message.Content, viper.GetString("bot.prefix")+"sannounce"+" ")
+				s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
+				for _, publicMessage := range public {
+					publicContent := strings.Trim(publicMessage.Content, " ")
+					if publicContent == content {
+						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+						s.ChannelMessageSend(m.ChannelID, "Successfully recalled announcement\n*"+publicContent+"*")
+						return
+					}
+				}
 			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"event"+" ") {
 				create := &discordgo.MessageCreate{Message: message}
 				event, err := api.ParseEvent(create, committeeHelpStrings["event"])
