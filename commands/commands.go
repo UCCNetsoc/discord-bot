@@ -232,7 +232,47 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	servers := viper.Get("discord.servers").(*config.Servers)
+	guild, err := s.Guild(servers.PublicServer)
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Couldn't find public guild")
+		return
+	}
 
+	allChannels := guild.Channels
+	var channels []*discordgo.Channel
+	// Get all text channels
+	for _, channel := range allChannels {
+		if channel.Type == discordgo.ChannelTypeGuildText {
+			channels = append(channels, channel)
+		}
+	}
+	channel := channels[rand.Intn(len(channels))]
+	messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
+		return
+	}
+	fmt.Println(len(messages))
+	if len(messages) == 0 {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
+		return
+	}
+	message := messages[rand.Intn(len(messages))]
+	timestamp, err := message.Timestamp.Parse()
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting time")
+		return
+	}
+
+	embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
+		fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
+	).SetTitle(message.Content).MessageEmbed
+	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")
+		return
+	}
 }
 
 // dm commands
