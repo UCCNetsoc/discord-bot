@@ -231,6 +231,10 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 	}
 }
 
+func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+}
+
 // dm commands
 func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	userInput := strings.Split(m.Content, " ")[0]
