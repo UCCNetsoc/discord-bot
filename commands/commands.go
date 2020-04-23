@@ -267,7 +267,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 
 	embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
 		fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
-	).SetTitle(message.Content).MessageEmbed
+	).SetTitle(message.Content).TruncateTitle().MessageEmbed
 	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	if err != nil {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")

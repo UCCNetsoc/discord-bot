@@ -189,3 +189,11 @@ func (e *Embed) SetColor(clr int) *Embed {
 	e.Color = clr
 	return e
 }
+
+// TruncateTitle ...
+func (e *Embed) TruncateTitle() *Embed {
+	if len(e.Title) > EmbedLimitTitle {
+		e.Title = e.Title[:EmbedLimitTitle]
+	}
+	return e
+}
