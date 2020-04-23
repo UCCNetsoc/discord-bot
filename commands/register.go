@@ -40,13 +40,13 @@ func Register(s *discordgo.Session) {
 	)
 	command(
 		"announce",
-		fmt.Sprintf("send a message in the format: \n\t!announce TEXT\n\tCharacter limit of %d", viper.GetInt("discord.charlimit")),
+		fmt.Sprintf("send a message in the format: \n\t!announce TEXT"),
 		addAnnouncement,
 		true,
 	)
 	command(
 		"sannounce",
-		fmt.Sprintf("silent announce. send a message in the format: \n\t!announce TEXT\n\tCharacter limit of %d. This version doesn't @ everyone.", viper.GetInt("discord.charlimit")),
+		fmt.Sprintf("silent announce. send a message in the format: \n\t!announce TEXT\n\tThis version doesn't @ everyone."),
 		addAnnouncementSilent,
 		true,
 	)

@@ -31,10 +31,6 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 	if len(content) == 0 {
 		return nil, fmt.Errorf("Error parsing command\n```%s```", help)
 	}
-	limit := viper.GetInt("discord.charlimit")
-	if len(content) > limit {
-		return nil, fmt.Errorf("Announcement exceeds %d characters", limit)
-	}
 	var image *http.Response
 	var err error
 	if len(m.Attachments) > 0 && m.Attachments[0].Width > 0 {
