@@ -57,6 +57,9 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 
+	// Add online command
+	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"
+
 	s.AddHandler(messageCreate)
 	s.AddHandler(serverJoin)
 }
