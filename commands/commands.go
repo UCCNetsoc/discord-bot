@@ -251,8 +251,10 @@ attempt:
 	var channels []*discordgo.Channel
 	// Get all text channels
 	for _, channel := range allChannels {
-		if channel.Type == discordgo.ChannelTypeGuildText {
-			channels = append(channels, channel)
+		if channel != nil {
+			if channel.Type == discordgo.ChannelTypeGuildText {
+				channels = append(channels, channel)
+			}
 		}
 	}
 	i := rand.Intn(len(channels))
