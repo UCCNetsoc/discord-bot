@@ -292,6 +292,7 @@ func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		}
 		break
 	}
+	delete(verifyCodes, m.Author.ID) // Remove verify code
 	// Successfully registered
 	s.ChannelMessageSend(m.ChannelID, "Thank you. You have been registered for the Netsoc Discord Server")
 	registering[found] = registering[len(registering)-1]
