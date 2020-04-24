@@ -138,6 +138,12 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 }
 
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	announcement(ctx, s, m, "@everyone\n")
+}
+func addAnnouncementSilent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	announcement(ctx, s, m, "")
+}
+func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
 		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
@@ -150,12 +156,12 @@ func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 		if announcement.Image != nil {
 			s.ChannelFileSendWithMessage(
 				channels.PublicAnnouncements,
-				fmt.Sprintf("@everyone\n%s", announcement.Content),
+				fmt.Sprintf("%s%s", mention, announcement.Content),
 				"poster.jpg",
 				announcement.Image.Body,
 			)
 		} else {
-			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("@everyone\n%s", announcement.Content))
+			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("%s%s", mention, announcement.Content))
 		}
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
@@ -186,6 +192,18 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 						return
 					}
 				}
+
+			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"sannounce"+" ") {
+				content := strings.TrimPrefix(message.Content, viper.GetString("bot.prefix")+"sannounce"+" ")
+				s.ChannelMessageDelete(channels.PrivateEvents, message.ID)
+				for _, publicMessage := range public {
+					publicContent := strings.Trim(publicMessage.Content, " ")
+					if publicContent == content {
+						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
+						s.ChannelMessageSend(m.ChannelID, "Successfully recalled announcement\n*"+publicContent+"*")
+						return
+					}
+				}
 			} else if strings.HasPrefix(message.Content, viper.GetString("bot.prefix")+"event"+" ") {
 				create := &discordgo.MessageCreate{Message: message}
 				event, err := api.ParseEvent(create, committeeHelpStrings["event"])
@@ -210,6 +228,76 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 				}
 			}
 		}
+	}
+}
+
+func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	var mention *discordgo.User
+	if len(m.Mentions) > 0 {
+		mention = m.Mentions[0]
+	}
+	servers := viper.Get("discord.servers").(*config.Servers)
+	guild, err := s.Guild(servers.PublicServer)
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Couldn't find public guild")
+		return
+	}
+
+	allChannels := guild.Channels
+attempt:
+	if len(allChannels) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+	}
+	var channels []*discordgo.Channel
+	// Get all text channels
+	for _, channel := range allChannels {
+		if channel != nil {
+			if channel.Type == discordgo.ChannelTypeGuildText {
+				channels = append(channels, channel)
+			}
+		}
+	}
+	i := rand.Intn(len(channels))
+	channel := channels[i]
+	messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
+		return
+	}
+	if mention != nil {
+		var userMessages []*discordgo.Message
+		for _, message := range messages {
+			if message.Author.ID == mention.ID {
+				userMessages = append(userMessages, message)
+			}
+		}
+		if len(userMessages) == 0 {
+			// If no messages by user, delete channel and try again
+			allChannels[i] = allChannels[len(allChannels)-1]
+			allChannels[len(allChannels)-1] = nil
+			allChannels = allChannels[:len(allChannels)-1]
+			goto attempt
+		}
+		messages = userMessages
+	}
+	if len(messages) == 0 {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
+		return
+	}
+	message := messages[rand.Intn(len(messages))]
+	timestamp, err := message.Timestamp.Parse()
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting time")
+		return
+	}
+
+	embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
+		fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
+	).SetTitle(message.Content).TruncateTitle().MessageEmbed
+	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")
+		return
 	}
 }
 

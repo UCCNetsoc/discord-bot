@@ -30,7 +30,6 @@ func printAll() {
 					fmt.Printf("%s: %s\n", sk, strval)
 				}
 			} else {
-
 				fmt.Printf("%s: %v\n", sk, sv)
 			}
 		}

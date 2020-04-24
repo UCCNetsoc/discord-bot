@@ -20,14 +20,16 @@ type Announcement struct {
 // ParseAnnouncement Return an annoucement from a message
 func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, error) {
 	// In the correct channel
-	content := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"announce")
-	content = strings.Trim(content, " ")
+	var content string
+	if strings.HasPrefix(m.Content, viper.GetString("bot.prefix")+"announce") {
+		content = strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"announce")
+		content = strings.Trim(content, " ")
+	} else if strings.HasPrefix(m.Content, viper.GetString("bot.prefix")+"sannounce") {
+		content = strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"sannounce")
+		content = strings.Trim(content, " ")
+	}
 	if len(content) == 0 {
 		return nil, fmt.Errorf("Error parsing command\n```%s```", help)
-	}
-	limit := viper.GetInt("discord.charlimit")
-	if len(content) > limit {
-		return nil, fmt.Errorf("Announcement exceeds %d characters", limit)
 	}
 	var image *http.Response
 	var err error
