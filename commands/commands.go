@@ -252,12 +252,14 @@ attempt:
 	var channels []*discordgo.Channel
 	// Get all text channels
 	for _, channel := range allChannels {
+		block := false
 		for _, blocked := range blacklist {
-			if channel.ID == blocked {
-				goto skip
+			if channel != nil && channel.ID == blocked {
+				block = true
+				break
 			}
 		}
-		if channel != nil {
+		if channel != nil && !block {
 			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
 			if err != nil {
 				log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
@@ -268,7 +270,6 @@ attempt:
 				channels = append(channels, channel)
 			}
 		}
-	skip:
 	}
 	if len(channels) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
