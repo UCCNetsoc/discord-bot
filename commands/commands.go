@@ -294,7 +294,9 @@ attempt:
 	if mention != nil {
 		var userMessages []*discordgo.Message
 		for _, message := range messages {
-			if message.Author.ID == mention.ID {
+			if message.Author.ID == mention.ID &&
+				len(strings.Trim(m.Content, " ")) > 0 &&
+				!strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 				userMessages = append(userMessages, message)
 			}
 		}
