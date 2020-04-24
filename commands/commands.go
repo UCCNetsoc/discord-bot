@@ -270,6 +270,10 @@ attempt:
 		}
 	skip:
 	}
+	if len(channels) == 0 {
+		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+		return
+	}
 	i := rand.Intn(len(channels))
 	channel := channels[i]
 	messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
