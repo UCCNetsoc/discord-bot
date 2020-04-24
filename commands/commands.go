@@ -291,6 +291,11 @@ attempt:
 		return
 	}
 	message := messages[rand.Intn(len(messages))]
+	messageContent, err := message.ContentWithMoreMentionsReplaced(s)
+	if err != nil {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
+		return
+	}
 	timestamp, err := message.Timestamp.Parse()
 	if err != nil {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting time")
@@ -299,7 +304,7 @@ attempt:
 
 	embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
 		fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
-	).SetTitle(message.Content).TruncateTitle().MessageEmbed
+	).SetTitle(messageContent).TruncateTitle().MessageEmbed
 	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
 	if err != nil {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")
