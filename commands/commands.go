@@ -244,6 +244,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 	}
 
 	allChannels := guild.Channels
+	blacklist := *viper.Get("discord.quote_blacklist").(*[]string)
 attempt:
 	if len(allChannels) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
@@ -251,6 +252,11 @@ attempt:
 	var channels []*discordgo.Channel
 	// Get all text channels
 	for _, channel := range allChannels {
+		for _, blocked := range blacklist {
+			if channel.ID == blocked {
+				goto skip
+			}
+		}
 		if channel != nil {
 			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
 			if err != nil {
@@ -262,6 +268,7 @@ attempt:
 				channels = append(channels, channel)
 			}
 		}
+	skip:
 	}
 	i := rand.Intn(len(channels))
 	channel := channels[i]

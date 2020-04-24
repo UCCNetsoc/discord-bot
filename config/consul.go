@@ -41,6 +41,11 @@ func readFromConsul() error {
 		return fmt.Errorf("error creating watcher for 'discord.channels': %w", err)
 	}
 
+	err = createConsulWatcher("quote_blacklist", "discord.quote_blacklist")
+	if err != nil {
+		return fmt.Errorf("error creating watcher for 'discord.quote_blacklist': %w", err)
+	}
+
 	return nil
 }
 
