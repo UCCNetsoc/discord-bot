@@ -98,7 +98,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		ctx := context.WithValue(ctx, logKey, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
-			"guild_id":   "DM",
+			"guild_id":   m.GuildID,
 			"body":       body,
 		})
 
