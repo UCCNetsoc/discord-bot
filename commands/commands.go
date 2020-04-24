@@ -237,13 +237,12 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		mention = m.Mentions[0]
 	}
 	servers := viper.Get("discord.servers").(*config.Servers)
-	guild, err := s.Guild(servers.PublicServer)
+
+	allChannels, err := s.GuildChannels(servers.PublicServer)
 	if err != nil {
 		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Couldn't find public guild")
 		return
 	}
-
-	allChannels := guild.Channels
 	blacklist := *viper.Get("discord.quote_blacklist").(*[]string)
 	attempts := 0
 	if len(allChannels) == 0 {
@@ -251,8 +250,8 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
 		return
 	}
-	max := len(allChannels) / 2
-	for len(allChannels) > 0 && attempts <= max {
+	max := len(allChannels)
+	for len(allChannels) > 0 || attempts < max {
 		channels := []*discordgo.Channel{}
 		// Get all text channels
 		for _, channel := range allChannels {
@@ -260,7 +259,6 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			for _, blocked := range blacklist {
 				if channel != nil && channel.ID == blocked {
 					block = true
-					break
 				}
 			}
 			if channel != nil && !block {
@@ -282,18 +280,18 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		}
 		i := rand.Intn(len(channels))
 		channel := channels[i]
-		messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+		discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
 			return
 		}
+		var userMessages []*discordgo.Message
 		if mention != nil {
-			var userMessages []*discordgo.Message
-			for _, message := range messages {
-				if cont := strings.Trim(message.Content, " "); message.Author.ID == mention.ID &&
-					len(cont) > 0 &&
-					!strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
-					userMessages = append(userMessages, message)
+			for _, message := range discMessages {
+				if message.Author.ID == mention.ID {
+					if cont := strings.Trim(message.Content, " "); len(cont) > 0 {
+						userMessages = append(userMessages, message)
+					}
 				}
 			}
 			if len(userMessages) == 0 {
@@ -304,13 +302,23 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				attempts++
 				continue
 			}
+		}
+		var messages []*discordgo.Message
+		if len(userMessages) > 0 {
 			messages = userMessages
+		} else {
+			messages = discMessages
 		}
 		if len(messages) == 0 {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 			return
 		}
 		message := messages[rand.Intn(len(messages))]
+		if cont := strings.Trim(message.Content, " "); len(cont) == 0 ||
+			strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
+			attempts++
+			continue
+		}
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
