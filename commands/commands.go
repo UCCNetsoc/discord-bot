@@ -251,8 +251,8 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
 		return
 	}
-	max := len(allChannels)
-	for len(allChannels) > 0 || attempts < max {
+	max := len(allChannels) / 2
+	for len(allChannels) > 0 || attempts > max {
 		channels := []*discordgo.Channel{}
 		// Get all text channels
 		for _, channel := range allChannels {
