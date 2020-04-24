@@ -252,7 +252,13 @@ attempt:
 	// Get all text channels
 	for _, channel := range allChannels {
 		if channel != nil {
-			if channel.Type == discordgo.ChannelTypeGuildText {
+			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
+			if err != nil {
+				log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
+				return
+			}
+			if channel.Type == discordgo.ChannelTypeGuildText &&
+				perms&discordgo.PermissionReadMessages > 0 {
 				channels = append(channels, channel)
 			}
 		}
