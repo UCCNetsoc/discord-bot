@@ -245,9 +245,18 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 
 	allChannels := guild.Channels
 	blacklist := *viper.Get("discord.quote_blacklist").(*[]string)
-attempt:
+	attempts := 0
 	if len(allChannels) == 0 {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).Error(fmt.Sprintf("Got no channels for user %v ", *mention))
 		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+		return
+	}
+	max := len(allChannels) / 2
+attempt:
+	if mention != nil && (len(allChannels) == 0 || attempts > max) {
+		log.WithFields(ctx.Value(logKey).(log.Fields)).Error(fmt.Sprintf("Got no channels for user %v ", *mention))
+		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+		return
 	}
 	var channels []*discordgo.Channel
 	// Get all text channels
@@ -294,6 +303,7 @@ attempt:
 			allChannels[i] = allChannels[len(allChannels)-1]
 			allChannels[len(allChannels)-1] = nil
 			allChannels = allChannels[:len(allChannels)-1]
+			attempts++
 			goto attempt
 		}
 		messages = userMessages
