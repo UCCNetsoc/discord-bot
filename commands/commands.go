@@ -252,86 +252,83 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		return
 	}
 	max := len(allChannels) / 2
-attempt:
-	if mention != nil && (len(allChannels) == 0 || attempts > max) {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).Error(fmt.Sprintf("Got no channels for user %v ", *mention))
-		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
-		return
-	}
-	var channels []*discordgo.Channel
-	// Get all text channels
-	for _, channel := range allChannels {
-		block := false
-		for _, blocked := range blacklist {
-			if channel != nil && channel.ID == blocked {
-				block = true
-				break
+	for len(allChannels) > 0 && attempts <= max {
+		channels := []*discordgo.Channel{}
+		// Get all text channels
+		for _, channel := range allChannels {
+			block := false
+			for _, blocked := range blacklist {
+				if channel != nil && channel.ID == blocked {
+					block = true
+					break
+				}
+			}
+			if channel != nil && !block {
+				perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
+				if err != nil {
+					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
+					return
+				}
+				if channel.Type == discordgo.ChannelTypeGuildText &&
+					perms&discordgo.PermissionReadMessages > 0 {
+					channels = append(channels, channel)
+				}
 			}
 		}
-		if channel != nil && !block {
-			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
-			if err != nil {
-				log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
-				return
-			}
-			if channel.Type == discordgo.ChannelTypeGuildText &&
-				perms&discordgo.PermissionReadMessages > 0 {
-				channels = append(channels, channel)
-			}
+		if len(channels) == 0 {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages for: " + m.Author.Username)
+			s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
+			return
 		}
-	}
-	if len(channels) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
-		return
-	}
-	i := rand.Intn(len(channels))
-	channel := channels[i]
-	messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
-	if err != nil {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
-		return
-	}
-	if mention != nil {
-		var userMessages []*discordgo.Message
-		for _, message := range messages {
-			if message.Author.ID == mention.ID &&
-				len(strings.Trim(m.Content, " ")) > 0 &&
-				!strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
-				userMessages = append(userMessages, message)
+		i := rand.Intn(len(channels))
+		channel := channels[i]
+		messages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
+			return
+		}
+		if mention != nil {
+			var userMessages []*discordgo.Message
+			for _, message := range messages {
+				if cont := strings.Trim(message.Content, " "); message.Author.ID == mention.ID &&
+					len(cont) > 0 &&
+					!strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
+					userMessages = append(userMessages, message)
+				}
 			}
+			if len(userMessages) == 0 {
+				// If no messages by user, delete channel and try again
+				allChannels[i] = allChannels[len(allChannels)-1]
+				allChannels[len(allChannels)-1] = nil
+				allChannels = allChannels[:len(allChannels)-1]
+				attempts++
+				continue
+			}
+			messages = userMessages
 		}
-		if len(userMessages) == 0 {
-			// If no messages by user, delete channel and try again
-			allChannels[i] = allChannels[len(allChannels)-1]
-			allChannels[len(allChannels)-1] = nil
-			allChannels = allChannels[:len(allChannels)-1]
-			attempts++
-			goto attempt
+		if len(messages) == 0 {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
+			return
 		}
-		messages = userMessages
-	}
-	if len(messages) == 0 {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
-		return
-	}
-	message := messages[rand.Intn(len(messages))]
-	messageContent, err := message.ContentWithMoreMentionsReplaced(s)
-	if err != nil {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
-		return
-	}
-	timestamp, err := message.Timestamp.Parse()
-	if err != nil {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting time")
-		return
-	}
+		message := messages[rand.Intn(len(messages))]
+		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
+			return
+		}
+		timestamp, err := message.Timestamp.Parse()
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting time")
+			return
+		}
 
-	embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
-		fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
-	).SetTitle(messageContent).TruncateTitle().MessageEmbed
-	_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
-	if err != nil {
-		log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")
+		embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
+			fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
+		).SetTitle(messageContent).TruncateTitle().MessageEmbed
+		_, err = s.ChannelMessageSendEmbed(m.ChannelID, embed)
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error sending message")
+		}
 		return
 	}
 }
