@@ -232,6 +232,7 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 }
 
 func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	rand.Seed(time.Now().UnixNano())
 	var mention *discordgo.User
 	if len(m.Mentions) > 0 {
 		mention = m.Mentions[0]
@@ -289,7 +290,8 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		if mention != nil {
 			for _, message := range discMessages {
 				if message.Author.ID == mention.ID {
-					if cont := strings.Trim(message.Content, " "); len(cont) > 0 {
+					if cont := strings.Trim(message.Content, " "); len(cont) > 0 &&
+						!strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
 						userMessages = append(userMessages, message)
 					}
 				}
@@ -314,11 +316,6 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			return
 		}
 		message := messages[rand.Intn(len(messages))]
-		if cont := strings.Trim(message.Content, " "); len(cont) == 0 ||
-			strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
-			attempts++
-			continue
-		}
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
