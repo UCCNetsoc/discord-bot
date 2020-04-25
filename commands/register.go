@@ -6,12 +6,18 @@ import (
 	"strings"
 
 	"github.com/Strum355/log"
+	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
 
 const logKey = "_logger"
 
+var (
+	cachedMessages *cache.Cache
+	globalSession  *discordgo.Session
+)
 var helpStrings = make(map[string]string)
 var committeeHelpStrings = make(map[string]string)
 var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
@@ -29,6 +35,7 @@ func command(name string, helpMessage string, function commandFunc, committee bo
 
 // Register commands
 func Register(s *discordgo.Session) {
+	globalSession = s
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
@@ -104,5 +111,51 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		command(ctx, s, m)
 		return
+	}
+}
+
+// CacheMessages initializes message caching
+func CacheMessages() {
+	s := globalSession
+	cachedMessages = cache.New(cache.NoExpiration, cache.NoExpiration)
+	servers := viper.Get("discord.servers").(*config.Servers)
+
+	allChannels, err := s.GuildChannels(servers.PublicServer)
+	if err != nil {
+		log.WithError(err).Error("Couldn't find public guild")
+		return
+	}
+
+	for _, channel := range allChannels {
+		if channel != nil {
+			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
+			if err != nil {
+				log.WithError(err).Error("Error getting channel perms")
+				return
+			}
+			if channel.Type == discordgo.ChannelTypeGuildText &&
+				perms&discordgo.PermissionReadMessages > 0 {
+				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+				if err != nil {
+					log.WithError(err).Error("Error getting messages")
+					return
+				}
+				for _j := 0; _j < 10; _j++ {
+					last := discMessages[len(discMessages)-1]
+					if last != nil {
+						more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
+						if err != nil {
+							log.WithError(err).Error("Error getting more messages")
+							return
+						}
+						if len(more) == 0 {
+							break
+						}
+						discMessages = append(discMessages, more...)
+					}
+				}
+				cachedMessages.Set(channel.ID, discMessages, cache.NoExpiration)
+			}
+		}
 	}
 }

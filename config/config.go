@@ -15,7 +15,7 @@ func InitConfig() error {
 	viper.AutomaticEnv()
 	// Consul
 	printAll()
-	return readFromConsul()
+	return nil
 }
 
 func printAll() {

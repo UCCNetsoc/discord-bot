@@ -22,11 +22,12 @@ type Channels struct {
 	PrivateEvents       string `json:"private_events"`       // On committee server
 }
 
-func readFromConsul() error {
+// ReadFromConsul sets up watchers for consul
+func ReadFromConsul(callback func()) error {
 	// Connect to consul
 	// Listen for consul updates
 
-	err := createConsulWatcher("servers", "discord.servers")
+	err := createConsulWatcher("servers", "discord.servers", callback)
 	if err != nil {
 		return fmt.Errorf("error creating watcher for 'discord.servers': %w", err)
 	}
@@ -49,7 +50,7 @@ func readFromConsul() error {
 	return nil
 }
 
-func createConsulWatcher(consulKey, viperKey string) error {
+func createConsulWatcher(consulKey, viperKey string, callbacks ...func()) error {
 	consulKey = "discordbot/" + consulKey
 	// Channels watcher
 	params := map[string]interface{}{
@@ -88,6 +89,9 @@ func createConsulWatcher(consulKey, viperKey string) error {
 			}).WithError(err).Error("Failed to unmarshal Consul data")
 		}
 		log.WithFields(log.Fields{"value": string(structData.Value)}).Info("Consul updated")
+		for _, callback := range callbacks {
+			callback()
+		}
 
 	}
 	go func() {

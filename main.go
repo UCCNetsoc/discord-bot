@@ -37,6 +37,7 @@ func main() {
 	err = session.Open()
 	commands.Register(session)
 	exitError(err)
+	exitError(config.ReadFromConsul(commands.CacheMessages))
 
 	// Maintain connection until a SIGTERM, then cleanly exit
 	log.Info("Bot is Running")

@@ -11,6 +11,7 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	petname "github.com/dustinkirkland/golang-petname"
+	"github.com/patrickmn/go-cache"
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
@@ -282,25 +283,34 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		}
 		channelIndex := rand.Intn(len(channels))
 		channel := channels[channelIndex]
-		discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
-		if err != nil {
-			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
-			return
-		}
-		for _j := 0; _j < 3; _j++ {
-			last := discMessages[len(discMessages)-1]
-			if last != nil {
-				more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
-				if err != nil {
-					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting more messages")
-					return
+
+		var discMessages []*discordgo.Message
+		// Get cached messages
+		if cachedMessages != nil {
+			if more, exists := cachedMessages.Get(channel.ID); exists {
+				moreMessages := more.([]*discordgo.Message)
+				if len(moreMessages) == 0 {
+					continue
 				}
-				if len(more) == 0 {
-					break
+				last := moreMessages[0]
+				if last != nil {
+					discMessages, err = s.ChannelMessages(channel.ID, 100, "", last.ID, "")
+					if err != nil {
+						log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
+						return
+					}
+					discMessages = append(discMessages, moreMessages...)
+					cachedMessages.Set(channel.ID, discMessages, cache.NoExpiration)
 				}
-				discMessages = append(discMessages, more...)
+			}
+		} else {
+			discMessages, err = s.ChannelMessages(channel.ID, 100, "", "", "")
+			if err != nil {
+				log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
+				return
 			}
 		}
+		fmt.Println(len(discMessages))
 		var userMessages []*discordgo.Message
 		if mention != nil {
 			for _, message := range discMessages {
