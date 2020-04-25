@@ -285,6 +285,21 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
 			return
 		}
+		for _j := 0; _j < 5; _j++ {
+			last := discMessages[len(discMessages)-1]
+			if last != nil {
+				fmt.Println(last.Timestamp)
+				more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
+				if err != nil {
+					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting more messages")
+					return
+				}
+				if len(more) == 0 {
+					break
+				}
+				discMessages = append(discMessages, more...)
+			}
+		}
 		var userMessages []*discordgo.Message
 		if mention != nil {
 			for _, message := range discMessages {
