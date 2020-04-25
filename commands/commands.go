@@ -255,21 +255,23 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		channels := []*discordgo.Channel{}
 		// Get all text channels
 		for _, channel := range allChannels {
-			block := false
-			for _, blocked := range blacklist {
-				if channel != nil && channel.ID == blocked {
-					block = true
+			if channel != nil {
+				block := false
+				for _, blocked := range blacklist {
+					if channel.ID == blocked {
+						block = true
+					}
 				}
-			}
-			if channel != nil && !block {
-				perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
-				if err != nil {
-					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
-					return
-				}
-				if channel.Type == discordgo.ChannelTypeGuildText &&
-					perms&discordgo.PermissionReadMessages > 0 {
-					channels = append(channels, channel)
+				if !block {
+					perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
+					if err != nil {
+						log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting channel perms")
+						return
+					}
+					if channel.Type == discordgo.ChannelTypeGuildText &&
+						perms&discordgo.PermissionReadMessages > 0 {
+						channels = append(channels, channel)
+					}
 				}
 			}
 		}
@@ -278,17 +280,16 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
 			return
 		}
-		i := rand.Intn(len(channels))
-		channel := channels[i]
+		channelIndex := rand.Intn(len(channels))
+		channel := channels[channelIndex]
 		discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
 			return
 		}
-		for _j := 0; _j < 5; _j++ {
+		for _j := 0; _j < 3; _j++ {
 			last := discMessages[len(discMessages)-1]
 			if last != nil {
-				fmt.Println(last.Timestamp)
 				more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
 				if err != nil {
 					log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting more messages")
@@ -311,7 +312,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			}
 			if len(userMessages) == 0 {
 				// If no messages by user, delete channel and try again
-				allChannels[i] = allChannels[len(allChannels)-1]
+				allChannels[channelIndex] = allChannels[len(allChannels)-1]
 				allChannels[len(allChannels)-1] = nil
 				allChannels = allChannels[:len(allChannels)-1]
 				attempts++
