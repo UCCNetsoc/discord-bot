@@ -310,7 +310,6 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				return
 			}
 		}
-		fmt.Println(len(discMessages))
 		var userMessages []*discordgo.Message
 		if mention != nil {
 			for _, message := range discMessages {
