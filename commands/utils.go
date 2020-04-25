@@ -9,6 +9,42 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Ring of messages for cache
+type Ring struct {
+	end    int
+	cycled bool
+	buf    [1000]*discordgo.Message
+}
+
+// Push messages
+func (r *Ring) Push(m []*discordgo.Message) {
+	n := len(m)
+	if n > 1000 {
+		m = m[n-r.end:]
+	}
+	if !r.cycled && r.end+n > 999 {
+		r.cycled = true
+	}
+	// Copy
+	for _, mess := range m {
+		r.end = (r.end + 1) % 1000
+		r.buf[r.end] = mess
+	}
+}
+
+// Get messages
+func (r *Ring) Get() [1000]*discordgo.Message {
+	return r.buf
+}
+
+// Len of buf
+func (r *Ring) Len() int {
+	if r.cycled {
+		return 1000
+	}
+	return r.end
+}
+
 func sendEmail(from string, to string, subject string, content string) (*rest.Response, error) {
 	fromAddress := mail.NewEmail(from, from)
 	toAddress := mail.NewEmail(to, to)

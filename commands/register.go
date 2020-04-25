@@ -136,6 +136,8 @@ func CacheMessages() {
 			if channel.Type == discordgo.ChannelTypeGuildText &&
 				perms&discordgo.PermissionReadMessages > 0 {
 				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+				ringMessages := Ring{}
+				ringMessages.Push(discMessages)
 				if err != nil {
 					log.WithError(err).Error("Error getting messages")
 					return
@@ -151,10 +153,10 @@ func CacheMessages() {
 						if len(more) == 0 {
 							break
 						}
-						discMessages = append(discMessages, more...)
+						ringMessages.Push(discMessages)
 					}
 				}
-				cachedMessages.Set(channel.ID, discMessages, cache.NoExpiration)
+				cachedMessages.Set(channel.ID, &ringMessages, cache.NoExpiration)
 			}
 		}
 	}
