@@ -143,7 +143,7 @@ func CacheMessages() {
 					return
 				}
 				for _j := 0; _j < 10; _j++ {
-					last := discMessages[len(discMessages)-1]
+					last := ringMessages.GetLast()
 					if last != nil {
 						more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
 						if err != nil {
@@ -153,7 +153,9 @@ func CacheMessages() {
 						if len(more) == 0 {
 							break
 						}
-						ringMessages.Push(discMessages)
+						ringMessages.Push(more)
+					} else {
+						break
 					}
 				}
 				cachedMessages.Set(channel.ID, &ringMessages, cache.NoExpiration)

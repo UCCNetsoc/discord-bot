@@ -27,14 +27,25 @@ func (r *Ring) Push(m []*discordgo.Message) {
 	}
 	// Copy
 	for _, mess := range m {
-		r.end = (r.end + 1) % 1000
 		r.buf[r.end] = mess
+		r.end = (r.end + 1) % 1000
 	}
 }
 
 // Get messages
 func (r *Ring) Get() [1000]*discordgo.Message {
 	return r.buf
+}
+
+// GetLast message
+func (r *Ring) GetLast() *discordgo.Message {
+	if r.end == 0 {
+		if r.cycled {
+			return r.buf[999]
+		}
+		return nil
+	}
+	return r.buf[r.end-1]
 }
 
 // Len of buf
