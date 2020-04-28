@@ -13,7 +13,7 @@ import (
 type Ring struct {
 	end    int
 	cycled bool
-	buf    [1000]*discordgo.Message
+	Buffer [1000]*discordgo.Message
 }
 
 // Push messages
@@ -27,25 +27,33 @@ func (r *Ring) Push(m []*discordgo.Message) {
 	}
 	// Copy
 	for _, mess := range m {
-		r.buf[r.end] = mess
+		r.Buffer[r.end] = mess
 		r.end = (r.end + 1) % 1000
 	}
 }
 
 // Get messages
-func (r *Ring) Get() [1000]*discordgo.Message {
-	return r.buf
+func (r *Ring) Get(i int) *discordgo.Message {
+	return r.Buffer[i]
 }
 
 // GetLast message
 func (r *Ring) GetLast() *discordgo.Message {
 	if r.end == 0 {
 		if r.cycled {
-			return r.buf[999]
+			return r.Buffer[999]
 		}
 		return nil
 	}
-	return r.buf[r.end-1]
+	return r.Buffer[r.end-1]
+}
+
+// GetFirst message still left in buffer
+func (r *Ring) GetFirst() *discordgo.Message {
+	if r.cycled {
+		return r.Buffer[(r.end+1)%1000]
+	}
+	return r.Buffer[0]
 }
 
 // Len of buf

@@ -298,7 +298,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				if discMessages.Len() == 0 {
 					continue
 				}
-				last := discMessages.Get()[0]
+				last := discMessages.GetFirst()
 				if last != nil {
 					moreMessages, err := s.ChannelMessages(channel.ID, 100, "", last.ID, "")
 					if err != nil {
@@ -313,7 +313,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 
 		if mention != nil {
 			for i := 0; i < discMessages.Len(); i++ {
-				message := discMessages.Get()[i]
+				message := discMessages.Get(i)
 				if message.Author.ID == mention.ID {
 					if cont := strings.Trim(message.Content, " "); !strings.HasPrefix(cont, viper.GetString("bot.prefix")) && len(message.Content) > 0 {
 						userMessages.Push([]*discordgo.Message{message})
@@ -339,7 +339,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 			return
 		}
-		message := messages.Get()[rand.Intn(messages.Len())]
+		message := messages.Get(rand.Intn(messages.Len()))
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
