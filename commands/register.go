@@ -39,7 +39,7 @@ func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
-	command("quote", "display a random quote from a netsoc member.\n\tUsage: !quote or !quote @user", quote, false)
+	command("quote", "display a random quote from a netsoc member.\n\tUsage: !quote or !quote {@user,#channel}", quote, false)
 	command(
 		"event",
 		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
