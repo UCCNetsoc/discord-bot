@@ -280,10 +280,17 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
 			return
 		}
+		// Check if channel mentioned
+		for _, channel := range channels {
+			if strings.Contains(m.Content, channel.Mention()) {
+				channels = []*discordgo.Channel{channel}
+				break
+			}
+		}
 		channelIndex := rand.Intn(len(channels))
 		channel := channels[channelIndex]
 
-		var discMessages *Ring
+		discMessages := &Ring{}
 		// Get cached messages
 		if cachedMessages != nil {
 			if more, exists := cachedMessages.Get(channel.ID); exists {
