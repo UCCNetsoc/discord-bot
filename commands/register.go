@@ -159,6 +159,7 @@ func CacheMessages() {
 					}
 				}
 				cachedMessages.Set(channel.ID, &ringMessages, cache.NoExpiration)
+				log.Info(fmt.Sprintf("Cached %d messages for channel %s on startup", ringMessages.Len(), channel.Name))
 			}
 		}
 	}
