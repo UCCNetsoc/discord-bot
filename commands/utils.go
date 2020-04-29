@@ -51,7 +51,7 @@ func (r *Ring) GetLast() *discordgo.Message {
 // GetFirst message still left in buffer
 func (r *Ring) GetFirst() *discordgo.Message {
 	if r.cycled {
-		return r.Buffer[(r.end+1)%1000]
+		return r.Buffer[r.end]
 	}
 	return r.Buffer[0]
 }
