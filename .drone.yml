@@ -45,10 +45,10 @@ steps:
       password:
         from_secret: registry_pub_token
     when:
-    event:
-      - push
-    branch:
-      - master
+      event:
+        - push
+      branch:
+        - master
 
   - name: discord_notif_success
     image: appleboy/drone-discord
