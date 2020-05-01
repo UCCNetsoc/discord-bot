@@ -8,15 +8,28 @@ import (
 	"time"
 
 	"github.com/Strum355/log"
+	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/bwmarrin/discordgo"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
 
-var cached *cache.Cache
+type returnEvent struct {
+	Title,
+	Description string
+	ImageURL string `json:"image_url"`
+	Date     int64
+}
+
+var (
+	cached  *cache.Cache
+	session *discordgo.Session
+)
 
 // Run the REST API
-func Run() {
+func Run(s *discordgo.Session) {
 	cached = cache.New(30*time.Minute, time.Hour)
+	session = s
 
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
@@ -43,11 +56,41 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		events = cachedEvents.([]*Event)
 	} else {
 		events = []*Event{}
+		channelID := viper.Get("discord.channels").(*config.Channels).PrivateEvents
+		liveEvents, err := session.ChannelMessages(channelID, 100, "", "", "")
+		if err != nil {
+			log.WithError(err).Error("Error querying events for api")
+			return
+		}
+		i := 0
+		for _, event := range liveEvents {
+			if i == amount {
+				break
+			}
+			parsed, err := ParseEvent(&discordgo.MessageCreate{Message: event}, "")
+			if err == nil {
+				// Message successfully parsed as an event.
+				events = append(events, parsed)
+				i++
+			}
+		}
+		cached.Set("events", events, cache.DefaultExpiration)
 	}
 	w.Header().Set("content-type", "application/json")
-	b, err := json.Marshal(events)
+	returnEvents := []returnEvent{}
+	for _, event := range events {
+		returnEvents = append(returnEvents, returnEvent{
+			event.Title,
+			event.Description,
+			event.Image.Request.URL.String(),
+			event.Date.Unix(),
+		})
+	}
+
+	b, err := json.Marshal(returnEvents)
 	if err != nil {
-		log.WithFields(log.Fields{"events": events}).WithError(err).Error("Error marshalling events")
+		log.WithFields(log.Fields{"events": returnEvents}).WithError(err).Error("Error marshalling events")
+		return
 	}
 	w.Write(b)
 }

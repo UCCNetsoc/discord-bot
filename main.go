@@ -30,9 +30,6 @@ func main() {
 	// Setup viper and consul
 	exitError(config.InitConfig())
 
-	// Run the REST API for events/announcements in a different goroutine
-	go api.Run()
-
 	// Discord connection
 	token := viper.GetString("discord.token")
 	session, err := discordgo.New("Bot " + token)
@@ -42,6 +39,9 @@ func main() {
 	commands.Register(session)
 	exitError(err)
 	exitError(config.ReadFromConsul(commands.CacheMessages))
+
+	// Run the REST API for events/announcements in a different goroutine
+	go api.Run(session)
 
 	// Maintain connection until a SIGTERM, then cleanly exit
 	log.Info("Bot is Running")
