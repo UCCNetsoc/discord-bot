@@ -19,4 +19,6 @@ func initDefaults() {
 	viper.SetDefault("consul.token", "")
 	// Sendgrid
 	viper.SetDefault("sendgrid.token", "")
+	// Rest API
+	viper.SetDefault("api.port", 80)
 }

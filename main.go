@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/commands"
 
 	"github.com/Strum355/log"
@@ -28,6 +29,9 @@ func main() {
 
 	// Setup viper and consul
 	exitError(config.InitConfig())
+
+	// Run the REST API for events/announcements in a different goroutine
+	go api.Run()
 
 	// Discord connection
 	token := viper.GetString("discord.token")
