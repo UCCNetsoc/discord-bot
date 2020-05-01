@@ -67,19 +67,17 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 			log.WithError(err).Error("Error querying events for api")
 			return
 		}
-		i := 0
 		for _, event := range liveEvents {
-			if i == amount {
-				break
-			}
 			parsed, err := ParseEvent(&discordgo.MessageCreate{Message: event}, "")
 			if err == nil {
 				// Message successfully parsed as an event.
 				events = append(events, parsed)
-				i++
 			}
 		}
 		cached.Set("events", events, cache.DefaultExpiration)
+		if len(events) > amount {
+			events = events[:amount]
+		}
 	}
 	w.Header().Set("content-type", "application/json")
 	returnEvents := []returnEvent{}
@@ -125,19 +123,17 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 			log.WithError(err).Error("Error querying events for api")
 			return
 		}
-		i := 0
 		for _, event := range liveAnnounce {
-			if i == amount {
-				break
-			}
 			parsed, err := ParseAnnouncement(&discordgo.MessageCreate{Message: event}, "")
 			if err == nil {
 				// Message successfully parsed as an event.
 				announcemenents = append(announcemenents, parsed)
-				i++
 			}
 		}
 		cached.Set("announcements", announcemenents, cache.DefaultExpiration)
+		if len(announcemenents) > amount {
+			announcemenents = announcemenents[:amount]
+		}
 	}
 	w.Header().Set("content-type", "application/json")
 	returnAnnouncements := []returnAnnouncement{}
