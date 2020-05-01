@@ -39,7 +39,7 @@ func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
-	command("quote", "display a random quote from a netsoc member.\n\tUsage: !quote or !quote @user", quote, false)
+	command("quote", "display a random quote from a netsoc member.\n\tUsage: !quote or !quote {@user,#channel}", quote, false)
 	command(
 		"event",
 		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
@@ -136,12 +136,14 @@ func CacheMessages() {
 			if channel.Type == discordgo.ChannelTypeGuildText &&
 				perms&discordgo.PermissionReadMessages > 0 {
 				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
+				ringMessages := Ring{}
+				ringMessages.Push(discMessages)
 				if err != nil {
 					log.WithError(err).Error("Error getting messages")
 					return
 				}
 				for _j := 0; _j < 10; _j++ {
-					last := discMessages[len(discMessages)-1]
+					last := ringMessages.GetLast()
 					if last != nil {
 						more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
 						if err != nil {
@@ -151,10 +153,13 @@ func CacheMessages() {
 						if len(more) == 0 {
 							break
 						}
-						discMessages = append(discMessages, more...)
+						ringMessages.Push(more)
+					} else {
+						break
 					}
 				}
-				cachedMessages.Set(channel.ID, discMessages, cache.NoExpiration)
+				cachedMessages.Set(channel.ID, &ringMessages, cache.NoExpiration)
+				log.Info(fmt.Sprintf("Cached %d messages for channel %s on startup", ringMessages.Len(), channel.Name))
 			}
 		}
 	}

@@ -11,7 +11,6 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	petname "github.com/dustinkirkland/golang-petname"
-	"github.com/patrickmn/go-cache"
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
@@ -281,45 +280,47 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			s.ChannelMessageSend(m.ChannelID, "Couldn't find any messages by that user")
 			return
 		}
+		// Check if channel mentioned
+		for _, channel := range channels {
+			if strings.Contains(m.Content, channel.Mention()) {
+				channels = []*discordgo.Channel{channel}
+				break
+			}
+		}
 		channelIndex := rand.Intn(len(channels))
 		channel := channels[channelIndex]
 
-		var discMessages []*discordgo.Message
+		discMessages := &Ring{}
 		// Get cached messages
 		if cachedMessages != nil {
 			if more, exists := cachedMessages.Get(channel.ID); exists {
-				moreMessages := more.([]*discordgo.Message)
-				if len(moreMessages) == 0 {
+				discMessages = more.(*Ring)
+				if discMessages.Len() == 0 {
 					continue
 				}
-				last := moreMessages[0]
+				last := discMessages.GetFirst()
 				if last != nil {
-					discMessages, err = s.ChannelMessages(channel.ID, 100, "", last.ID, "")
+					moreMessages, err := s.ChannelMessages(channel.ID, 100, "", last.ID, "")
 					if err != nil {
 						log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
 						return
 					}
-					discMessages = append(discMessages, moreMessages...)
-					cachedMessages.Set(channel.ID, discMessages, cache.NoExpiration)
+					discMessages.Push(moreMessages)
 				}
 			}
-		} else {
-			discMessages, err = s.ChannelMessages(channel.ID, 100, "", "", "")
-			if err != nil {
-				log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error getting messages")
-				return
-			}
 		}
-		var userMessages []*discordgo.Message
+		userMessages := &Ring{}
+
 		if mention != nil {
-			for _, message := range discMessages {
+			for i := 0; i < discMessages.Len(); i++ {
+				message := discMessages.Get(i)
 				if message.Author.ID == mention.ID {
-					if cont := strings.Trim(message.Content, " "); !strings.HasPrefix(cont, viper.GetString("bot.prefix")) {
-						userMessages = append(userMessages, message)
+					if cont := strings.Trim(message.Content, " "); !strings.HasPrefix(cont, viper.GetString("bot.prefix")) && len(message.Content) > 0 {
+						userMessages.Push([]*discordgo.Message{message})
 					}
 				}
 			}
-			if len(userMessages) == 0 {
+			if userMessages.Len() == 0 {
 				// If no messages by user, delete channel and try again
 				allChannels[channelIndex] = allChannels[len(allChannels)-1]
 				allChannels[len(allChannels)-1] = nil
@@ -328,17 +329,17 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				continue
 			}
 		}
-		var messages []*discordgo.Message
-		if len(userMessages) > 0 {
+		var messages *Ring
+		if userMessages.Len() > 0 {
 			messages = userMessages
 		} else {
 			messages = discMessages
 		}
-		if len(messages) == 0 {
+		if messages.Len() == 0 {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 			return
 		}
-		message := messages[rand.Intn(len(messages))]
+		message := messages.Get(rand.Intn(messages.Len()))
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
