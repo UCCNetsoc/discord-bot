@@ -51,10 +51,15 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	amount, err := strconv.Atoi(queryAmount[0])
-	if err != nil || amount > limit {
+	if err != nil {
 		http.Error(w, "Please provide an int as 'q's value", 403)
 		return
 	}
+	if amount > limit {
+		http.Error(w, "Query amount exceeds the query limit", 403)
+		return
+	}
+	
 	var events []*Event
 	cachedEvents, found := cached.Get("events")
 	if found {
@@ -107,10 +112,15 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	amount, err := strconv.Atoi(queryAmount[0])
-	if err != nil || amount > limit {
+	if err != nil {
 		http.Error(w, "Please provide an int as 'q's value", 403)
 		return
 	}
+	if amount > limit {
+		http.Error(w, "Query amount exceeds the query limit", 403)
+		return
+	}
+	
 	var announcemenents []*Announcement
 	cachedAnnouncements, found := cached.Get("announcements")
 	if found {
