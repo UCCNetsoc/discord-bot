@@ -6,6 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/commands"
 
 	"github.com/Strum355/log"
@@ -38,6 +39,9 @@ func main() {
 	commands.Register(session)
 	exitError(err)
 	exitError(config.ReadFromConsul(commands.CacheMessages))
+
+	// Run the REST API for events/announcements in a different goroutine
+	go api.Run(session)
 
 	// Maintain connection until a SIGTERM, then cleanly exit
 	log.Info("Bot is Running")
