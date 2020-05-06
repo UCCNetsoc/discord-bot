@@ -59,7 +59,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Query amount exceeds the query limit", 403)
 		return
 	}
-	
+
 	var events []*Event
 	cachedEvents, found := cached.Get("events")
 	if found {
@@ -80,9 +80,9 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		cached.Set("events", events, cache.DefaultExpiration)
-		if len(events) > amount {
-			events = events[:amount]
-		}
+	}
+	if len(events) > amount {
+		events = events[:amount]
 	}
 	w.Header().Set("content-type", "application/json")
 	returnEvents := []returnEvent{}
@@ -120,7 +120,7 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Query amount exceeds the query limit", 403)
 		return
 	}
-	
+
 	var announcemenents []*Announcement
 	cachedAnnouncements, found := cached.Get("announcements")
 	if found {
@@ -141,9 +141,9 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		cached.Set("announcements", announcemenents, cache.DefaultExpiration)
-		if len(announcemenents) > amount {
-			announcemenents = announcemenents[:amount]
-		}
+	}
+	if len(announcemenents) > amount {
+		announcemenents = announcemenents[:amount]
 	}
 	w.Header().Set("content-type", "application/json")
 	returnAnnouncements := []returnAnnouncement{}
