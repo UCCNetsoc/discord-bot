@@ -15,14 +15,14 @@ import (
 )
 
 type returnEvent struct {
-	Title,
-	Description string
-	ImageURL string `json:"image_url"`
-	Date     int64
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	ImageURL    string `json:"image_url"`
+	Date        int64  `json:"date"`
 }
 type returnAnnouncement struct {
-	Date     int64
-	Content  string
+	Date     int64  `json:"date"`
+	Content  string `json:"content"`
 	ImageURL string `json:"image_url"`
 }
 
