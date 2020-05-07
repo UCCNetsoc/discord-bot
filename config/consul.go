@@ -19,6 +19,7 @@ type Servers struct {
 // Channels required for events
 type Channels struct {
 	PublicAnnouncements string `json:"public_announcements"` // On public server
+	PublicGeneral       string `json:"public_general"`       // On public server
 	PrivateEvents       string `json:"private_events"`       // On committee server
 }
 

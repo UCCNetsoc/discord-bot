@@ -442,6 +442,8 @@ func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	delete(verifyCodes, m.Author.ID) // Remove verify code
 	// Successfully registered
 	s.ChannelMessageSend(m.ChannelID, "Thank you. You have been registered for the Netsoc Discord Server")
+	channels := viper.Get("discord.channels").(*config.Channels)
+	s.ChannelMessageSend(channels.PublicGeneral, fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering.", m.Author.Mention()))
 	registering[found] = registering[len(registering)-1]
 	registering[len(registering)-1] = ""
 	registering = registering[:len(registering)-1]
