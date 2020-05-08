@@ -345,26 +345,19 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 
 		// must do it for first of weightSlice, i know that messages contrain at least one message and so therefore so would my weightSlice
 		weightsSlice := make([]uint, messages.Len())
-		uniqueReacts := messages.GetFirst().Reactions
-		var sumOfReacts uint = 0
-		for _, uniqueReaction := range uniqueReacts {
-			sumOfReacts += uint(uniqueReaction.Count)
-		}
-		weightsSlice[0] = sumOfReacts + 1
-		totalWeight := weightsSlice[0]
+		var totalWeight uint = 0
 		// duplicating code inside for loop
-		if len(weightsSlice) > 1 {
-			for i := range weightsSlice[1:] {
-				uniqueReacts := messages.Get(i).Reactions
-				var sumOfReacts uint = 0
-				for _, uniqueReaction := range uniqueReacts {
-					sumOfReacts += uint(uniqueReaction.Count)
-				}
-				weightsSlice[i] = sumOfReacts + 1
-				totalWeight += weightsSlice[i]
+		for i := range weightsSlice {
+			uniqueReacts := messages.Get(i).Reactions
+			var sumOfReacts uint = 0
+			for _, uniqueReaction := range uniqueReacts {
+				sumOfReacts += uint(uniqueReaction.Count)
 			}
+			weightsSlice[i] = sumOfReacts + 1
+			totalWeight += weightsSlice[i]
 		}
 		randomInt := rand.Intn(int(totalWeight))
+		fmt.Println(strconv.Itoa(int(totalWeight)))
 
 		var i int = -1
 		for randomInt > 0 {
