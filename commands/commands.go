@@ -21,7 +21,6 @@ var registering = make([]string, 0)
 var verifyCodes = make(map[string]string)
 
 const layoutIE = "02/01/06"
-const messageDefaultWeight uint = 1
 
 // ping command
 func ping(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
