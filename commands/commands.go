@@ -341,6 +341,8 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		}
 
 		// quote takes into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance
+		// messageDefaultWeight is relative to weight of a single reaction
+		var messageDefaultWeight uint = 1
 		weightsSlice := make([]uint, messages.Len())
 		var totalWeight uint = 0
 		// duplicating code inside for loop
@@ -350,11 +352,10 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			for _, uniqueReaction := range uniqueReacts {
 				sumOfReacts += uint(uniqueReaction.Count)
 			}
-			weightsSlice[i] = sumOfReacts + 1
+			weightsSlice[i] = sumOfReacts + messageDefaultWeight
 			totalWeight += weightsSlice[i]
 		}
 		randomInt := rand.Intn(int(totalWeight))
-		fmt.Println(strconv.Itoa(int(totalWeight)))
 
 		var i int = -1
 		for randomInt > 0 {
