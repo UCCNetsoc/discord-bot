@@ -351,7 +351,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			sumOfReacts += uint(uniqueReaction.Count)
 		}
 		weightsSlice[0] = sumOfReacts + 1
-
+		totalWeight := weightsSlice[0]
 		// duplicating code inside for loop
 		if len(weightsSlice) > 1 {
 			for i := range weightsSlice[1:] {
@@ -360,11 +360,11 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				for _, uniqueReaction := range uniqueReacts {
 					sumOfReacts += uint(uniqueReaction.Count)
 				}
-				weightsSlice[i] = sumOfReacts + 1 + weightsSlice[i-1]
+				weightsSlice[i] = sumOfReacts + 1
+				totalWeight += weightsSlice[i]
 			}
 		}
-		max := weightsSlice[len(weightsSlice)]
-		randomInt := rand.Intn(int(max))
+		randomInt := rand.Intn(int(totalWeight))
 
 		var i int = -1
 		for randomInt > 0 {
