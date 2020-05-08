@@ -345,6 +345,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		// messageDefaultWeight is relative to weight of a single reaction
 		weightsSlice := make([]uint, messages.Len())
 		messageDefaultWeight := viper.Get("bot.quote.default_message_weight").(uint)
+		var totalWeight uint = 0
 		// duplicating code inside for loop
 		for i := range weightsSlice {
 			uniqueReacts := messages.Get(i).Reactions
