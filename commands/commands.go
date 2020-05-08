@@ -339,7 +339,31 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 			return
 		}
-		message := messages.Get(rand.Intn(messages.Len()))
+
+		// quote takes into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance
+		// messageDefaultWeight is relative to weight of a single reaction
+		weightsSlice := make([]uint, messages.Len())
+		messageDefaultWeight := uint(viper.Get("bot.quote.default_message_weight").(int))
+		var totalWeight uint = 0
+		// duplicating code inside for loop
+		for i := range weightsSlice {
+			uniqueReacts := messages.Get(i).Reactions
+			var sumOfReacts uint = 0
+			for _, uniqueReaction := range uniqueReacts {
+				sumOfReacts += uint(uniqueReaction.Count)
+			}
+			weightsSlice[i] = sumOfReacts + messageDefaultWeight
+			totalWeight += weightsSlice[i]
+		}
+		randomInt := rand.Intn(int(totalWeight))
+
+		i := -1
+		for randomInt > 0 {
+			i++
+			randomInt -= int(weightsSlice[i])
+		}
+		message := messages.Get(i)
+
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
