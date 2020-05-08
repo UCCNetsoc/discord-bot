@@ -340,10 +340,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			return
 		}
 
-		// my contribution
-		// quote should take into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance, and its simply each reaction is given a weight of 1 with a message also getting a weight of one
-
-		// must do it for first of weightSlice, i know that messages contrain at least one message and so therefore so would my weightSlice
+		// quote takes into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance
 		weightsSlice := make([]uint, messages.Len())
 		var totalWeight uint = 0
 		// duplicating code inside for loop
@@ -365,12 +362,6 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			randomInt -= int(weightsSlice[i])
 		}
 		message := messages.Get(i)
-
-		//using thewse comments to make space for my code cause i like space and gos strict formatting
-		//
-
-		// old way of randomising which message got picked
-		// message := messages.Get(rand.Intn(messages.Len()))
 
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
