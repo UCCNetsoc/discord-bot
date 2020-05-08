@@ -339,7 +339,46 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			log.WithFields(ctx.Value(logKey).(log.Fields)).Error("Error getting messages")
 			return
 		}
-		message := messages.Get(rand.Intn(messages.Len()))
+
+		// my contribution
+		// quote should take into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance, and its simply each reaction is given a weight of 1 with a message also getting a weight of one
+
+		// must do it for first of weightSlice, i know that messages contrain at least one message and so therefore so would my weightSlice
+		weightsSlice := make([]uint, messages.Len())
+		uniqueReacts := messages.GetFirst().Reactions
+		var sumOfReacts uint = 0
+		for _, uniqueReaction := range uniqueReacts {
+			sumOfReacts += uint(uniqueReaction.Count)
+		}
+		weightsSlice[0] = sumOfReacts + 1
+
+		// duplicating code inside for loop
+		if len(weightsSlice) > 1 {
+			for i := range weightsSlice[1:] {
+				uniqueReacts := messages.Get(i).Reactions
+				var sumOfReacts uint = 0
+				for _, uniqueReaction := range uniqueReacts {
+					sumOfReacts += uint(uniqueReaction.Count)
+				}
+				weightsSlice[i] = sumOfReacts + 1 + weightsSlice[i-1]
+			}
+		}
+		max := weightsSlice[len(weightsSlice)]
+		randomInt := rand.Intn(int(max))
+
+		var i int = -1
+		for randomInt > 0 {
+			i++
+			randomInt -= int(weightsSlice[i])
+		}
+		message := messages.Get(i)
+
+		//using thewse comments to make space for my code cause i like space and gos strict formatting
+		//
+
+		// old way of randomising which message got picked
+		// message := messages.Get(rand.Intn(messages.Len()))
+
 		messageContent, err := message.ContentWithMoreMentionsReplaced(s)
 		if err != nil {
 			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("Error parsing mentions")
