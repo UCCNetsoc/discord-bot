@@ -5,6 +5,7 @@ import "github.com/spf13/viper"
 func initDefaults() {
 	// Bot
 	viper.SetDefault("bot.prefix", "!")
+	viper.SetDefault("bot.quote.default_message_weight", 1)
 	// Discord
 	viper.SetDefault("discord.token", "") // GitHub scrapers be like -.-
 	viper.SetDefault("discord.servers", &Servers{})
