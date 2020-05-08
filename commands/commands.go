@@ -342,7 +342,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 
 		// quote takes into consideration nubmer of reacts for considering which message to quote, more reactions means higher chance
 		// messageDefaultWeight is relative to weight of a single reaction
-		var messageDefaultWeight uint = 1
+		const messageDefaultWeight uint = 1
 		weightsSlice := make([]uint, messages.Len())
 		var totalWeight uint = 0
 		// duplicating code inside for loop
