@@ -358,7 +358,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		randomInt := rand.Intn(int(totalWeight))
 
 		i := -1
-		for randomInt > 0 {
+		for randomInt >= 0 {
 			i++
 			randomInt -= int(weightsSlice[i])
 		}
