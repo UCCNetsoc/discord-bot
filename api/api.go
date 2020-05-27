@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"time"
 
@@ -31,9 +32,21 @@ var (
 	session *discordgo.Session
 )
 
+type sortEvents struct {
+	events []*Event
+}
+
+func (e sortEvents) Len() int           { return len(e.events) }
+func (e sortEvents) Less(i, j int) bool { return e.events[i].Date.Unix() < e.events[j].Date.Unix() }
+func (e *sortEvents) Swap(i, j int) {
+	temp := e.events[i]
+	e.events[i] = e.events[j]
+	e.events[j] = temp
+}
+
 // Run the REST API
 func Run(s *discordgo.Session) {
-	cached = cache.New(30*time.Minute, time.Hour)
+	cached = cache.New(5*time.Minute, time.Hour)
 	session = s
 
 	http.HandleFunc("/events", getEvents)
@@ -81,6 +94,16 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		}
 		cached.Set("events", events, cache.DefaultExpiration)
 	}
+	// Filter out events that have already passed
+	allEvents := make([]*Event, len(events))
+	copy(allEvents, events)
+	events = []*Event{}
+	for _, event := range allEvents {
+		if event.Date.Unix() > time.Now().AddDate(0, 0, 1).Unix() {
+			events = append(events, event)
+		}
+	}
+	sort.Sort(&sortEvents{events})
 	if len(events) > amount {
 		events = events[:amount]
 	}
