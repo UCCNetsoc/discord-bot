@@ -47,6 +47,12 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 	command(
+		"sevent",
+		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description\n\tThis version doesn't @ everyone.", viper.GetInt("discord.charlimit")),
+		addEventSilent,
+		true,
+	)
+	command(
 		"announce",
 		fmt.Sprintf("send a message in the format: \n\t!announce TEXT"),
 		addAnnouncement,

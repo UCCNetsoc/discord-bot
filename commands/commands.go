@@ -136,6 +136,31 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
 	}
 }
+func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
+		if err != nil {
+			log.WithFields(ctx.Value(logKey).(log.Fields)).WithError(err).Error("failed to parse event")
+			s.ChannelMessageSend(m.ChannelID, "Failed to parse event: "+err.Error())
+			return
+		}
+		s.ChannelFileSendWithMessage(
+			channels.PublicAnnouncements,
+			fmt.Sprintf(
+				"Hey everyone, we have another upcoming event on *%s*:\n**%s**\n%s",
+				event.Date.Format(layoutIE),
+				event.Title,
+				event.Description,
+			),
+			"poster.jpg",
+			event.Image.Body,
+		)
+
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
+	}
+}
 
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	announcement(ctx, s, m, "@everyone\n")
