@@ -3,6 +3,8 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -143,6 +145,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	if m.UserID == s.State.User.ID {
+		return
+	}
 	react := Reaction(m.MessageReaction.Emoji.Name)
 	data, ok := reactionMap[m.MessageID]
 	if ok {
@@ -161,21 +166,37 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 				if content.Image != nil {
 					// Contains image
 					// Upload image
-					response := []byte{}
-					if _, err := content.Image.Body.Read(response); err == nil {
-						mediaResponse, _, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+					getImage, err := http.Get(content.Image.Request.URL.String())
+					if err != nil {
+						log.Error(err.Error())
+						return
+					}
+					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
+						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
 							File:     response,
-							MimeType: content.Image.Header.Get("content-type"),
+							MimeType: getImage.Header.Get("content-type"),
 						})
 						if err == nil {
 							mediaIds = append(mediaIds, mediaResponse.MediaID)
+							log.Info(mediaResponse.MediaIDString)
+							log.Info(getImage.Header.Get("content-type"))
+							log.Info(mediaHTTP.Status)
+						} else {
+							log.Error(err.Error())
 						}
+					} else {
+						log.Error(err.Error())
 					}
 				}
 				// Send tweet
-				twitterClient.Statuses.Update(content.Content, &twitterApi.StatusUpdateParams{
+				tweet, _, err := twitterClient.Statuses.Update(content.Content, &twitterApi.StatusUpdateParams{
 					MediaIds: mediaIds,
 				})
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+				log.Info(tweet.Text)
 			}
 		}
 	}
