@@ -156,7 +156,42 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			switch react {
 			case twitter:
 				fmt.Println(content.Description)
-				// twitterClient.Statuses.Update()
+				mediaIds := []int64{}
+				if content.Image != nil {
+					// Contains image
+					// Upload image
+					getImage, err := http.Get(content.Image.Request.URL.String())
+					if err != nil {
+						log.Error(err.Error())
+						return
+					}
+					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
+						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+							File:     response,
+							MimeType: getImage.Header.Get("content-type"),
+						})
+						if err == nil {
+							mediaIds = append(mediaIds, mediaResponse.MediaID)
+							log.Info(mediaResponse.MediaIDString)
+							log.Info(getImage.Header.Get("content-type"))
+							log.Info(mediaHTTP.Status)
+						} else {
+							log.Error(err.Error())
+						}
+					} else {
+						log.Error(err.Error())
+					}
+				}
+				// Send tweet
+				tweet, _, err := twitterClient.Statuses.Update(content.Description, &twitterApi.StatusUpdateParams{
+					MediaIds: mediaIds,
+				})
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+				log.Info(tweet.Text)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
 			}
 		case *api.Announcement:
 			switch react {

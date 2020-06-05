@@ -131,6 +131,10 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 			"poster.jpg",
 			event.Image.Body,
 		)
+		if len(event.Description) < viper.GetInt("discord.charlimit") {
+			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
+			reactionMap[m.ID] = event
+		}
 
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
