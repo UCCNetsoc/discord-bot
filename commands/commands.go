@@ -156,6 +156,8 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			"poster.jpg",
 			event.Image.Body,
 		)
+		s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
+		reactionMap[m.ID] = event
 
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
@@ -188,6 +190,8 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 		} else {
 			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("%s%s", mention, announcement.Content))
 		}
+		s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
+		reactionMap[m.ID] = announcement
 	} else {
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
 	}

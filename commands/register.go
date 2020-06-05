@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/Strum355/log"
+	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
 	"github.com/patrickmn/go-cache"
@@ -18,9 +19,18 @@ var (
 	cachedMessages *cache.Cache
 	globalSession  *discordgo.Session
 )
+
+// Reaction on a user message
+type Reaction string
+
+const (
+	twitter Reaction = "🇹"
+)
+
 var helpStrings = make(map[string]string)
 var committeeHelpStrings = make(map[string]string)
 var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
+var reactionMap = make(map[string]interface{}) // Maps message ids to content
 
 type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
 
@@ -75,6 +85,7 @@ func Register(s *discordgo.Session) {
 	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"
 
 	s.AddHandler(messageCreate)
+	s.AddHandler(messageReaction)
 	s.AddHandler(serverJoin)
 }
 
@@ -117,6 +128,25 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		command(ctx, s, m)
 		return
+	}
+}
+
+func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	react := Reaction(m.MessageReaction.Emoji.Name)
+	data, ok := reactionMap[m.MessageID]
+	if ok {
+		switch content := data.(type) {
+		case *api.Event:
+			switch react {
+			case twitter:
+				fmt.Println(content.Description)
+			}
+		case *api.Announcement:
+			switch react {
+			case twitter:
+				fmt.Println(content.Content)
+			}
+		}
 	}
 }
 
