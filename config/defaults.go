@@ -20,6 +20,11 @@ func initDefaults() {
 	viper.SetDefault("consul.token", "")
 	// Sendgrid
 	viper.SetDefault("sendgrid.token", "")
+	// Twitter
+	viper.SetDefault("twitter.key", "")
+	viper.SetDefault("twitter.secret", "")
+	viper.SetDefault("twitter.access.key", "")
+	viper.SetDefault("twitter.access.secret", "")
 	// Rest API
 	viper.SetDefault("api.port", 80)
 	viper.SetDefault("api.event_query_limit", 20)

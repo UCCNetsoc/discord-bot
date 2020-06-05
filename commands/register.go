@@ -9,6 +9,8 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	twitterApi "github.com/dghubble/go-twitter/twitter"
+	"github.com/dghubble/oauth1"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -18,6 +20,9 @@ const logKey = "_logger"
 var (
 	cachedMessages *cache.Cache
 	globalSession  *discordgo.Session
+
+	// Twitter
+	twitterClient *twitterApi.Client
 )
 
 // Reaction on a user message
@@ -84,6 +89,12 @@ func Register(s *discordgo.Session) {
 	// Add online command
 	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"
 
+	// Setup APIs
+	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
+	twitterToken := oauth1.NewToken(viper.GetString("twitter.access.key"), viper.GetString("twitter.access.secret"))
+	httpClient := twitterConfig.Client(oauth1.NoContext, twitterToken)
+	twitterClient = twitterApi.NewClient(httpClient)
+
 	s.AddHandler(messageCreate)
 	s.AddHandler(messageReaction)
 	s.AddHandler(serverJoin)
@@ -140,6 +151,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			switch react {
 			case twitter:
 				fmt.Println(content.Description)
+				// twitterClient.Statuses.Update()
 			}
 		case *api.Announcement:
 			switch react {
