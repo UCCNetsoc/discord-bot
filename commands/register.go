@@ -9,8 +9,8 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
-	twitterApi "github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	twitterApi "github.com/ericm/go-twitter/twitter"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -157,6 +157,25 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			switch react {
 			case twitter:
 				fmt.Println(content.Content)
+				mediaIds := []int64{}
+				if content.Image != nil {
+					// Contains image
+					// Upload image
+					response := []byte{}
+					if _, err := content.Image.Body.Read(response); err == nil {
+						mediaResponse, _, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+							File:     response,
+							MimeType: content.Image.Header.Get("content-type"),
+						})
+						if err == nil {
+							mediaIds = append(mediaIds, mediaResponse.MediaID)
+						}
+					}
+				}
+				// Send tweet
+				twitterClient.Statuses.Update(content.Content, &twitterApi.StatusUpdateParams{
+					MediaIds: mediaIds,
+				})
 			}
 		}
 	}
