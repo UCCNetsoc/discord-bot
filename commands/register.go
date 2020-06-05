@@ -197,6 +197,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 					return
 				}
 				log.Info(tweet.Text)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
 			}
 		}
 	}
