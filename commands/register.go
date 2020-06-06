@@ -3,11 +3,16 @@ package commands
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"strings"
 
 	"github.com/Strum355/log"
+	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/dghubble/oauth1"
+	twitterApi "github.com/ericm/go-twitter/twitter"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -17,10 +22,22 @@ const logKey = "_logger"
 var (
 	cachedMessages *cache.Cache
 	globalSession  *discordgo.Session
+
+	// Twitter
+	twitterClient *twitterApi.Client
 )
+
+// Reaction on a user message
+type Reaction string
+
+const (
+	twitter Reaction = "🇹"
+)
+
 var helpStrings = make(map[string]string)
 var committeeHelpStrings = make(map[string]string)
 var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
+var reactionMap = make(map[string]interface{}) // Maps message ids to content
 
 type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
 
@@ -74,7 +91,14 @@ func Register(s *discordgo.Session) {
 	// Add online command
 	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"
 
+	// Setup APIs
+	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
+	twitterToken := oauth1.NewToken(viper.GetString("twitter.access.key"), viper.GetString("twitter.access.secret"))
+	httpClient := twitterConfig.Client(oauth1.NoContext, twitterToken)
+	twitterClient = twitterApi.NewClient(httpClient)
+
 	s.AddHandler(messageCreate)
+	s.AddHandler(messageReaction)
 	s.AddHandler(serverJoin)
 }
 
@@ -117,6 +141,100 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 		command(ctx, s, m)
 		return
+	}
+}
+
+func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	if m.UserID == s.State.User.ID {
+		return
+	}
+	react := Reaction(m.MessageReaction.Emoji.Name)
+	data, ok := reactionMap[m.MessageID]
+	if ok {
+		switch content := data.(type) {
+		case *api.Event:
+			switch react {
+			case twitter:
+				fmt.Println(content.Description)
+				mediaIds := []int64{}
+				if content.Image != nil {
+					// Contains image
+					// Upload image
+					getImage, err := http.Get(content.Image.Request.URL.String())
+					if err != nil {
+						log.Error(err.Error())
+						return
+					}
+					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
+						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+							File:     response,
+							MimeType: getImage.Header.Get("content-type"),
+						})
+						if err == nil {
+							mediaIds = append(mediaIds, mediaResponse.MediaID)
+							log.Info(mediaResponse.MediaIDString)
+							log.Info(getImage.Header.Get("content-type"))
+							log.Info(mediaHTTP.Status)
+						} else {
+							log.Error(err.Error())
+						}
+					} else {
+						log.Error(err.Error())
+					}
+				}
+				// Send tweet
+				tweet, _, err := twitterClient.Statuses.Update(content.Description, &twitterApi.StatusUpdateParams{
+					MediaIds: mediaIds,
+				})
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+				log.Info(tweet.Text)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
+			}
+		case *api.Announcement:
+			switch react {
+			case twitter:
+				fmt.Println(content.Content)
+				mediaIds := []int64{}
+				if content.Image != nil {
+					// Contains image
+					// Upload image
+					getImage, err := http.Get(content.Image.Request.URL.String())
+					if err != nil {
+						log.Error(err.Error())
+						return
+					}
+					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
+						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+							File:     response,
+							MimeType: getImage.Header.Get("content-type"),
+						})
+						if err == nil {
+							mediaIds = append(mediaIds, mediaResponse.MediaID)
+							log.Info(mediaResponse.MediaIDString)
+							log.Info(getImage.Header.Get("content-type"))
+							log.Info(mediaHTTP.Status)
+						} else {
+							log.Error(err.Error())
+						}
+					} else {
+						log.Error(err.Error())
+					}
+				}
+				// Send tweet
+				tweet, _, err := twitterClient.Statuses.Update(content.Content, &twitterApi.StatusUpdateParams{
+					MediaIds: mediaIds,
+				})
+				if err != nil {
+					log.Error(err.Error())
+					return
+				}
+				log.Info(tweet.Text)
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
+			}
+		}
 	}
 }
 
