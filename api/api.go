@@ -108,6 +108,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		events = events[:amount]
 	}
 	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	returnEvents := []returnEvent{}
 	for _, event := range events {
 		returnEvents = append(returnEvents, returnEvent{
@@ -169,6 +170,7 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		announcemenents = announcemenents[:amount]
 	}
 	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	returnAnnouncements := []returnAnnouncement{}
 	for _, ann := range announcemenents {
 		announce := returnAnnouncement{
