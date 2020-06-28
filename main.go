@@ -19,9 +19,9 @@ var production bool
 
 func main() {
 	// Check for flags
-	production = *flag.Bool("p", false, "enables production with json logging")
+	production = flag.Bool("p", false, "enables production with json logging")
 	flag.Parse()
-	if production {
+	if *production {
 		log.InitJSONLogger(&log.Config{Output: os.Stdout})
 	} else {
 		log.InitSimpleLogger(&log.Config{Output: os.Stdout})
