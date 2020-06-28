@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var production bool
+var production *bool
 
 func main() {
 	// Check for flags
