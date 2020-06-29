@@ -4,6 +4,8 @@ github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/Strum355/log v1.0.1 h1:iU1K3d0gALy1EnI1ldN01x1n3Cm8vMeQttSRNtzxibk=
 github.com/Strum355/log v1.0.1/go.mod h1:5wP2IZ86aXjSO/xlH/9lNaN3G0K8u0baaHujSiIFtqA=
+github.com/Strum355/log v1.1.0 h1:hjo1FaZlP575ZImtl9Q987svqXzFgP3JCq36ELzCeUs=
+github.com/Strum355/log v1.1.0/go.mod h1:5wP2IZ86aXjSO/xlH/9lNaN3G0K8u0baaHujSiIFtqA=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/armon/circbuf v0.0.0-20150827004946-bbbad097214e/go.mod h1:3U/XgcO3hCbHZ8TKRvWD2dDTCfh9M9ya+I9JpbB7O8o=
