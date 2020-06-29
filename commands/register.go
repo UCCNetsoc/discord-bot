@@ -149,18 +149,15 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 		return
 	}
 	react := Reaction(m.MessageReaction.Emoji.Name)
-	data, ok := reactionMap[m.MessageID]
-	if ok {
-		switch content := data.(type) {
-		case *api.Event:
+	if data, ok := reactionMap[m.MessageID]; ok {
+		if content, ok := data.(api.Entry); ok {
 			switch react {
 			case twitter:
-				fmt.Println(content.Description)
 				mediaIds := []int64{}
-				if content.Image != nil {
+				if content.GetImage() != nil {
 					// Contains image
 					// Upload image
-					getImage, err := http.Get(content.Image.Request.URL.String())
+					getImage, err := http.Get(content.GetImage().Request.URL.String())
 					if err != nil {
 						log.Error(err.Error())
 						return
@@ -183,48 +180,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 					}
 				}
 				// Send tweet
-				tweet, _, err := twitterClient.Statuses.Update(content.Description, &twitterApi.StatusUpdateParams{
-					MediaIds: mediaIds,
-				})
-				if err != nil {
-					log.Error(err.Error())
-					return
-				}
-				log.Info(tweet.Text)
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
-			}
-		case *api.Announcement:
-			switch react {
-			case twitter:
-				fmt.Println(content.Content)
-				mediaIds := []int64{}
-				if content.Image != nil {
-					// Contains image
-					// Upload image
-					getImage, err := http.Get(content.Image.Request.URL.String())
-					if err != nil {
-						log.Error(err.Error())
-						return
-					}
-					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
-						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
-							File:     response,
-							MimeType: getImage.Header.Get("content-type"),
-						})
-						if err == nil {
-							mediaIds = append(mediaIds, mediaResponse.MediaID)
-							log.Info(mediaResponse.MediaIDString)
-							log.Info(getImage.Header.Get("content-type"))
-							log.Info(mediaHTTP.Status)
-						} else {
-							log.Error(err.Error())
-						}
-					} else {
-						log.Error(err.Error())
-					}
-				}
-				// Send tweet
-				tweet, _, err := twitterClient.Statuses.Update(content.Content, &twitterApi.StatusUpdateParams{
+				tweet, _, err := twitterClient.Statuses.Update(content.GetContent(), &twitterApi.StatusUpdateParams{
 					MediaIds: mediaIds,
 				})
 				if err != nil {
