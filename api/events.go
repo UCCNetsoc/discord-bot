@@ -1,7 +1,9 @@
 package api
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -14,8 +16,8 @@ import (
 type Event struct {
 	Title,
 	Description string
-	Date  time.Time
-	Image *http.Response
+	Date time.Time
+	*Image
 }
 
 const layoutISO = "2006-01-02"
@@ -46,11 +48,21 @@ func ParseEvent(m *discordgo.MessageCreate, help string) (*Event, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing image: %w", err)
 	}
+	defer imageReader.Body.Close()
+	imageRead, err := ioutil.ReadAll(imageReader.Body)
+	if err != nil {
+		return nil, err
+	}
+	imageBody := bytes.NewBuffer(imageRead)
 
 	return &Event{
 		Title:       title,
 		Description: description,
 		Date:        dateTime,
-		Image:       imageReader,
+		Image: &Image{
+			ImgData:   imageBody,
+			ImgURL:    imageReader.Request.URL.String(),
+			ImgHeader: &imageReader.Header,
+		},
 	}, nil
 }

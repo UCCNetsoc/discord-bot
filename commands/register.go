@@ -3,8 +3,7 @@ package commands
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
-	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -154,30 +153,23 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			switch react {
 			case twitter:
 				mediaIds := []int64{}
-				if content.GetImage() != nil {
+				image := content.GetImage()
+				if image.ImgData != nil {
 					// Contains image
 					// Upload image
-					getImage, err := http.Get(content.GetImage().Request.URL.String())
+					mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
+						File:     image.ImgData.Bytes(),
+						MimeType: image.ImgHeader.Get("content-type"),
+					})
 					if err != nil {
-						log.WithError(err).Error("Failed to retrieve image")
+						log.WithError(err).Error("Failed to upload image")
 						return
 					}
-					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
-						mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
-							File:     response,
-							MimeType: getImage.Header.Get("content-type"),
-						})
-						if err != nil {
-							log.WithError(err).Error("Failed to upload image")
-							return
-						}
-						mediaIds = append(mediaIds, mediaResponse.MediaID)
-						log.Info(mediaResponse.MediaIDString)
-						log.Info(getImage.Header.Get("content-type"))
-						log.Info(mediaHTTP.Status)
-					} else {
-						log.WithError(err).Error("Failed to read image")
-					}
+					mediaIds = append(mediaIds, mediaResponse.MediaID)
+					log.Info(mediaResponse.MediaIDString)
+					log.Info(image.ImgHeader.Get("content-type"))
+					log.Info(mediaHTTP.Status)
+					log.Info(strconv.Itoa(image.ImgData.Len()))
 				}
 				// Send tweet
 				tweet, _, err := twitterClient.Statuses.Update(content.GetContent(), &twitterApi.StatusUpdateParams{

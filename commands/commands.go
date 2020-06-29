@@ -129,7 +129,7 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 				event.Description,
 			),
 			"poster.jpg",
-			event.Image.Body,
+			event.ImgData,
 		)
 		if len(event.Description) < viper.GetInt("discord.charlimit") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
@@ -158,7 +158,7 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				event.Description,
 			),
 			"poster.jpg",
-			event.Image.Body,
+			event.ImgData,
 		)
 		if len(event.Description) < viper.GetInt("discord.charlimit") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
@@ -186,12 +186,12 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 			return
 		}
 
-		if announcement.Image != nil {
+		if announcement.ImgData != nil {
 			s.ChannelFileSendWithMessage(
 				channels.PublicAnnouncements,
 				fmt.Sprintf("%s%s", mention, announcement.Content),
 				"poster.jpg",
-				announcement.Image.Body,
+				announcement.ImgData,
 			)
 		} else {
 			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("%s%s", mention, announcement.Content))

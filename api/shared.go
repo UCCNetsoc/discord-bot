@@ -1,11 +1,21 @@
 package api
 
-import "net/http"
+import (
+	"bytes"
+	"net/http"
+)
 
 // Entry represents an entry in the announcements channel
 type Entry interface {
 	GetContent() string
-	GetImage() *http.Response
+	GetImage() *Image
+}
+
+// Image to be embedded in an entry
+type Image struct {
+	ImgData   *bytes.Buffer
+	ImgHeader *http.Header
+	ImgURL    string
 }
 
 // GetContent returns message content
@@ -19,11 +29,11 @@ func (e Event) GetContent() string {
 }
 
 // GetImage returns Image response data
-func (a Announcement) GetImage() *http.Response {
+func (a Announcement) GetImage() *Image {
 	return a.Image
 }
 
 // GetImage returns Image response data
-func (e Event) GetImage() *http.Response {
+func (e Event) GetImage() *Image {
 	return e.Image
 }

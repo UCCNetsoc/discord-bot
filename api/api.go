@@ -114,7 +114,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		returnEvents = append(returnEvents, returnEvent{
 			event.Title,
 			event.Description,
-			event.Image.Request.URL.String(),
+			event.ImgURL,
 			event.Date.Unix(),
 		})
 	}
@@ -177,8 +177,8 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 			Date:    ann.Date.Unix(),
 			Content: ann.Content,
 		}
-		if ann.Image != nil {
-			announce.ImageURL = ann.Image.Request.URL.String()
+		if ann.ImgData != nil {
+			announce.ImageURL = ann.ImgURL
 		}
 		returnAnnouncements = append(returnAnnouncements, announce)
 	}
