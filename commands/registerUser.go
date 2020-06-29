@@ -25,6 +25,8 @@ var (
 // registeringState defines a state node in the registering flow FSM
 type registeringState func(context.Context, *discordgo.Session, *discordgo.MessageCreate) registeringState
 
+// initiatedRegistration state is entered when a user invokes the register command to join the server. This state
+// loops back to itself until the user supplies a valid umail email and the verification email sends successfully
 func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) registeringState {
 	content := strings.TrimSpace(m.Content)
 
