@@ -7,7 +7,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-func SendEmail(from string, to string, subject string, content string) (*rest.Response, error) {
+func SendEmail(from, to, subject, content string) (*rest.Response, error) {
 	fromAddress := mail.NewEmail(from, from)
 	toAddress := mail.NewEmail(to, to)
 	message := mail.NewSingleEmail(fromAddress, subject, toAddress, content, content)
