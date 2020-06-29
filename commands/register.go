@@ -167,14 +167,14 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 							File:     response,
 							MimeType: getImage.Header.Get("content-type"),
 						})
-						if err == nil {
-							mediaIds = append(mediaIds, mediaResponse.MediaID)
-							log.Info(mediaResponse.MediaIDString)
-							log.Info(getImage.Header.Get("content-type"))
-							log.Info(mediaHTTP.Status)
-						} else {
+						if err != nil {
 							log.WithError(err).Error("Failed to upload image")
+							return
 						}
+						mediaIds = append(mediaIds, mediaResponse.MediaID)
+						log.Info(mediaResponse.MediaIDString)
+						log.Info(getImage.Header.Get("content-type"))
+						log.Info(mediaHTTP.Status)
 					} else {
 						log.WithError(err).Error("Failed to read image")
 					}
