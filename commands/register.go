@@ -10,6 +10,7 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/ring"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
 	twitterApi "github.com/ericm/go-twitter/twitter"
@@ -260,7 +261,7 @@ func CacheMessages() {
 			if channel.Type == discordgo.ChannelTypeGuildText &&
 				perms&discordgo.PermissionReadMessages > 0 {
 				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
-				ringMessages := Ring{}
+				ringMessages := ring.Ring{}
 				ringMessages.Push(discMessages)
 				if err != nil {
 					log.WithError(err).Error("Error getting messages")

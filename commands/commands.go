@@ -10,6 +10,9 @@ import (
 
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/emails"
+	"github.com/UCCNetsoc/discord-bot/embed"
+	"github.com/UCCNetsoc/discord-bot/ring"
 	petname "github.com/dustinkirkland/golang-petname"
 
 	"github.com/Strum355/log"
@@ -327,11 +330,11 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		channelIndex := rand.Intn(len(channels))
 		channel := channels[channelIndex]
 
-		discMessages := &Ring{}
+		discMessages := &ring.Ring{}
 		// Get cached messages
 		if cachedMessages != nil {
 			if more, exists := cachedMessages.Get(channel.ID); exists {
-				discMessages = more.(*Ring)
+				discMessages = more.(*ring.Ring)
 				if discMessages.Len() == 0 {
 					continue
 				}
@@ -346,7 +349,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				}
 			}
 		}
-		userMessages := &Ring{}
+		userMessages := &ring.Ring{}
 
 		if mention != nil {
 			for i := 0; i < discMessages.Len(); i++ {
@@ -366,7 +369,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 				continue
 			}
 		}
-		var messages *Ring
+		var messages *ring.Ring
 		if userMessages.Len() > 0 {
 			messages = userMessages
 		} else {
@@ -412,7 +415,7 @@ func quote(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			return
 		}
 
-		embed := NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
+		embed := embed.NewEmbed().SetAuthor(message.Author.Username, message.Author.AvatarURL("")).SetDescription(
 			fmt.Sprintf("*%s in #%s*", timestamp.Format(layoutIE), channel.Name),
 		).SetTitle(messageContent).TruncateTitle()
 
@@ -456,7 +459,7 @@ func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		// Generate phrase
 		randomCode := petname.Generate(3, "-")
 		// Send email
-		response, err := sendEmail("server.registration@netsoc.co",
+		response, err := emails.SendEmail("server.registration@netsoc.co",
 			userInput,
 			"Netsoc Discord Verification",
 			"Please message the following token to the Netsoc Bot to gain access to the Discord Server:\n\n"+
