@@ -159,7 +159,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 					// Upload image
 					getImage, err := http.Get(content.GetImage().Request.URL.String())
 					if err != nil {
-						log.Error(err.Error())
+						log.WithError(err).Error("Failed to retrieve image")
 						return
 					}
 					if response, err := ioutil.ReadAll(getImage.Body); err == nil {
@@ -173,10 +173,10 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 							log.Info(getImage.Header.Get("content-type"))
 							log.Info(mediaHTTP.Status)
 						} else {
-							log.Error(err.Error())
+							log.WithError(err).Error("Failed to upload image")
 						}
 					} else {
-						log.Error(err.Error())
+						log.WithError(err).Error("Failed to read image")
 					}
 				}
 				// Send tweet
@@ -184,7 +184,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 					MediaIds: mediaIds,
 				})
 				if err != nil {
-					log.Error(err.Error())
+					log.WithError(err).Error("Failed to send tweet")
 					return
 				}
 				log.Info(tweet.Text)
