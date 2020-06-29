@@ -10,6 +10,7 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/emails"
 	"github.com/bwmarrin/discordgo"
 	petname "github.com/dustinkirkland/golang-petname"
 	"github.com/spf13/viper"
@@ -34,7 +35,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 
 	rand.Seed(time.Now().UnixNano())
 	randomCode := petname.Generate(3, "-")
-	response, err := sendEmail(
+	response, err := emails.SendEmail(
 		"discord.registration@netsoc.co",
 		content,
 		"Netsoc Discord Verification",

@@ -49,7 +49,7 @@ steps:
       event:
         - push
       branch:
-        - beta     
+        - develop
 
   - name: build_prod
     image: plugins/docker
