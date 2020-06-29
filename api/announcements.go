@@ -52,7 +52,6 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 			return nil, err
 		}
 		imageBody = bytes.NewBuffer(imageRead)
-		fmt.Println(imageBody.Len(), image)
 		defer image.Body.Close()
 	}
 	date, err := m.Timestamp.Parse()

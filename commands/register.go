@@ -3,7 +3,6 @@ package commands
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -167,9 +166,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 					}
 					mediaIds = append(mediaIds, mediaResponse.MediaID)
 					log.Info(mediaResponse.MediaIDString)
-					log.Info(image.ImgHeader.Get("content-type"))
 					log.Info(mediaHTTP.Status)
-					log.Info(strconv.Itoa(image.ImgData.Len()))
 				}
 				// Send tweet
 				tweet, _, err := twitterClient.Statuses.Update(content.GetContent(), &twitterApi.StatusUpdateParams{
