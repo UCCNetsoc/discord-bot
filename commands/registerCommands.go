@@ -18,8 +18,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const logKey = "_logger"
-
 var (
 	cachedMessages *cache.Cache
 	globalSession  *discordgo.Session
@@ -35,10 +33,12 @@ const (
 	twitter Reaction = "🇹"
 )
 
-var helpStrings = make(map[string]string)
-var committeeHelpStrings = make(map[string]string)
-var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
-var reactionMap = make(map[string]interface{}) // Maps message ids to content
+var (
+	helpStrings          = make(map[string]string)
+	committeeHelpStrings = make(map[string]string)
+	commandsMap          = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
+	reactionMap          = make(map[string]interface{}) // Maps message ids to content
+)
 
 type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
 
@@ -113,7 +113,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check if its a DM
 	if len(m.GuildID) == 0 {
-		ctx := context.WithValue(ctx, logKey, log.Fields{
+		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
 			"guild_id":   "DM",
@@ -133,12 +133,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
-		ctx := context.WithValue(ctx, logKey, log.Fields{
+		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
 			"guild_id":   m.GuildID,
+			"command":    commandStr,
 			"body":       body,
 		})
+
+		log.WithContext(ctx).Info("invoking standard command")
 
 		command(ctx, s, m)
 		return
