@@ -65,10 +65,11 @@ func checkStatuses(s *discordgo.Session, m *discordgo.MessageCreate, sites []str
 // Check the up status of a website, returning an error if not up - checks if can connect and response is 200
 func checkStatus(site string, retryCount int, statuses chan statusCheck) {
 	var timeTaken int64 = 0
+	client := http.Client{Timeout: 5 * time.Second}
 
 	err := try.Do(func(attempt int) (bool, error) {
 		startTime := time.Now()
-		resp, err := http.Get(site)
+		resp, err := client.Get(site)
 		timeTaken = time.Now().Sub(startTime).Milliseconds()
 
 		if resp != nil {
