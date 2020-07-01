@@ -86,6 +86,7 @@ func Register(s *discordgo.Session) {
 		recall,
 		true,
 	)
+	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
 
 	// Add online command
 	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"

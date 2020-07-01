@@ -9,6 +9,7 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/ericm/go-twitter v0.0.0-20200605182549-dd530d8e2eea
 	github.com/hashicorp/consul/api v1.4.0
+	github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/sendgrid/rest v2.4.1+incompatible
 	github.com/sendgrid/sendgrid-go v3.5.0+incompatible
