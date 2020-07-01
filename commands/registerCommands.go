@@ -8,14 +8,13 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/ring"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
 	twitterApi "github.com/ericm/go-twitter/twitter"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
-
-const logKey = "_logger"
 
 var (
 	cachedMessages *cache.Cache
@@ -32,10 +31,12 @@ const (
 	twitter Reaction = "🇹"
 )
 
-var helpStrings = make(map[string]string)
-var committeeHelpStrings = make(map[string]string)
-var commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
-var reactionMap = make(map[string]interface{}) // Maps message ids to content
+var (
+	helpStrings          = make(map[string]string)
+	committeeHelpStrings = make(map[string]string)
+	commandsMap          = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
+	reactionMap          = make(map[string]interface{}) // Maps message ids to content
+)
 
 type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
 
@@ -110,7 +111,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// Check if its a DM
 	if len(m.GuildID) == 0 {
-		ctx := context.WithValue(ctx, logKey, log.Fields{
+		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
 			"guild_id":   "DM",
@@ -130,12 +131,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
-		ctx := context.WithValue(ctx, logKey, log.Fields{
+		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
 			"guild_id":   m.GuildID,
+			"command":    commandStr,
 			"body":       body,
 		})
+
+		log.WithContext(ctx).Info("invoking standard command")
 
 		command(ctx, s, m)
 		return
@@ -205,7 +209,7 @@ func CacheMessages() {
 			if channel.Type == discordgo.ChannelTypeGuildText &&
 				perms&discordgo.PermissionReadMessages > 0 {
 				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
-				ringMessages := Ring{}
+				ringMessages := ring.Ring{}
 				ringMessages.Push(discMessages)
 				if err != nil {
 					log.WithError(err).Error("Error getting messages")
