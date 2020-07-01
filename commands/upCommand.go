@@ -25,7 +25,7 @@ type statusCheck struct {
 // Up command to check the status of various websites hosted on Netsoc servers
 func checkUpCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Check if committee channel, don't allow in public server
-	if isCommittee(m) {
+	if !isCommittee(m) {
 		return
 	}
 
