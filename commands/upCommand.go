@@ -32,7 +32,7 @@ func checkUpCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	sites := strings.Split(viper.GetString("netsoc.sites"), ",")
 
 	// Run on a separate goroutine to not block bot
-	go checkStatuses(s, m, sites)
+	checkStatuses(s, m, sites)
 }
 
 func checkStatuses(s *discordgo.Session, m *discordgo.MessageCreate, sites []string) {
@@ -72,7 +72,7 @@ func checkStatus(site string, retryCount int, statuses chan statusCheck) {
 		timeTaken = time.Now().Sub(startTime).Milliseconds()
 
 		if resp != nil {
-			if resp.StatusCode != 200 {
+			if resp.StatusCode >= 400 {
 				err = errors.New("website response not 200")
 			}
 		}
