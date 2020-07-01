@@ -73,7 +73,7 @@ func checkStatus(site string, retryCount int, statuses chan statusCheck) {
 
 		if resp != nil {
 			if resp.StatusCode >= 400 {
-				err = errors.New("website response not 200")
+				err = errors.New(fmt.Sprintf("error status code %d returned", resp.StatusCode))
 			}
 		}
 
