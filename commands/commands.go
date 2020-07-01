@@ -1,8 +1,10 @@
 package commands
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
 	"strings"
 
@@ -116,6 +118,7 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 			s.ChannelMessageSend(m.ChannelID, "Failed to parse event: "+err.Error())
 			return
 		}
+		b := bytes.NewBuffer([]byte{})
 		s.ChannelFileSendWithMessage(
 			channels.PublicAnnouncements,
 			fmt.Sprintf(
@@ -125,8 +128,9 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 				event.Description,
 			),
 			"poster.jpg",
-			event.Image.Body,
+			io.TeeReader(event.ImgData, b),
 		)
+		event.ImgData = b
 		if len(event.Description) < viper.GetInt("discord.charlimit") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
 			reactionMap[m.ID] = event
@@ -146,6 +150,7 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			s.ChannelMessageSend(m.ChannelID, "Failed to parse event: "+err.Error())
 			return
 		}
+		b := bytes.NewBuffer([]byte{})
 		s.ChannelFileSendWithMessage(
 			channels.PublicAnnouncements,
 			fmt.Sprintf(
@@ -155,8 +160,9 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				event.Description,
 			),
 			"poster.jpg",
-			event.Image.Body,
+			io.TeeReader(event.ImgData, b),
 		)
+		event.ImgData = b
 		if len(event.Description) < viper.GetInt("discord.charlimit") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
 			reactionMap[m.ID] = event
@@ -185,13 +191,15 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 			return
 		}
 
-		if announcement.Image != nil {
+		if announcement.ImgData != nil {
+			b := bytes.NewBuffer([]byte{})
 			s.ChannelFileSendWithMessage(
 				channels.PublicAnnouncements,
 				fmt.Sprintf("%s%s", mention, announcement.Content),
 				"poster.jpg",
-				announcement.Image.Body,
+				io.TeeReader(announcement.ImgData, b),
 			)
+			announcement.ImgData = b
 		} else {
 			s.ChannelMessageSend(channels.PublicAnnouncements, fmt.Sprintf("%s%s", mention, announcement.Content))
 		}
