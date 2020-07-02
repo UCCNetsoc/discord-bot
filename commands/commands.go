@@ -56,13 +56,17 @@ func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to create DM channel")
-		s.ChannelMessageSend(m.ChannelID, "Failed to create a private message channel")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Failed to create a private message channel."))
 		return
 	}
 
 	registering[m.Author.ID] = initiatedRegistration
 
-	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
+	emb := embed.NewEmbed().
+		SetTitle("Netsoc Server Registration").
+		SetDescription("Send me your UCC email address so we can verify you're a UCC student.").
+		SetFooter("Message your email in the form <Student ID>@umail.ucc.ie. A code will be sent to your email that you will then send here.")
+	s.ChannelMessageSendEmbed(channel.ID, emb.MessageEmbed)
 }
 
 func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
@@ -92,12 +96,15 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		welcomeID := guild.SystemChannelID
 		if len(welcomeID) > 0 {
 			// Send welcome message
-			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
+			emb := embed.NewEmbed().SetTitle("Welcome!").SetDescription(fmt.Sprintf(messages[i], m.Member.Mention()))
+			// s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
 			if viper.GetBool("discord.autoregister") {
-				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+				emb.SetFooter("We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			} else {
-				s.ChannelMessageSend(welcomeID, "Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+				emb.SetFooter("Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			}
+
+			s.ChannelMessageSendEmbed(welcomeID, emb.MessageEmbed)
 		}
 
 	}

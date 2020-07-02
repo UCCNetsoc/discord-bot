@@ -3,6 +3,8 @@ package commands
 import (
 	"time"
 
+	"github.com/UCCNetsoc/discord-bot/embed"
+
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
@@ -45,4 +47,8 @@ func memberContains(members []*discordgo.Member, userID string) bool {
 		}
 	}
 	return found
+}
+
+func errorEmbed(message string) *discordgo.MessageEmbed {
+	return embed.NewEmbed().SetTitle("❗ ERROR ❗").SetDescription(message).MessageEmbed
 }
