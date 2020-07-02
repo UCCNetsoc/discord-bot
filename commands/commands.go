@@ -35,7 +35,7 @@ func help(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate)
 	for k, v := range helpStrings {
 		out += k + ": " + v + "\n"
 	}
-	if isCommittee(m) {
+	if isCommittee(s, m) {
 		for k, v := range committeeHelpStrings {
 			out += k + ": " + v + "\n"
 		}
@@ -111,7 +111,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 
 func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("failed to parse event")
@@ -143,7 +143,7 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 
 func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("failed to parse event")
@@ -183,7 +183,7 @@ func addAnnouncementSilent(ctx context.Context, s *discordgo.Session, m *discord
 
 func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("error sending announcement")
@@ -215,7 +215,7 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 // recall events and announcements
 func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		public, err := s.ChannelMessages(channels.PublicAnnouncements, 100, "", "", "")
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Error getting channel public")
