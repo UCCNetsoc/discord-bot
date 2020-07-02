@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/UCCNetsoc/discord-bot/embed"
+
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/emails"
@@ -31,7 +33,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	content := strings.TrimSpace(m.Content)
 
 	if !umailRegex.MatchString(content) {
-		s.ChannelMessageSend(m.ChannelID, "Please use a valid UCC email address")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Please use a valid UCC email address!"))
 		return initiatedRegistration
 	}
 
@@ -47,21 +49,24 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 		log.WithContext(ctx).
 			WithError(err).
 			Error("failed to send verification email")
-		s.ChannelMessageSend(m.ChannelID, "Failed to send verification email. Please try again later or contact a SysAdmin")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Failed to send verification email. Please try again later or contact a SysAdmin"))
 		return initiatedRegistration
 	}
 
 	// Success
 	if response.StatusCode < 300 && response.StatusCode > 199 {
 		verifyCodes[m.Author.ID] = randomCode
-		s.ChannelMessageSend(m.ChannelID, "Please reply with the token that has been emailed to you")
+		s.ChannelMessageSendEmbed(m.ChannelID, embed.NewEmbed().
+			SetTitle("Server Registration").
+			SetDescription("Please reply with the token that has been emailed to you.").
+			MessageEmbed)
 		return submittedEmail
 	}
 
 	log.WithContext(ctx).
 		WithFields(log.Fields{"status_code": response.StatusCode, "response": response.Body}).
 		Error("Sendgrid returned bad status code")
-	s.ChannelMessageSend(m.ChannelID, "Failed to send verification email. Please try again later or contact a SysAdmin")
+	s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Failed to send verification email. Please try again later or contact a SysAdmin"))
 	return initiatedRegistration
 }
 
@@ -73,7 +78,7 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	if !ok {
 		// if we're here, shits either no bueno..or the bot was restarted since
 		log.WithContext(ctx).Error("expected verification token but none was found")
-		s.ChannelMessageSend(m.ChannelID, "There was an issue verifying you, please contact a SysAdmin :(")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("There was an issue verifying you, please contact a SysAdmin :("))
 		return submittedEmail
 	}
 
@@ -82,7 +87,7 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			WithFields(log.Fields{"expected_code": code, "received_code": content}).
 			Warn("user supplied non-matching verification token")
 
-		s.ChannelMessageSend(m.ChannelID, "Incorrect token. Please try again or contact a SysAdmin")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Incorrect token. Please try again or contact a SysAdmin"))
 		return submittedEmail
 	}
 
@@ -96,14 +101,19 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				WithError(err).
 				WithFields(log.Fields{"role_id": roleID, "target_guild_id": servers.PublicServer}).
 				Error("failed to add role to user")
-			s.ChannelMessageSend(m.ChannelID, "Failed registering you for the server, please contact a SysAdmin :(")
+			s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Failed registering you for the server, please contact a SysAdmin :("))
 			return submittedEmail
 		}
 	}
 
-	s.ChannelMessageSend(m.ChannelID, "Congrats! You've been registered for the Netsoc Discord Server. Have fun!")
+	s.ChannelMessageSendEmbed(m.ChannelID, embed.NewEmbed().SetTitle("✔️ Verified!").SetDescription("Congrats! You've been registered for the Netsoc Discord Server. Have fun!").MessageEmbed)
 	channels := viper.Get("discord.channels").(*config.Channels)
-	s.ChannelMessageSend(channels.PublicGeneral, fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering.", m.Author.Mention()))
+
+	s.ChannelMessageSendEmbed(channels.PublicGeneral, embed.NewEmbed().
+		SetTitle("Welcome").
+		SetDescription(fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering.", m.Author.Mention())).
+		MessageEmbed)
+
 	delete(registering, m.Author.ID)
 	delete(verifyCodes, m.Author.ID)
 	return nil

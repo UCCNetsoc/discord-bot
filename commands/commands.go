@@ -35,7 +35,7 @@ func help(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate)
 	for k, v := range helpStrings {
 		out += k + ": " + v + "\n"
 	}
-	if isCommittee(m) {
+	if isCommittee(s, m) {
 		for k, v := range committeeHelpStrings {
 			out += k + ": " + v + "\n"
 		}
@@ -56,13 +56,17 @@ func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to create DM channel")
-		s.ChannelMessageSend(m.ChannelID, "Failed to create a private message channel")
+		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Failed to create a private message channel."))
 		return
 	}
 
 	registering[m.Author.ID] = initiatedRegistration
 
-	s.ChannelMessageSend(channel.ID, "Please message me your UCC email address so I can verify you as a member of UCC")
+	emb := embed.NewEmbed().
+		SetTitle("Netsoc Server Registration").
+		SetDescription("Send me your UCC email address so we can verify you're a UCC student.").
+		SetFooter("Message your email in the form <Student ID>@umail.ucc.ie. A code will be sent to your email that you will then send here.")
+	s.ChannelMessageSendEmbed(channel.ID, emb.MessageEmbed)
 }
 
 func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
@@ -92,12 +96,15 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		welcomeID := guild.SystemChannelID
 		if len(welcomeID) > 0 {
 			// Send welcome message
-			s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
+			emb := embed.NewEmbed().SetTitle("Welcome!").SetDescription(fmt.Sprintf(messages[i], m.Member.Mention()))
+			// s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
 			if viper.GetBool("discord.autoregister") {
-				s.ChannelMessageSend(welcomeID, "We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+				emb.SetFooter("We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			} else {
-				s.ChannelMessageSend(welcomeID, "Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+				emb.SetFooter("Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			}
+
+			s.ChannelMessageSendEmbed(welcomeID, emb.MessageEmbed)
 		}
 
 	}
@@ -111,7 +118,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 
 func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("failed to parse event")
@@ -143,7 +150,7 @@ func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 
 func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		event, err := api.ParseEvent(m, committeeHelpStrings["event"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("failed to parse event")
@@ -183,7 +190,7 @@ func addAnnouncementSilent(ctx context.Context, s *discordgo.Session, m *discord
 
 func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		announcement, err := api.ParseAnnouncement(m, committeeHelpStrings["announce"])
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("error sending announcement")
@@ -215,7 +222,7 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 // recall events and announcements
 func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	channels := viper.Get("discord.channels").(*config.Channels)
-	if isCommittee(m) && m.ChannelID == channels.PrivateEvents {
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
 		public, err := s.ChannelMessages(channels.PublicAnnouncements, 100, "", "", "")
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Error getting channel public")

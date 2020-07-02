@@ -118,8 +118,10 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"guild_id":   "DM",
 		})
 
-		dmCommands(ctx, s, m)
-		return
+		if !isCommittee(s, m) {
+			dmCommands(ctx, s, m)
+			return
+		}
 	}
 
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
