@@ -15,5 +15,7 @@ func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		if state != nil {
 			registering[m.Author.ID] = state
 		}
+		return
 	}
+	callCommand(s, m)
 }

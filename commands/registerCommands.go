@@ -108,11 +108,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 
-	ctx := context.Background()
-
 	// Check if its a DM
 	if len(m.GuildID) == 0 {
-		ctx := context.WithValue(ctx, log.Key, log.Fields{
+		ctx := context.WithValue(context.Background(), log.Key, log.Fields{
 			"author_id":  m.Author.ID,
 			"channel_id": m.ChannelID,
 			"guild_id":   "DM",
@@ -127,7 +125,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return
 	}
+	callCommand(s, m)
+}
 
+func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
+	ctx := context.Background()
 	body := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix"))
 
 	commandStr := strings.Fields(body)[0]
