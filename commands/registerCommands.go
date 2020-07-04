@@ -55,34 +55,34 @@ func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
-	command("quote", "display a random quote from a netsoc member.\n\tUsage: !quote or !quote {@user,#channel}", quote, false)
+	command("quote", "display a random quote from a netsoc member. Usage: *`!quote`* or *`!quote {@user,#channel}`*", quote, false)
 	command(
 		"event",
-		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description", viper.GetInt("discord.charlimit")),
+		"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
 		addEvent,
 		true,
 	)
 	command(
 		"sevent",
-		fmt.Sprintf("send a message in the format: \n\t!event \"title\" \"yyyy-mm-dd\" \"description\" \n\tand make sure to have an image attached too.\n\tCharacter limit of %d for description\n\tThis version doesn't @ everyone.", viper.GetInt("discord.charlimit")),
+		"same as *`!event`* but doesn't @ everyone",
 		addEventSilent,
 		true,
 	)
 	command(
 		"announce",
-		fmt.Sprintf("send a message in the format: \n\t!announce TEXT"),
+		"send a message in the format *`!announce TEXT`*",
 		addAnnouncement,
 		true,
 	)
 	command(
 		"sannounce",
-		fmt.Sprintf("silent announce. send a message in the format: \n\t!announce TEXT\n\tThis version doesn't @ everyone."),
+		"same as *`!announce`* but doesn't @ everyone",
 		addAnnouncementSilent,
 		true,
 	)
 	command(
 		"recall",
-		fmt.Sprintf("PERMANENTLY DELETE the last announcement or event."),
+		"PERMANENTLY DELETE the last announcement or event.",
 		recall,
 		true,
 	)

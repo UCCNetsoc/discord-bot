@@ -31,16 +31,20 @@ func ping(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate)
 
 // help command
 func help(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	out := "```"
+	emb := embed.NewEmbed()
+	emb.SetTitle("Netsoc Bot Commands")
+	description := ""
 	for k, v := range helpStrings {
-		out += k + ": " + v + "\n"
+		description += fmt.Sprintf("**`!%s`**: %s\n", k, v)
 	}
 	if isCommittee(s, m) {
+		description += "\n**Committee commands**:\n\n"
 		for k, v := range committeeHelpStrings {
-			out += k + ": " + v + "\n"
+			description += fmt.Sprintf("**`!%s`**: %s\n", k, v)
 		}
 	}
-	_, err := s.ChannelMessageSend(m.ChannelID, out+"```")
+	emb.SetDescription(description)
+	_, err := s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("Failed to send help message")
 		return
