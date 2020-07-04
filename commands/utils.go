@@ -17,8 +17,8 @@ var (
 )
 
 func isCommittee(s *discordgo.Session, m *discordgo.MessageCreate) bool {
-	if m.GuildID != "" && m.GuildID == (viper.Get("discord.servers").(*config.Servers).CommitteeServer) {
-		return true
+	if m.GuildID != "" {
+		return m.GuildID == (viper.Get("discord.servers").(*config.Servers).CommitteeServer)
 	}
 
 	var err error
