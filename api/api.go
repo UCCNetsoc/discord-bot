@@ -46,7 +46,7 @@ func (e *sortEvents) Swap(i, j int) {
 
 // Run the REST API
 func Run(s *discordgo.Session) {
-	cached = cache.New(5*time.Minute, time.Hour)
+	cached = cache.New(3*time.Minute, 3*time.Minute)
 	session = s
 
 	http.HandleFunc("/events", getEvents)
