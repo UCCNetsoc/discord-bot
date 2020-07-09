@@ -73,6 +73,15 @@ steps:
       branch:
         - master
 
+  - name: sourcegraph_lsif
+    image: sourcegraph/lsif-go
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    commands:
+      - lsif-go
+      - src lsif upload -github-token=$${GITHUB_TOKEN}        
+
   - name: discord_notif_success
     image: appleboy/drone-discord
     environment:
@@ -140,3 +149,10 @@ name: registry_pub_token
 get:
   path: docker_registry/harbor
   name: harbor_pub_token
+
+---
+kind: secret
+name: github_token
+get:
+  path: github/personal_access_tokens
+  name: public_repo_token
