@@ -55,6 +55,7 @@ func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
+	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
 	command("quote", "display a random quote from a netsoc member. Usage: *`!quote`* or *`!quote {@user,#channel}`*", quote, false)
 	command(
 		"event",
@@ -87,9 +88,6 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
-
-	// Add online command
-	helpStrings["online"] = "see how many people are online in minecraft.netsoc.co"
 
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
