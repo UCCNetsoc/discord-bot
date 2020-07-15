@@ -7,6 +7,8 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
+	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
 	twitterApi "github.com/ericm/go-twitter/twitter"
@@ -91,6 +93,7 @@ func Register(s *discordgo.Session) {
 	s.AddHandler(messageCreate)
 	s.AddHandler(messageReaction)
 	s.AddHandler(serverJoin)
+	s.AddHandler(memberLeave)
 }
 
 // Called whenever a message is sent in a server the bot has access to
@@ -110,6 +113,16 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 	}
+	servers := viper.Get("discord.servers").(*config.Servers)
+	publicServer, err := s.Guild(servers.PublicServer)
+	if err != nil {
+		log.WithError(err).Error("Failed to get Public Server guild")
+		return
+	}
+	if m.GuildID == publicServer.ID {
+		prometheus.MessageCreate()
+	}
+
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return
 	}
@@ -174,4 +187,8 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 			}
 		}
 	}
+}
+
+func memberLeave(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	prometheus.MemberLeave()
 }
