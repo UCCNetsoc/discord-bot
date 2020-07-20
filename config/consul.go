@@ -29,22 +29,14 @@ func ReadFromConsul() error {
 	if err != nil {
 		return fmt.Errorf("error creating watcher for 'discord.servers': %w", err)
 	}
-
 	err = createConsulWatcher("welcome_messages", "discord.welcome_messages")
 	if err != nil {
 		return fmt.Errorf("error creating watcher for 'discord.welcome_messages': %w", err)
 	}
-
 	err = createConsulWatcher("channels", "discord.channels")
 	if err != nil {
 		return fmt.Errorf("error creating watcher for 'discord.channels': %w", err)
 	}
-
-	err = createConsulWatcher("quote_blacklist", "discord.quote_blacklist")
-	if err != nil {
-		return fmt.Errorf("error creating watcher for 'discord.quote_blacklist': %w", err)
-	}
-
 	return nil
 }
 

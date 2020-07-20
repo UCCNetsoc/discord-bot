@@ -97,7 +97,6 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Author.Bot {
 		return
 	}
-
 	// Check if its a DM
 	if len(m.GuildID) == 0 {
 		ctx := context.WithValue(context.Background(), log.Key, log.Fields{
@@ -105,13 +104,11 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"channel_id": m.ChannelID,
 			"guild_id":   "DM",
 		})
-
 		if !isCommittee(s, m) {
 			dmCommands(ctx, s, m)
 			return
 		}
 	}
-
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return
 	}
@@ -121,9 +118,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	ctx := context.Background()
 	body := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix"))
-
 	commandStr := strings.Fields(body)[0]
-
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
@@ -133,9 +128,7 @@ func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"command":    commandStr,
 			"body":       body,
 		})
-
 		log.WithContext(ctx).Info("invoking standard command")
-
 		command(ctx, s, m)
 		return
 	}
