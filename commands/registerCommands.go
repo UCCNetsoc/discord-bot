@@ -7,19 +7,13 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/config"
-	"github.com/UCCNetsoc/discord-bot/ring"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
 	twitterApi "github.com/ericm/go-twitter/twitter"
-	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
 
 var (
-	cachedMessages *cache.Cache
-	globalSession  *discordgo.Session
-
 	// Twitter
 	twitterClient *twitterApi.Client
 )
@@ -51,12 +45,10 @@ func command(name string, helpMessage string, function commandFunc, committee bo
 
 // Register commands
 func Register(s *discordgo.Session) {
-	globalSession = s
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
 	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
-	//command("quote", "display a random quote from a netsoc member. Usage: *`!quote`* or *`!quote {@user,#channel}`*", quote, false)
 	command(
 		"event",
 		"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
@@ -185,57 +177,6 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 				}
 				log.Info(tweet.Text)
 				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
-			}
-		}
-	}
-}
-
-// CacheMessages initializes message caching
-func CacheMessages() {
-	s := globalSession
-	cachedMessages = cache.New(cache.NoExpiration, cache.NoExpiration)
-	servers := viper.Get("discord.servers").(*config.Servers)
-
-	allChannels, err := s.GuildChannels(servers.PublicServer)
-	if err != nil {
-		log.WithError(err).Error("Couldn't find public guild")
-		return
-	}
-
-	for _, channel := range allChannels {
-		if channel != nil {
-			perms, err := s.UserChannelPermissions(s.State.User.ID, channel.ID)
-			if err != nil {
-				log.WithError(err).Error("Error getting channel perms")
-				return
-			}
-			if channel.Type == discordgo.ChannelTypeGuildText &&
-				perms&discordgo.PermissionReadMessages > 0 {
-				discMessages, err := s.ChannelMessages(channel.ID, 100, "", "", "")
-				ringMessages := ring.Ring{}
-				ringMessages.Push(discMessages)
-				if err != nil {
-					log.WithError(err).Error("Error getting messages")
-					return
-				}
-				for _j := 0; _j < 10; _j++ {
-					last := ringMessages.GetLast()
-					if last != nil {
-						more, err := s.ChannelMessages(channel.ID, 100, last.ID, "", "")
-						if err != nil {
-							log.WithError(err).Error("Error getting more messages")
-							return
-						}
-						if len(more) == 0 {
-							break
-						}
-						ringMessages.Push(more)
-					} else {
-						break
-					}
-				}
-				cachedMessages.Set(channel.ID, &ringMessages, cache.NoExpiration)
-				log.Info(fmt.Sprintf("Cached %d messages for channel %s on startup", ringMessages.Len(), channel.Name))
 			}
 		}
 	}

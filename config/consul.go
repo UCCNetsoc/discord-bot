@@ -24,11 +24,8 @@ type Channels struct {
 }
 
 // ReadFromConsul sets up watchers for consul
-func ReadFromConsul(callback func()) error {
-	// Connect to consul
-	// Listen for consul updates
-
-	err := createConsulWatcher("servers", "discord.servers", callback)
+func ReadFromConsul() error {
+	err := createConsulWatcher("servers", "discord.servers")
 	if err != nil {
 		return fmt.Errorf("error creating watcher for 'discord.servers': %w", err)
 	}
