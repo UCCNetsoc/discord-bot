@@ -97,7 +97,6 @@ func Register(s *discordgo.Session) {
 
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	log.Info(fmt.Sprintf("%+v", m.Member))
 	if m.Author.Bot {
 		return
 	}
@@ -141,7 +140,6 @@ func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
-	log.Info("hi")
 	if m.UserID == s.State.User.ID {
 		return
 	}
