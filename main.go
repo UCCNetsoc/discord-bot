@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/UCCNetsoc/discord-bot/commands"
+
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/UCCNetsoc/discord-bot/status"
@@ -37,6 +39,7 @@ func main() {
 	exitError(err)
 	// Open websocket
 	err = session.Open()
+	commands.Register(session)
 	exitError(err)
 	exitError(config.ReadFromConsul())
 
