@@ -7,7 +7,6 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
@@ -98,6 +97,7 @@ func Register(s *discordgo.Session) {
 
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
+	log.Info(fmt.Sprintf("%+v", m.Member))
 	if m.Author.Bot {
 		return
 	}
@@ -113,15 +113,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 	}
-	servers := viper.Get("discord.servers").(*config.Servers)
-	publicServer, err := s.Guild(servers.PublicServer)
-	if err != nil {
-		log.WithError(err).Error("Failed to get Public Server guild")
-		return
-	}
-	if m.GuildID == publicServer.ID {
-		prometheus.MessageCreate()
-	}
+	prometheus.MessageCreate(m.GuildID, m.ChannelID)
 
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return
@@ -149,6 +141,7 @@ func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
+	log.Info("hi")
 	if m.UserID == s.State.User.ID {
 		return
 	}
@@ -190,5 +183,12 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 }
 
 func memberLeave(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
-	prometheus.MemberLeave()
+	prometheus.MemberLeave(m.User.ID)
+}
+
+func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
+	// Check if its not a DM
+	if len(m.GuildID) != 0 {
+		prometheus.MessageDelete(m.GuildID, m.ChannelID)
+	}
 }

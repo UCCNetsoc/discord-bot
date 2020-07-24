@@ -115,7 +115,7 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		SetDescription(fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering.", m.Author.Mention())).
 		MessageEmbed)
 
-	prometheus.MemberJoin()
+	prometheus.MemberJoin(m.Author.ID)
 
 	delete(registering, m.Author.ID)
 	delete(verifyCodes, m.Author.ID)

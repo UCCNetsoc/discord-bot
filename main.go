@@ -7,7 +7,6 @@ import (
 	"syscall"
 
 	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/commands"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/UCCNetsoc/discord-bot/status"
 
@@ -38,13 +37,12 @@ func main() {
 	exitError(err)
 	// Open websocket
 	err = session.Open()
-	commands.Register(session)
 	exitError(err)
 	exitError(config.ReadFromConsul())
 
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)
-	go prometheus.CreateExporter()
+	go prometheus.CreateExporter(session)
 
 	// Update the bot status periodically
 	go status.Status(session)
