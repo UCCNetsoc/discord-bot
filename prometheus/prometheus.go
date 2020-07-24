@@ -149,7 +149,7 @@ func MessageCreate(server string, channel string) {
 		return
 	}
 	messageCount.WithLabelValues(server, channel).Inc()
-	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", 1) ON DUPLICATE KEY UPDATE value = value + 1;")
+	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON DUPLICATE KEY UPDATE value = value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -167,7 +167,7 @@ func MessageDelete(server string, channel string) {
 	}
 
 	messageCount.WithLabelValues(server, channel).Dec()
-	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", 0) ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON DUPLICATE KEY UPDATE value = value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
