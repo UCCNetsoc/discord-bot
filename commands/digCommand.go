@@ -16,7 +16,8 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	args := strings.Fields(strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"dig"))
 
 	if len(args) < 2 {
-		s.ChannelMessageSend(m.ChannelID, "Missing arguments: TYPE DOMAIN <@RESOLVER>")
+		s.ChannelMessageSend(m.ChannelID, "Missing arguments: TYPE DOMAIN [@RESOLVER]")
+		return
 	}
 
 	domain := args[1] + "."
