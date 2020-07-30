@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Strum355/log"
 	"github.com/miekg/dns"
@@ -30,6 +31,10 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	var (
 		client dns.Client
 		msg    dns.Msg
+
+		resp *dns.Msg
+		time time.Duration
+		err  error
 	)
 
 	switch args[0] {
@@ -45,20 +50,48 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		msg.SetQuestion(domain, dns.TypeTXT)
 	}
 
-	resp, time, err := client.ExchangeContext(ctx, &msg, resolver+":53")
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Encountered error: %v", err))
-		return
-	}
+	func() {
+		defer func() {
+			if err != nil {
+				log.WithContext(ctx).
+					WithError(err).
+					WithFields(log.Fields{
+						"tcp":  client.Net == "tcp",
+						"time": time.String(),
+					}).
+					Error("error querying DNS record")
+			}
+		}()
 
-	if resp.Truncated {
-		client.Net = "tcp"
 		resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Encountered error: %v", err))
 			return
 		}
+
+		if resp.Truncated {
+			client.Net = "tcp"
+			resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Encountered error: %v", err))
+				return
+			}
+		}
+	}()
+
+	// return here because returns above are anon function scoped
+	if err != nil {
+		return
 	}
+
+	log.WithContext(ctx).
+		WithFields(log.Fields{
+			"responses": fmt.Sprintf("%#v", resp),
+			"tcp":       client.Net == "tcp",
+			"answers":   resp.Answer,
+			"time":      time.String(),
+		}).
+		Info("got DNS response")
 
 	var b strings.Builder
 	b.WriteString("```\n")
@@ -66,8 +99,6 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	if len(resp.Answer) == 0 {
 		b.WriteString("No results\n")
 	}
-
-	log.Info(fmt.Sprintf("%t", resp.Truncated))
 
 	for _, r := range resp.Answer {
 		b.WriteString(fmt.Sprintf("%s\t%d\t%s\t", domain, r.Header().Ttl, args[0]))
@@ -87,7 +118,7 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		}
 	}
 
-	b.WriteString(fmt.Sprintf("\nResponse time: %dms\n", time.Milliseconds()))
+	b.WriteString(fmt.Sprintf("\nResponse time: %s\n", time.String()))
 
 	b.WriteString("```")
 	s.ChannelMessageSend(m.ChannelID, b.String())
