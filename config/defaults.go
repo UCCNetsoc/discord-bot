@@ -31,4 +31,5 @@ func initDefaults() {
 	viper.SetDefault("api.announcement_query_limit", 20)
 	// Up sites
 	viper.SetDefault("netsoc.sites", "https://uccexpress.ie,https://netsoc.co,https://motley.ie,https://admin.netsoc.co,https://hlm.netsoc.co,https://uccnetsoc.netsoc.co,https://wiki.netsoc.co")
+	viper.SetDefault("minecraft.host", "games.vm.netsoc.co:1194")
 }

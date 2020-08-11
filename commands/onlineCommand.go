@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
+	"github.com/spf13/viper"
 )
 
 // https://wiki.vg/Server_List_Ping
@@ -70,7 +71,7 @@ func online(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 func Query() (Response, error) {
 	res := Response{}
 
-	conn, err := net.Dial("tcp", "minecraft.netsoc.co:1194")
+	conn, err := net.Dial("tcp", viper.GetString("minecraft.host"))
 	if err != nil {
 		return res, err
 	}
