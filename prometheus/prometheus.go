@@ -41,18 +41,13 @@ var (
 			"channel",
 		})
 	globalSession *discordgo.Session
+	globalDB      *sql.DB
 )
 
 // MemberJoin is called whenever a member joins the server
 // Increments memberCount and increments membersJoined if member hasn't joined in the past
 func MemberJoin(id string) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
-	result, err := db.Query("SELECT id FROM joined WHERE id = " + id)
+	result, err := globalDB.Query("SELECT id FROM joined WHERE id = " + id)
 	defer result.Close()
 	if err != nil {
 		log.WithError(err).Error("Failed to get joined")
@@ -60,12 +55,7 @@ func MemberJoin(id string) {
 	}
 	if !result.Next() {
 		membersJoined.Inc()
-		_, err = db.Exec("INSERT INTO stats VALUES('membersJoined', 1) ON DUPLICATE KEY UPDATE value = value + 1;")
-		if err != nil {
-			log.WithError(err).Error("Failed to update messageCount")
-			return
-		}
-		_, err = db.Exec("INSERT INTO joined VALUES(" + id + ")")
+		_, err = globalDB.Exec("INSERT INTO joined VALUES(" + id + ")")
 		if err != nil {
 			log.WithError(err).Error("Failed to add id to joined")
 			return
@@ -108,14 +98,8 @@ func MemberLeave(id string) {
 // EventCreate is called whenever an event is created
 // It increments eventCount
 func EventCreate() {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
 	eventCount.Dec()
-	_, err = db.Exec("INSERT INTO stats VALUES('eventCount', 1) ON DUPLICATE KEY UPDATE value = value + 1;")
+	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 1) ON DUPLICATE KEY UPDATE value = value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -125,14 +109,8 @@ func EventCreate() {
 // EventRevoke is called whenever an event is revoked
 // Decrements eventCount
 func EventRevoke() {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
 	eventCount.Dec()
-	_, err = db.Exec("INSERT INTO stats VALUES('eventCount', 0) ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 0) ON DUPLICATE KEY UPDATE value = value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -142,14 +120,8 @@ func EventRevoke() {
 // MessageCreate is called whenever a message is sent
 // Increments messageCount for the given server and channel
 func MessageCreate(server string, channel string) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
 	messageCount.WithLabelValues(server, channel).Inc()
-	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON DUPLICATE KEY UPDATE value = value + 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON DUPLICATE KEY UPDATE value = value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -159,15 +131,8 @@ func MessageCreate(server string, channel string) {
 // MessageDelete is called whenever a message is deleted
 // Decrements messageCount for the given server and channel
 func MessageDelete(server string, channel string) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
-
 	messageCount.WithLabelValues(server, channel).Dec()
-	_, err = db.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON DUPLICATE KEY UPDATE value = value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -175,23 +140,17 @@ func MessageDelete(server string, channel string) {
 }
 
 func createTables() {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
+	_, err := globalDB.Exec("CREATE TABLE IF NOT EXISTS stats(name VARCHAR(20) PRIMARY KEY, value INT);")
 	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
+		log.WithError(err).Error("Failed to create table stats")
 		return
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS stats(name VARCHAR(20) PRIMARY KEY, value INT);")
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to create table stats")
-		return
-	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS messageCount(server VARCHAR(20), channel VARCHAR(20), value INT, PRIMARY KEY (server, channel));")
+	_, err = globalDB.Exec("CREATE TABLE IF NOT EXISTS messageCount(server VARCHAR(20), channel VARCHAR(20), value INT, PRIMARY KEY (server, channel));")
 	if err != nil {
 		log.WithError(err).Error("Failed to create table messageCount")
 		return
 	}
-	_, err = db.Exec("CREATE TABLE IF NOT EXISTS joined(id VARCHAR(20));")
+	_, err = globalDB.Exec("CREATE TABLE IF NOT EXISTS joined(id VARCHAR(20));")
 	if err != nil {
 		log.WithError(err).Error("Failed to create table joined")
 		return
@@ -201,18 +160,13 @@ func createTables() {
 func setup(s *discordgo.Session) {
 	globalSession = s
 	createTables()
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@%s/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
-	defer db.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to connect to db")
-		return
-	}
 	servers := viper.Get("discord.servers").(*config.Servers)
 	publicServer, err := s.Guild(servers.PublicServer)
 	if err != nil {
 		log.WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
+	newMembers := []string{}
 	for _, member := range publicServer.Members {
 		found := false
 		for _, roleID := range strings.Split(viper.GetString("discord.roles"), ",") {
@@ -227,11 +181,28 @@ func setup(s *discordgo.Session) {
 			}
 		}
 		if found {
-			MemberJoin(member.User.ID)
+			result, err := globalDB.Query("SELECT id FROM joined WHERE id = " + member.User.ID)
+			defer result.Close()
+			if err != nil {
+				log.WithError(err).Error("Failed to get joined")
+				return
+			}
+			if !result.Next() {
+				newMembers = append(newMembers, member.User.ID)
+				membersJoined.Inc()
+			}
+			memberCount.Inc()
+		}
+	}
+	if len(newMembers) > 0 {
+		_, err = globalDB.Exec("INSERT INTO joined VALUES (" + strings.Join(newMembers, "), (") + ")")
+		if err != nil {
+			log.WithError(err).Error("Failed to add id to joined")
+			return
 		}
 	}
 
-	result, err := db.Query("SELECT COUNT(*) FROM joined")
+	result, err := globalDB.Query("SELECT COUNT(*) FROM joined")
 	defer result.Close()
 	if err != nil {
 		log.WithError(err).Error("Failed to get joined")
@@ -246,7 +217,7 @@ func setup(s *discordgo.Session) {
 		membersJoined.Set(value)
 	}
 
-	result, err = db.Query("SELECT value FROM stats WHERE name = 'eventCount'")
+	result, err = globalDB.Query("SELECT value FROM stats WHERE name = 'eventCount'")
 	defer result.Close()
 	if err != nil {
 		log.WithError(err).Error("Failed to get stats")
@@ -261,7 +232,7 @@ func setup(s *discordgo.Session) {
 		eventCount.Set(value)
 	}
 
-	result, err = db.Query("SELECT server, channel, value FROM messageCount")
+	result, err = globalDB.Query("SELECT server, channel, value FROM messageCount")
 	defer result.Close()
 	if err != nil {
 		log.WithError(err).Error("Failed to get message count")
@@ -283,6 +254,13 @@ func setup(s *discordgo.Session) {
 // CreateExporter should be called when bot is starting
 // to set up database tables and start the prometheus exporter http server
 func CreateExporter(s *discordgo.Session) {
+	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
+	if err != nil {
+		log.WithError(err).Error("Failed to connect to db")
+		return
+	}
+	defer db.Close()
+	globalDB = db
 	setup(s)
 	http.Handle("/metrics", promhttp.Handler())
 	http.ListenAndServe(":2112", nil)
