@@ -37,6 +37,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 		"user_id":  m.User.ID,
 		"guild_id": m.GuildID,
 	})
+	log.WithContext(ctx).Info(fmt.Sprintf("%s has joined the server", m.Member.User.Username))
 	servers := viper.Get("discord.servers").(*config.Servers)
 	publicServer, err := s.Guild(servers.PublicServer)
 	if err != nil {
