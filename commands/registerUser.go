@@ -31,6 +31,7 @@ type registeringState func(context.Context, *discordgo.Session, *discordgo.Messa
 // loops back to itself until the user supplies a valid umail email and the verification email sends successfully
 func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) registeringState {
 	content := strings.TrimSpace(m.Content)
+	log.WithContext(ctx).Info("Emailing user.")
 
 	if !umailRegex.MatchString(content) {
 		s.ChannelMessageSendEmbed(m.ChannelID, errorEmbed("Please use a valid UCC email address!"))
@@ -42,9 +43,14 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	response, err := emails.SendEmail(
 		"discord.registration@netsoc.co",
 		content,
-		"Netsoc Discord Verification",
-		"Please message the following token to the Netsoc Bot to gain access to the Discord Server:\n\n"+
-			randomCode+"\n\nIf you did not request access to the Netsoc Discord Server, ignore this message.")
+		"UCC Netsoc Discord Verification",
+		"Please message the following token to the Netsoc Bot to gain access to the UCC Netsoc Discord Server:\n\n"+
+			randomCode+"\n\nIf you did not request access to the UCC Netsoc Discord Server, ignore this message.",
+		emails.FillTemplate(
+			"Discord Verification",
+			"Please message the following token to the Netsoc Bot to gain access to the UCC Netosc Discord Server. If you did not request access to the UCC Netsoc Discord Server, ignore this message.",
+			randomCode),
+	)
 	if err != nil {
 		log.WithContext(ctx).
 			WithError(err).
