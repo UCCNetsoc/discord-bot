@@ -26,7 +26,7 @@ func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	registering[m.Author.ID] = initiatedRegistration
 
 	emb := embed.NewEmbed().
-		SetTitle("Netsoc Server Registration").
+		SetTitle("UCC Netsoc Server Registration").
 		SetDescription("Send me your UCC email address so we can verify you're a UCC student.").
 		SetFooter("Message your email in the form <Student ID>@umail.ucc.ie. A code will be sent to your email that you will then send here.")
 	s.ChannelMessageSendEmbed(channel.ID, emb.MessageEmbed)

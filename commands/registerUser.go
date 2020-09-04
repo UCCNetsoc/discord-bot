@@ -48,7 +48,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 			randomCode+"\n\nIf you did not request access to the UCC Netsoc Discord Server, ignore this message.",
 		emails.FillTemplate(
 			"Discord Verification",
-			"Please message the following token to the Netsoc Bot to gain access to the UCC Netosc Discord Server. If you did not request access to the UCC Netsoc Discord Server, ignore this message.",
+			"Please message the following token to the Netsoc Bot to gain access to the UCC Netosc Discord Server. <br />If you did not request access to the UCC Netsoc Discord Server, ignore this message.",
 			randomCode),
 	)
 	if err != nil {
@@ -63,7 +63,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	if response.StatusCode < 300 && response.StatusCode > 199 {
 		verifyCodes[m.Author.ID] = randomCode
 		s.ChannelMessageSendEmbed(m.ChannelID, embed.NewEmbed().
-			SetTitle("Server Registration").
+			SetTitle("UCC Netsoc Server Registration").
 			SetDescription("Please reply with the token that has been emailed to you.").
 			MessageEmbed)
 		return submittedEmail
