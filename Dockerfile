@@ -21,4 +21,6 @@ WORKDIR /bin
 
 COPY --from=dev /go/bin/discord-bot ./discord-bot
 
+EXPOSE 2112
+
 CMD [ "discord-bot", "-p" ]
