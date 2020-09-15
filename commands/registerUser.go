@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/UCCNetsoc/discord-bot/embed"
+	"github.com/UCCNetsoc/discord-bot/prometheus"
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
@@ -119,6 +120,8 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		SetTitle("Welcome").
 		SetDescription(fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering.", m.Author.Mention())).
 		MessageEmbed)
+
+	prometheus.MemberJoin(m.Author.ID)
 
 	delete(registering, m.Author.ID)
 	delete(verifyCodes, m.Author.ID)

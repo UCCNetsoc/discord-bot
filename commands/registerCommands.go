@@ -7,6 +7,7 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
+	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
 	twitterApi "github.com/ericm/go-twitter/twitter"
@@ -91,6 +92,7 @@ func Register(s *discordgo.Session) {
 	s.AddHandler(messageCreate)
 	s.AddHandler(messageReaction)
 	s.AddHandler(serverJoin)
+	s.AddHandler(memberLeave)
 }
 
 // Called whenever a message is sent in a server the bot has access to
@@ -110,6 +112,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 	}
+	prometheus.MessageCreate(m.GuildID, m.ChannelID)
+
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return
 	}
@@ -173,5 +177,16 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
 			}
 		}
+	}
+}
+
+func memberLeave(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
+	prometheus.MemberLeave(m.User.ID)
+}
+
+func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
+	// Check if its not a DM
+	if len(m.GuildID) != 0 {
+		prometheus.MessageDelete(m.GuildID, m.ChannelID)
 	}
 }

@@ -1,5 +1,5 @@
 # Netsoc Discord Bot
-[![](https://ci.netsoc.co/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot/)
+[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
 
 The UCC Netsoc discord bot has the following features:
   - Allows UCC students to automatically register as a member for the public Discord Server
