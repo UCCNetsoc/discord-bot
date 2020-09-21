@@ -42,7 +42,6 @@ func main() {
 	err = session.Open()
 	commands.Register(session)
 	exitError(err)
-	exitError(config.ReadFromConsul())
 
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)

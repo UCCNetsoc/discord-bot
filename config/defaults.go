@@ -9,10 +9,18 @@ func initDefaults() {
 	// Discord
 	viper.SetDefault("discord.token", "") // GitHub scrapers be like -.-
 	viper.SetDefault("discord.servers", &Servers{})
+	viper.SetDefault("discord.channels", &Channels{})
+
+	viper.SetDefault("discord.public.server", "")
+	viper.SetDefault("discord.public.channel", "")
+	viper.SetDefault("discord.public.welcome", "")
+	viper.SetDefault("discord.committee.server", "")
+	viper.SetDefault("discord.committee.channel", "")
+
 	viper.SetDefault("discord.welcome_messages", &[]string{})
+
 	viper.SetDefault("discord.roles", "")
 	viper.SetDefault("discord.autoregister", true)
-	viper.SetDefault("discord.channels", &Channels{})
 	viper.SetDefault("discord.charlimit", 280) // Limit for event description
 	viper.SetDefault("discord.quote_blacklist", &[]string{})
 	// Consul
@@ -36,7 +44,7 @@ func initDefaults() {
 	viper.SetDefault("prom.port", 2112)
 	viper.SetDefault("prom.dbname", "promexporter")
 	// Database
-	viper.SetDefault("mysql.url", "")
-	viper.SetDefault("mysql.username", "")
-	viper.SetDefault("mysql.password", "")
+	viper.SetDefault("mysql.url", "mysql.netsoc.local:3306")
+	viper.SetDefault("mysql.username", "root")
+	viper.SetDefault("mysql.password", "password")
 }

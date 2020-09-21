@@ -11,6 +11,16 @@ cd $1
 if [ ! -f "./discord-bot/docker-compose.override.yml" ]; then
     echo "Discord Bot Token from https://discord.com/developers/applications:" 
     read DISCORD
+    echo "Public Server ID (Turn on Discord Developer Mode and right click to get ID):"
+    read PUBLIC_SERVER
+    echo "Committee Server ID:"
+    read COMMITTEE_SERVER
+    echo "Public Announcements Channel ID:"
+    read PUBLIC_CHANNEL
+    echo "Private Events Channel ID:"
+    read COMMITTEE_CHANNEL
+    echo "Welcome Messages (comma delimited, username as %s):"
+    read WELCOME_MESSAGES
     echo "Sendgrid Token (optional, press enter if none)"
     read SENDGRID
 
@@ -19,16 +29,15 @@ services:
   discord-bot:
     environment:
       - DISCORD_TOKEN=${DISCORD}
+      - DISCORD_PUBLIC_SERVER=${PUBLIC_SERVER}
+      - DISCORD_PUBLIC_CHANNEL=${PUBLIC_CHANNEL}
+      - DISCORD_COMMITTEE_SERVER=${COMMITTEE_SERVER}
+      - DISCORD_COMMITTEE_CHANNEL=${COMMITTEE_CHANNEL}
+      - DISCORD_PUBLIC_WELCOME=${WELCOME_MESSAGES}
       - SENDGRID_TOKEN=${SENDGRID}
     volumes:
       - ${WD}:/bot
 " > ./discord-bot/docker-compose.override.yml
-
-    echo " Go to consul at http://localhost:8500 and set the following K/Vs in \`discordbot/\`:
-   - \`channels\`: \`{\"public_announcements\": \"id\", \"private_events\": \"id\"}\`
-   - \`servers\`: \`{\"public\": \"id\", \"committee\": \"id\"}\`
-   - \`welcome_messages\`: \`[\"Hi %s, whats up\", \"Yo %s\"]\`
-   "
 fi
 
 bash -c "./dev-env up discord-bot"
