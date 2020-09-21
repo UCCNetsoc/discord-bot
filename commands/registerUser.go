@@ -44,6 +44,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	response, err := emails.SendEmail(
 		"UCC Netsoc",
 		"discord.registration@netsoc.co",
+		m.Author.Username,
 		content,
 		"UCC Netsoc Discord Verification",
 		"Please message the following token to the Netsoc Bot to gain access to the UCC Netsoc Discord Server:\n\n"+
