@@ -62,7 +62,7 @@ func serverJoin(s *discordgo.Session, m *discordgo.GuildMemberAdd) {
 			emb := embed.NewEmbed().SetTitle("Welcome!").SetDescription(fmt.Sprintf(messages[i], m.Member.Mention()))
 			// s.ChannelMessageSend(welcomeID, fmt.Sprintf(messages[i], m.Member.Mention()))
 			if viper.GetBool("discord.autoregister") {
-				emb.SetFooter("We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
+				emb.SetFooter("We've sent you a DM so you can register for full access to the server!\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!\n*If you don't receive the email right away, remember it can take up to 5 minutes to go through. If you still haven' received it, check your spam folder ;)*")
 			} else {
 				emb.SetFooter("Please type `!register` to start the verification process to make sure you're a UCC student.\nIf you're a student in another college simply let us know here and we will be able to assign you a role manually!")
 			}

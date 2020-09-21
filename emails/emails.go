@@ -8,10 +8,11 @@ import (
 )
 
 // SendEmail to end user.
-func SendEmail(from, to, subject, content, htmlContent string) (*rest.Response, error) {
-	fromAddress := mail.NewEmail(from, from)
+func SendEmail(fromName, from, to, subject, content, htmlContent string) (*rest.Response, error) {
+	fromAddress := mail.NewEmail(fromName, from)
 	toAddress := mail.NewEmail(to, to)
 	message := mail.NewSingleEmail(fromAddress, subject, toAddress, content, htmlContent)
+	message.SetReplyTo(fromAddress)
 	client := sendgrid.NewSendClient(viper.GetString("sendgrid.token"))
 	response, err := client.Send(message)
 	return response, err

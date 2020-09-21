@@ -112,7 +112,7 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			return
 		}
 	}
-	prometheus.MessageCreate(m.GuildID, m.ChannelID)
+	go prometheus.MessageCreate(m.GuildID, m.ChannelID)
 
 	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
 		return

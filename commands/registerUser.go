@@ -42,6 +42,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	rand.Seed(time.Now().UnixNano())
 	randomCode := petname.Generate(3, "-")
 	response, err := emails.SendEmail(
+		"UCC Netsoc",
 		"discord.registration@netsoc.co",
 		content,
 		"UCC Netsoc Discord Verification",
