@@ -7,12 +7,13 @@ fi
 
 WD=`pwd`
 cd $1
-echo "Discord Bot Token from https://discord.com/developers/applications:" 
-read DISCORD
-echo "Sendgrid Token (optional, press enter if none)"
-read SENDGRID
 
 if [ ! -f "./discord-bot/docker-compose.override.yml" ]; then
+    echo "Discord Bot Token from https://discord.com/developers/applications:" 
+    read DISCORD
+    echo "Sendgrid Token (optional, press enter if none)"
+    read SENDGRID
+
 	echo "version: \"3.7\" 
 services:
   discord-bot:
@@ -22,6 +23,12 @@ services:
     volumes:
       - ${WD}:/bot
 " > ./discord-bot/docker-compose.override.yml
+
+    echo " Go to consul at http://localhost:8500 and set the following K/Vs in \`discordbot/\`:
+   - \`channels\`: \`{\"public_announcements\": \"id\", \"private_events\": \"id\"}\`
+   - \`servers\`: \`{\"public\": \"id\", \"committee\": \"id\"}\`
+   - \`welcome_messages\`: \`[\"Hi %s, whats up\", \"Yo %s\"]\`
+   "
 fi
 
 bash -c "./dev-env up discord-bot"
