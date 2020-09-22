@@ -17,6 +17,8 @@ if [ ! -f "./discord-bot/docker-compose.override.yml" ]; then
     read COMMITTEE_SERVER
     echo "Public Announcements Channel ID:"
     read PUBLIC_CHANNEL
+    echo "Public General Channel ID:"
+    read PUBLIC_GENERAL
     echo "Private Events Channel ID:"
     read COMMITTEE_CHANNEL
     echo "Welcome Messages (comma delimited, username as %s):"
@@ -31,6 +33,7 @@ services:
       - DISCORD_TOKEN=${DISCORD}
       - DISCORD_PUBLIC_SERVER=${PUBLIC_SERVER}
       - DISCORD_PUBLIC_CHANNEL=${PUBLIC_CHANNEL}
+      - DISCORD_PUBLIC_GENERAL=${PUBLIC_GENERAL}
       - DISCORD_COMMITTEE_SERVER=${COMMITTEE_SERVER}
       - DISCORD_COMMITTEE_CHANNEL=${COMMITTEE_CHANNEL}
       - DISCORD_PUBLIC_WELCOME=${WELCOME_MESSAGES}

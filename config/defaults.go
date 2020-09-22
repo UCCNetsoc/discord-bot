@@ -13,6 +13,7 @@ func initDefaults() {
 
 	viper.SetDefault("discord.public.server", "")
 	viper.SetDefault("discord.public.channel", "")
+	viper.SetDefault("discord.public.general", "")
 	viper.SetDefault("discord.public.welcome", "")
 	viper.SetDefault("discord.committee.server", "")
 	viper.SetDefault("discord.committee.channel", "")
