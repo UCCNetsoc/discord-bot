@@ -31,7 +31,7 @@ func InitConfig() error {
 		&Servers{PublicServer: viper.GetString("discord.public.server"), CommitteeServer: viper.GetString("discord.committee.server")},
 	)
 	viper.Set(
-		"discord.chanels",
+		"discord.channels",
 		&Channels{PublicAnnouncements: viper.GetString("discord.public.channel"), PrivateEvents: viper.GetString("discord.committee.channel"), PublicGeneral: viper.GetString("discord.public.general")},
 	)
 	welcomeMessages := []string{}
