@@ -1,6 +1,6 @@
 # Netsoc Discord Bot
 
-[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
+[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.dev/UCCNetsoc/discord-bot)
 
 The UCC Netsoc discord bot has the following features:
 
