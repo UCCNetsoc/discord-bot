@@ -120,10 +120,15 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	callCommand(s, m)
 }
 
+func extractCommand(c string) (commandStr string, body string) {
+	body = strings.TrimPrefix(c, viper.GetString("bot.prefix"))
+	commandStr = strings.Fields(body)[0]
+	return
+}
+
 func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	ctx := context.Background()
-	body := strings.TrimPrefix(m.Content, viper.GetString("bot.prefix"))
-	commandStr := strings.Fields(body)[0]
+	commandStr, body := extractCommand(m.Content)
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{

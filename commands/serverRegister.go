@@ -13,9 +13,6 @@ import (
 )
 
 func serverRegister(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	if _, ok := registering[m.Author.ID]; ok {
-		return
-	}
 	channel, err := s.UserChannelCreate(m.Author.ID)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to create DM channel")

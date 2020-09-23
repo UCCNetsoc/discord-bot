@@ -10,7 +10,9 @@ import (
 // process of registering, they cannot execute any other commands that they may normally
 // be able to invoke, and must complete the registering flow first
 func dmCommands(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	if state, ok := registering[m.Author.ID]; ok {
+	if commandStr, _ := extractCommand(m.Content); commandStr == "register" {
+		delete(registering, m.Author.ID)
+	} else if state, ok := registering[m.Author.ID]; ok {
 		state = state(ctx, s, m)
 		if state != nil {
 			registering[m.Author.ID] = state

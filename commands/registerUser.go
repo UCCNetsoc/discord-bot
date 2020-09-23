@@ -67,7 +67,7 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 		verifyCodes[m.Author.ID] = randomCode
 		s.ChannelMessageSendEmbed(m.ChannelID, embed.NewEmbed().
 			SetTitle("UCC Netsoc Server Registration").
-			SetDescription("Please reply with the token that has been emailed to you.").
+			SetDescription("Please reply with the token that has been emailed to you. If you wish to enter another email, type `!register`.").
 			MessageEmbed)
 		return submittedEmail
 	}
