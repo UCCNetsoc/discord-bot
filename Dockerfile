@@ -1,3 +1,4 @@
+ARG VERSION
 FROM golang:1.14-alpine AS dev
 
 WORKDIR /bot
@@ -18,6 +19,8 @@ CMD [ "go", "run", "*.go" ]
 FROM alpine
 
 WORKDIR /bin
+
+ENV BOT_VERSION=${VERSION}
 
 COPY --from=dev /go/bin/discord-bot ./discord-bot
 
