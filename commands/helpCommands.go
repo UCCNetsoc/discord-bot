@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/UCCNetsoc/discord-bot/embed"
+	"github.com/spf13/viper"
 
 	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
@@ -13,8 +14,7 @@ import (
 const layoutIE = "02/01/06"
 
 func ping(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	_, err := s.ChannelMessageSend(m.ChannelID, "pong")
-	if err != nil {
+	if _, err := s.ChannelMessageSend(m.ChannelID, "pong"); err != nil {
 		log.WithContext(ctx).WithError(err).Error("Failed to send pong message")
 		return
 	}
@@ -38,5 +38,11 @@ func help(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("Failed to send help message")
 		return
+	}
+}
+
+func version(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	if _, err := s.ChannelMessageSend(m.ChannelID, viper.GetString("bot.version")); err != nil {
+		log.WithContext(ctx).WithError(err).Error("Failed to send version message")
 	}
 }

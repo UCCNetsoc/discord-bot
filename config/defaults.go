@@ -6,6 +6,7 @@ func initDefaults() {
 	// Bot
 	viper.SetDefault("bot.prefix", "!")
 	viper.SetDefault("bot.quote.default_message_weight", 1)
+	viper.SetDefault("bot.version", "development")
 	// Discord
 	viper.SetDefault("discord.token", "") // GitHub scrapers be like -.-
 	viper.SetDefault("discord.servers", &Servers{})
@@ -24,9 +25,7 @@ func initDefaults() {
 	viper.SetDefault("discord.autoregister", true)
 	viper.SetDefault("discord.charlimit", 280) // Limit for event description
 	viper.SetDefault("discord.quote_blacklist", &[]string{})
-	// Consul
-	viper.SetDefault("consul.address", "consul:8500")
-	viper.SetDefault("consul.token", "")
+
 	// Sendgrid
 	viper.SetDefault("sendgrid.token", "")
 	// Twitter

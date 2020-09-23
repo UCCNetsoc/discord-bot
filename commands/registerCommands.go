@@ -48,6 +48,7 @@ func command(name string, helpMessage string, function commandFunc, committee bo
 func Register(s *discordgo.Session) {
 	command("ping", "pong!", ping, false)
 	command("help", "displays this message", help, false)
+	command("version", "commit hash for the running bot version", version, false)
 	command("register", "registers you as a member of the server", serverRegister, false)
 	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
 	command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand, false)

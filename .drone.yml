@@ -63,6 +63,8 @@ steps:
       repo: uccnetsoc/discord-bot
       registry: docker.io
       custom_dns: [1.1.1.1]
+      environment:
+        BOT_VERSION: "${DRONE_COMMIT_SHA:0:7}"
       username:
         from_secret: docker_hub_user
       password:
@@ -80,7 +82,7 @@ steps:
         from_secret: github_token
     commands:
       - lsif-go
-      - src lsif upload -github-token=$${GITHUB_TOKEN}        
+      - src lsif upload -github-token=$${GITHUB_TOKEN}
 
   - name: discord_notif_success
     image: appleboy/drone-discord
@@ -156,4 +158,3 @@ name: github_token
 get:
   path: github/personal_access_tokens
   name: public_repo_token
-
