@@ -1,4 +1,3 @@
-ARG VER
 FROM golang:1.14-alpine AS dev
 
 WORKDIR /bot
