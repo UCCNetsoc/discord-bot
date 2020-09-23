@@ -1,6 +1,6 @@
 # Netsoc Discord Bot
 
-[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
+[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.dev/UCCNetsoc/discord-bot)
 
 The UCC Netsoc discord bot has the following features:
 
@@ -27,8 +27,3 @@ For that reason we decided to reimplement the bot with the ability to watch/read
 1. Ensure to clone this repo and the Netsoc [dev-env](https://github.com/UCCNetsoc/dev-env).
 
 1. In this repo, run `./start-dev.sh /path/to/dev-env` and follow the on screen prompts
-
-1. Go to consul at http://localhost:8500 and set the following K/Vs:
-   - `discordbot/channels`: `{"public_announcements": "id", "private_events": "id"}`
-   - `discordbot/servers`: `{"public": "id", "committee": "id"}`
-   - `discordbot/welcome_messages`: `["Hi %s, whats up?", "Yo %s"]`
