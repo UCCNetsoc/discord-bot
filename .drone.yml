@@ -63,8 +63,6 @@ steps:
       repo: uccnetsoc/discord-bot
       registry: docker.io
       custom_dns: [1.1.1.1]
-      environment:
-        BOT_VERSION: "${DRONE_COMMIT_SHA:0:7}"
       username:
         from_secret: docker_hub_user
       password:
