@@ -87,11 +87,18 @@ func Query() (Response, error) {
 	// Request - https://wiki.vg/Server_List_Ping#Request
 	_, err = conn.Write([]byte{0x01, 0x00})
 
+	if err != nil {
+		return res, err
+	}
+
 	// Calculate VarInt length of packet
 	var buf bytes.Buffer
 	pktLen := int64(0)
 	for shift := int64(0); ; shift++ {
-		io.CopyN(&buf, conn, 1)
+		_, err := io.CopyN(&buf, conn, 1)
+		if err != nil {
+			return res, err
+		}
 		val := int64(buf.Next(1)[0])
 		pktLen = (val << (shift * 7)) | pktLen
 		if val>>7 == 0 {
@@ -100,7 +107,10 @@ func Query() (Response, error) {
 	}
 
 	// Server response - https://wiki.vg/Server_List_Ping#Response
-	io.CopyN(&buf, conn, pktLen)
+	_, err = io.CopyN(&buf, conn, pktLen)
+	if err != nil {
+		return res, err
+	}
 
 	// Packet starts with two VarInts; Packet ID and Data Length
 	// https://wiki.vg/Protocol#VarInt_and_VarLong
