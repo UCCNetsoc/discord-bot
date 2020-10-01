@@ -15,6 +15,8 @@ import (
 	"github.com/spf13/viper"
 )
 
+const publicMessageCutoff = 10
+
 type returnEvent struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -32,16 +34,14 @@ var (
 	session *discordgo.Session
 )
 
-type sortEvents struct {
-	events []*Event
-}
+type sortEvents []*Event
 
-func (e sortEvents) Len() int           { return len(e.events) }
-func (e sortEvents) Less(i, j int) bool { return e.events[i].Date.Unix() < e.events[j].Date.Unix() }
+func (e sortEvents) Len() int           { return len(e) }
+func (e sortEvents) Less(i, j int) bool { return e[i].Date.Unix() < e[j].Date.Unix() }
 func (e *sortEvents) Swap(i, j int) {
-	temp := e.events[i]
-	e.events[i] = e.events[j]
-	e.events[j] = temp
+	temp := (*e)[i]
+	(*e)[i] = (*e)[j]
+	(*e)[j] = temp
 }
 
 // Run the REST API
@@ -103,7 +103,8 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 			events = append(events, event)
 		}
 	}
-	sort.Sort(&sortEvents{events})
+	sortE := sortEvents(events)
+	sort.Sort(&sortE)
 	if len(events) > amount {
 		events = events[:amount]
 	}
@@ -127,6 +128,16 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
+type sortAnnouncements []*Announcement
+
+func (a sortAnnouncements) Len() int           { return len(a) }
+func (a sortAnnouncements) Less(i, j int) bool { return a[i].Date.Unix() > a[j].Date.Unix() }
+func (a *sortAnnouncements) Swap(i, j int) {
+	temp := (*a)[i]
+	(*a)[i] = (*a)[j]
+	(*a)[j] = temp
+}
+
 func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	limit := viper.GetInt("api.announcement_query_limit")
@@ -145,34 +156,69 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var announcemenents []*Announcement
+	var announcements []*Announcement
 	cachedAnnouncements, found := cached.Get("announcements")
 	if found {
-		announcemenents = cachedAnnouncements.([]*Announcement)
+		announcements = cachedAnnouncements.([]*Announcement)
 	} else {
-		announcemenents = []*Announcement{}
-		channelID := viper.Get("discord.channels").(*config.Channels).PrivateEvents
-		liveAnnounce, err := session.ChannelMessages(channelID, 100, "", "", "")
+		announcements = []*Announcement{}
+		privateChannelID := viper.Get("discord.channels").(*config.Channels).PrivateEvents
+		privateAnnounce, err := session.ChannelMessages(privateChannelID, 100, "", "", "")
 		if err != nil {
-			log.WithError(err).Error("Error querying events for api")
+			log.WithError(err).Error("Error querying bot_events for api")
 			return
 		}
-		for _, event := range liveAnnounce {
+		publiChannelID := viper.Get("discord.channels").(*config.Channels).PublicAnnouncements
+		publicAnnounce, err := session.ChannelMessages(publiChannelID, 100, "", "", "")
+		if err != nil {
+			log.WithError(err).Error("Error querying announcements for api")
+			return
+		}
+		// Get messages from private command channel
+		for _, event := range privateAnnounce {
 			parsed, err := ParseAnnouncement(&discordgo.MessageCreate{Message: event}, "")
 			if err == nil {
 				// Message successfully parsed as an event.
-				announcemenents = append(announcemenents, parsed)
+				announcements = append(announcements, parsed)
 			}
 		}
-		cached.Set("announcements", announcemenents, cache.DefaultExpiration)
+		// Get other messages from public announcements.
+		for _, message := range publicAnnounce {
+			if message.Author.ID != session.State.User.ID && len(message.Content) > publicMessageCutoff {
+				date, err := message.Timestamp.Parse()
+				if err != nil {
+					log.WithError(err).Error("Message time parse fail")
+					return
+				}
+				img, err := parseImage(message)
+				if err != nil {
+					log.WithError(err).Error("Message image parse fail")
+					return
+				}
+				content, err := message.ContentWithMoreMentionsReplaced(session)
+				if err != nil {
+					log.WithError(err).Error("Message mentions replace fail")
+					return
+				}
+				announcement := &Announcement{
+					Date:    date,
+					Content: content,
+					Image:   img,
+				}
+				announcements = append(announcements, announcement)
+			}
+		}
+		sortA := sortAnnouncements(announcements)
+		sort.Sort(&sortA)
+		cached.Set("announcements", announcements, cache.DefaultExpiration)
 	}
-	if len(announcemenents) > amount {
-		announcemenents = announcemenents[:amount]
+	if len(announcements) > amount {
+		announcements = announcements[:amount]
 	}
 	w.Header().Set("content-type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	returnAnnouncements := []returnAnnouncement{}
-	for _, ann := range announcemenents {
+	for _, ann := range announcements {
 		announce := returnAnnouncement{
 			Date:    ann.Date.Unix(),
 			Content: ann.Content,

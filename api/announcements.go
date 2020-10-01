@@ -1,10 +1,7 @@
 package api
 
 import (
-	"bytes"
 	"fmt"
-	"io/ioutil"
-	"net/http"
 	"strings"
 	"time"
 
@@ -33,38 +30,17 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 	if len(content) == 0 {
 		return nil, fmt.Errorf("Error parsing command\n```%s```", help)
 	}
-	var (
-		image       *http.Response
-		err         error
-		imageHeader *http.Header
-		imageURL    string
-		imageBody   *bytes.Buffer
-	)
-	if len(m.Attachments) > 0 && m.Attachments[0].Width > 0 {
-		image, err = http.Get(m.Attachments[0].URL)
-		if err != nil {
-			return nil, fmt.Errorf("Error parsing image: %w", err)
-		}
-		imageHeader = &image.Header
-		imageURL = image.Request.URL.String()
-		imageRead, err := ioutil.ReadAll(image.Body)
-		if err != nil {
-			return nil, err
-		}
-		imageBody = bytes.NewBuffer(imageRead)
-		defer image.Body.Close()
-	}
 	date, err := m.Timestamp.Parse()
 	if err != nil {
 		return nil, fmt.Errorf("Error coverting date: %w", err)
 	}
+	img, err := parseImage(m.Message)
+	if err != nil {
+		return nil, err
+	}
 	return &Announcement{
 		Date:    date,
 		Content: content,
-		Image: &Image{
-			ImgData:   imageBody,
-			ImgURL:    imageURL,
-			ImgHeader: imageHeader,
-		},
+		Image:   img,
 	}, nil
 }
