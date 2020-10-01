@@ -24,7 +24,18 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 }
 
 func addEventWebsite(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	// api is passively updated so nothing is required to be done
+	channels := viper.Get("discord.channels").(*config.Channels)
+	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {
+		_, err := api.ParseEvent(m, committeeHelpStrings["event"])
+		if err != nil {
+			log.WithContext(ctx).WithError(err).Error("failed to parse event")
+			s.ChannelMessageSend(m.ChannelID, "Failed to parse event: "+err.Error())
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Event successfully posted to website! (Depending on cache may take a few minutes)")
+	} else {
+		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
+	}
 }
 
 func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
