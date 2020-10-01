@@ -13,12 +13,14 @@ import (
 )
 
 func members(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	args := strings.Fields(strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"members"))
+	args := strings.Fields(strings.TrimPrefix(strings.TrimSpace(m.Content), viper.GetString("bot.prefix")+"members"))
+	if len(args) < 1 {
+		s.ChannelMessageSend(m.ChannelID, "Please provide a role id (right-click a role to copy the id)")
+		return
+	}
 
 	servers := viper.Get("discord.servers").(*config.Servers)
-	// publicServer, err := s.Guild(servers.PublicServer)
 
-	var num int
 	role, err := s.State.Role(servers.PublicServer, args[0])
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to get role by ID")
@@ -37,6 +39,7 @@ func members(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCrea
 		return
 	}
 
+	var num int
 	for _, member := range members {
 		for _, roleID := range member.Roles {
 			if role.ID == roleID {
@@ -44,6 +47,5 @@ func members(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCrea
 			}
 		}
 	}
-
 	s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Number of members in %s is %d", role.Name, num))
 }
