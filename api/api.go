@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Strum355/log"
@@ -14,8 +15,6 @@ import (
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
-
-const publicMessageCutoff = 10
 
 type returnEvent struct {
 	Title       string `json:"title"`
@@ -184,7 +183,7 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		}
 		// Get other messages from public announcements.
 		for _, message := range publicAnnounce {
-			if message.Author.ID != session.State.User.ID && len(message.Content) > publicMessageCutoff {
+			if message.Author.ID != session.State.User.ID && len(message.Content) > viper.GetInt("api.public_message_cutoff") {
 				date, err := message.Timestamp.Parse()
 				if err != nil {
 					log.WithError(err).Error("Message time parse fail")
@@ -196,6 +195,10 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				content, err := message.ContentWithMoreMentionsReplaced(session)
+				for _, symbol := range viper.GetStringSlice("api.remove_symbols") {
+					content = strings.ReplaceAll(content, symbol, "")
+				}
+				content = strings.TrimSpace(content)
 				if err != nil {
 					log.WithError(err).Error("Message mentions replace fail")
 					return

@@ -37,6 +37,8 @@ func initDefaults() {
 	viper.SetDefault("api.port", 80)
 	viper.SetDefault("api.event_query_limit", 20)
 	viper.SetDefault("api.announcement_query_limit", 20)
+	viper.SetDefault("api.public_message_cutoff", 10)
+	viper.SetDefault("api.remove_symbols", []string{"@everyone", "@here"})
 	// Up sites
 	viper.SetDefault("netsoc.sites", "https://uccexpress.ie,https://netsoc.co,https://motley.ie,https://admin.netsoc.co,https://hlm.netsoc.co,https://uccnetsoc.netsoc.co,https://wiki.netsoc.co")
 	viper.SetDefault("minecraft.host", "games.vm.netsoc.co:1194")
