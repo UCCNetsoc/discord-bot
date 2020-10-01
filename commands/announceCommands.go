@@ -23,6 +23,10 @@ func addEventSilent(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	event(ctx, s, m, "everyone")
 }
 
+func addEventWebsite(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	// api is passively updated so nothing is required to be done
+}
+
 func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
 	channels := viper.Get("discord.channels").(*config.Channels)
 	if isCommittee(s, m) && m.ChannelID == channels.PrivateEvents {

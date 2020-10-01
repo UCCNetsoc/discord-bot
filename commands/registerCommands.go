@@ -66,6 +66,12 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 	command(
+		"wevent",
+		"same as *`!event`* but only posts to the website, not #announcements",
+		addEventWebsite,
+		true,
+	)
+	command(
 		"announce",
 		"send a message in the format *`!announce TEXT`*",
 		addAnnouncement,
