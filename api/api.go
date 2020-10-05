@@ -98,7 +98,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	copy(allEvents, events)
 	events = []*Event{}
 	for _, event := range allEvents {
-		if event.Date.Unix() > time.Now().AddDate(0, 0, 1).Unix() {
+		if event.Date.Unix() > time.Now().AddDate(0, 0, 0).Unix() {
 			events = append(events, event)
 		}
 	}
