@@ -32,7 +32,7 @@ func ParseAnnouncement(m *discordgo.MessageCreate, help string) (*Announcement, 
 	}
 	date, err := m.Timestamp.Parse()
 	if err != nil {
-		return nil, fmt.Errorf("Error coverting date: %w", err)
+		return nil, fmt.Errorf("Error converting date: %w", err)
 	}
 	img, err := parseImage(m.Message)
 	if err != nil {
