@@ -27,6 +27,9 @@ type returnAnnouncement struct {
 	Content  string `json:"content"`
 	ImageURL string `json:"image_url"`
 }
+type returnMembers struct {
+	Count int `json:"count"`
+}
 
 var (
 	cached  *cache.Cache
@@ -50,6 +53,7 @@ func Run(s *discordgo.Session) {
 
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
+	http.HandleFunc("/getMembers", getMembers)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("api.port")), nil)
 }
@@ -239,4 +243,35 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write(b)
 
+}
+
+func getMembers(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	limit := viper.GetInt("api.event_query_limit")
+	servers := viper.Get("discord.servers").(*config.Servers)
+	queryAmount, exists := query["q"]
+	if !exists || len(query) == 0 {
+		http.Error(w, "Please add the parameter 'q'", 403)
+		return
+	}
+	amount, err := strconv.Atoi(queryAmount[0])
+	if err != nil {
+		http.Error(w, "Please provide an int as 'q's value", 403)
+		return
+	}
+	if amount > limit {
+		http.Error(w, "Query amount exceeds the query limit", 403)
+		return
+	}
+
+	members, err := session.GuildMembers(servers.PublicServer, "", 1000)
+	if err != nil {
+		log.WithError(err).Error("Failed to get members")
+		return
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	json.NewEncoder(w).Encode(returnMembers{Count: len(members)})
 }
