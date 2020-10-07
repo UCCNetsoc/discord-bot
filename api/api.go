@@ -246,27 +246,11 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 }
 
 func getMembers(w http.ResponseWriter, r *http.Request) {
-	query := r.URL.Query()
-	limit := viper.GetInt("api.event_query_limit")
 	servers := viper.Get("discord.servers").(*config.Servers)
-	queryAmount, exists := query["q"]
-	if !exists || len(query) == 0 {
-		http.Error(w, "Please add the parameter 'q'", 403)
-		return
-	}
-	amount, err := strconv.Atoi(queryAmount[0])
-	if err != nil {
-		http.Error(w, "Please provide an int as 'q's value", 403)
-		return
-	}
-	if amount > limit {
-		http.Error(w, "Query amount exceeds the query limit", 403)
-		return
-	}
-
 	members, err := session.GuildMembers(servers.PublicServer, "", 1000)
 	if err != nil {
 		log.WithError(err).Error("Failed to get members")
+		http.Error(w, "Failed to get members", 500)
 		return
 	}
 
