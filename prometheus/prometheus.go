@@ -155,6 +155,7 @@ func createTables() {
 		log.WithError(err).Error("Failed to create table joined")
 		return
 	}
+	// Table will only store game-name, opponent and timestamp
 }
 
 func setup(s *discordgo.Session) {
