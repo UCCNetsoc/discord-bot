@@ -63,7 +63,11 @@ func online(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Unable to get player count at the moment. @sysadmins if issues persist")
 	} else {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%d players online right now", response.Players.Online))
+		plural := "players"
+		if response.Players.Online == 1 {
+			plural = "player"
+		}
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%d %s online right now", response.Players.Online, plural))
 	}
 }
 
@@ -99,9 +103,10 @@ func Query() (Response, error) {
 		if err != nil {
 			return res, err
 		}
-		val := int64(buf.Next(1)[0])
-		pktLen = (val << (shift * 7)) | pktLen
-		if val>>7 == 0 {
+		b := int64(buf.Next(1)[0])
+		value := b & 0b01111111
+		pktLen = (value << (shift * 7)) | pktLen
+		if b>>7 == 0 {
 			break
 		}
 	}

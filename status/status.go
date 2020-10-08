@@ -21,7 +21,7 @@ func Status(s *discordgo.Session) {
 func minecraftPlayerCount(s *discordgo.Session) {
 	resp, err := commands.Query()
 	if err != nil {
-		log.Error("Failed to query minecraft server status")
+		log.Error("Failed to query MC Server status: " + err.Error())
 	} else {
 		plural := "players"
 		if resp.Players.Online == 1 {
