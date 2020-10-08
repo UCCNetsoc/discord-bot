@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -74,7 +73,7 @@ func checkStatus(site string, retryCount int, statuses chan statusCheck) {
 
 		if resp != nil {
 			if resp.StatusCode >= 400 {
-				err = errors.New(fmt.Sprintf("error status code %d returned", resp.StatusCode))
+				err = fmt.Errorf("error status code %d returned", resp.StatusCode)
 			}
 		}
 
