@@ -101,7 +101,7 @@ func EventCreate() {
 	eventCount.Dec()
 	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 1) ON DUPLICATE KEY UPDATE value = value + 1;")
 	if err != nil {
-		log.WithError(err).Error("Failed to update messageCount")
+		log.WithError(err).Error("Failed to update eventCount")
 		return
 	}
 }
@@ -112,7 +112,7 @@ func EventRevoke() {
 	eventCount.Dec()
 	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 0) ON DUPLICATE KEY UPDATE value = value - 1;")
 	if err != nil {
-		log.WithError(err).Error("Failed to update messageCount")
+		log.WithError(err).Error("Failed to update eventCount")
 		return
 	}
 }
@@ -140,9 +140,9 @@ func MessageDelete(server string, channel string) {
 }
 
 func InsertScheduleItem(game string, opponent string, time string) {
-	_, err := globalDB.Exec("INSERT INTO schedule VALUES(" + game + ", " + opponent + ", " + time + ") ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err := globalDB.Exec("INSERT INTO schedule VALUES(" + game + ", " + opponent + ", " + time + ");")
 	if err != nil {
-		log.WithError(err).Error("Failed to update messageCount")
+		log.WithError(err).Error("Failed to update schedule")
 		return
 	}
 }
