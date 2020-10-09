@@ -11,6 +11,7 @@ import (
 type Servers struct {
 	PublicServer    string `json:"public"`
 	CommitteeServer string `json:"committee"`
+	SportsServer 	string `json:"sports"`
 }
 
 // Channels required for events.
@@ -18,6 +19,7 @@ type Channels struct {
 	PublicAnnouncements string `json:"public_announcements"` // On public server
 	PublicGeneral       string `json:"public_general"`       // On public server
 	PrivateEvents       string `json:"private_events"`       // On committee server
+	Captains 			string `json:"captains"`
 }
 
 // InitConfig sets up viper and consul.
@@ -28,11 +30,11 @@ func InitConfig() error {
 	viper.AutomaticEnv()
 	viper.Set(
 		"discord.servers",
-		&Servers{PublicServer: viper.GetString("discord.public.server"), CommitteeServer: viper.GetString("discord.committee.server")},
+		&Servers{PublicServer: viper.GetString("discord.public.server"), CommitteeServer: viper.GetString("discord.committee.server"), SportsServer: viper.GetString("discord.sports.server")},
 	)
 	viper.Set(
 		"discord.channels",
-		&Channels{PublicAnnouncements: viper.GetString("discord.public.channel"), PrivateEvents: viper.GetString("discord.committee.channel"), PublicGeneral: viper.GetString("discord.public.general")},
+		&Channels{PublicAnnouncements: viper.GetString("discord.public.channel"), PrivateEvents: viper.GetString("discord.committee.channel"), PublicGeneral: viper.GetString("discord.public.general"), Captains: viper.GetString("discord.sports.captains")},
 	)
 	welcomeMessages := []string{}
 	for _, message := range strings.Split(viper.GetString("discord.public.welcome"), ",") {

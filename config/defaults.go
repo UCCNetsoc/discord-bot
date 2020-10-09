@@ -18,6 +18,8 @@ func initDefaults() {
 	viper.SetDefault("discord.public.welcome", "")
 	viper.SetDefault("discord.committee.server", "")
 	viper.SetDefault("discord.committee.channel", "")
+	viper.SetDefault("discord.sports.server", "")
+	viper.SetDefault("discord.sports.captains", "")
 
 	viper.SetDefault("discord.welcome_messages", &[]string{})
 

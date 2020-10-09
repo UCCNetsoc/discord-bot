@@ -139,6 +139,14 @@ func MessageDelete(server string, channel string) {
 	}
 }
 
+func InsertScheduleItem(game string, opponent string, time string) {
+	_, err := globalDB.Exec("INSERT INTO schedule VALUES(" + game + ", " + opponent + ", " + time + ") ON DUPLICATE KEY UPDATE value = value - 1;")
+	if err != nil {
+		log.WithError(err).Error("Failed to update messageCount")
+		return
+	}
+}
+
 func createTables() {
 	_, err := globalDB.Exec("CREATE TABLE IF NOT EXISTS stats(name VARCHAR(20) PRIMARY KEY, value INT);")
 	if err != nil {
@@ -155,7 +163,11 @@ func createTables() {
 		log.WithError(err).Error("Failed to create table joined")
 		return
 	}
-	// Table will only store game-name, opponent and timestamp
+	_, err = globalDB.Exec("CREATE TABLE IF NOT EXISTS schedule(game VARCHAR(32), opponent VARCHAR(8), time DATETIME")
+	if err != nil {
+		log.WithError(err).Error("Failed to create table schedule ")
+		return
+	}
 }
 
 func setup(s *discordgo.Session) {
