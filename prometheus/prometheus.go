@@ -139,6 +139,8 @@ func MessageDelete(server string, channel string) {
 	}
 }
 
+// InsertScheduleItem is called whenever a captain makes a new schedule entry
+// It inserts match entry into DB
 func InsertScheduleItem(game string, opponent string, time string) {
 	_, err := globalDB.Exec("INSERT INTO schedule VALUES(" + game + ", " + opponent + ", " + time + ");")
 	if err != nil {

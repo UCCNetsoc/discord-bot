@@ -16,6 +16,7 @@ var (
 	lastUpdated      time.Time
 )
 
+// Checks if the given member is within the committee discord
 func isCommittee(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 	if m.GuildID != "" {
 		return m.GuildID == (viper.Get("discord.servers").(*config.Servers).CommitteeServer)
@@ -35,6 +36,23 @@ func isCommittee(s *discordgo.Session, m *discordgo.MessageCreate) bool {
 	}
 
 	return memberContains(committeeMembers, m.Author.ID)
+}
+
+// Checks if the given member has been granted the Captain role 
+func isCaptain(s *discordgo.Session, m *discordgo.MessageCreate) bool {
+	return containsRole(m.Member.Roles, "Captain") 
+}
+
+// Helper function to check if the user has a specific role 
+func containsRole(roles []string, role string) bool {
+	found := false
+	for _, i := range roles {
+		if i == role {
+			found = true
+			break
+		}
+	}
+	return found
 }
 
 // Helper function to check for a user ID in a list of members
