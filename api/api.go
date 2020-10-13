@@ -63,16 +63,16 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	limit := viper.GetInt("api.event_query_limit")
 	queryAmount, exists := query["q"]
 	if !exists || len(query) == 0 {
-		http.Error(w, "Please add the parameter 'q'", 403)
+		http.Error(w, "Please add the parameter 'q'", 400)
 		return
 	}
 	amount, err := strconv.Atoi(queryAmount[0])
 	if err != nil {
-		http.Error(w, "Please provide an int as 'q's value", 403)
+		http.Error(w, "Please provide an int as 'q's value", 400)
 		return
 	}
 	if amount > limit {
-		http.Error(w, "Query amount exceeds the query limit", 403)
+		http.Error(w, "Query amount exceeds the query limit", 400)
 		return
 	}
 
@@ -146,16 +146,16 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 	limit := viper.GetInt("api.announcement_query_limit")
 	queryAmount, exists := query["q"]
 	if !exists || len(query) == 0 {
-		http.Error(w, "Please add the parameter 'q'", 403)
+		http.Error(w, "Please add the parameter 'q'", 400)
 		return
 	}
 	amount, err := strconv.Atoi(queryAmount[0])
 	if err != nil {
-		http.Error(w, "Please provide an int as 'q's value", 403)
+		http.Error(w, "Please provide an int as 'q's value", 400)
 		return
 	}
 	if amount > limit {
-		http.Error(w, "Query amount exceeds the query limit", 403)
+		http.Error(w, "Query amount exceeds the query limit", 400)
 		return
 	}
 
