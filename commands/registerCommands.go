@@ -115,10 +115,8 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 			"channel_id": m.ChannelID,
 			"guild_id":   "DM",
 		})
-		if !isCommittee(s, m) {
-			dmCommands(ctx, s, m)
-			return
-		}
+		dmCommands(ctx, s, m)
+		return
 	} else {
 		go prometheus.MessageCreate(m.GuildID, m.ChannelID)
 	}

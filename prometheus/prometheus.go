@@ -259,7 +259,11 @@ func CreateExporter(s *discordgo.Session) {
 		log.WithError(err).Error("Failed to connect to db")
 		return
 	}
-	defer db.Close()
+	defer func() {
+		if db != nil {
+			db.Close()
+		}
+	}()
 	globalDB = db
 	setup(s)
 	http.Handle("/metrics", promhttp.Handler())

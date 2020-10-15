@@ -20,7 +20,7 @@ import (
 )
 
 var (
-	umailRegex  = regexp.MustCompile("[0-9]{8,11}@umail.ucc.ie")
+	umailRegex  = regexp.MustCompile("[0-9]{8,11}@umail.ucc.ie$")
 	registering = make(map[string]registeringState)
 	verifyCodes = make(map[string]string)
 )
