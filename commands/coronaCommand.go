@@ -74,9 +74,24 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	}
 	cm, slug := extractCommand(m.Content)
 	title := "Covid-19 Stats for"
+	p := message.NewPrinter(language.English)
 	if slug == cm {
 		slug = viper.GetString("corona.default")
 		// Also send global stats
+		body := "**New**\n"
+		body += p.Sprintf("Cases: %d\n", total.Global["NewConfirmed"])
+		body += p.Sprintf("Deaths: %d\n", total.Global["NewDeaths"])
+		body += p.Sprintf("Recoveries: %d\n", total.Global["NewRecovered"])
+		body += "\n**Total**\n"
+		body += p.Sprintf("Cases: %d\n", total.Global["TotalConfirmed"])
+		body += p.Sprintf("Deaths: %d\n", total.Global["TotalDeaths"])
+		body += p.Sprintf("Recoveries: %d\n", total.Global["TotalRecovered"])
+
+		emb := embed.NewEmbed()
+		emb.SetTitle("Covid-19 Global Stats")
+		emb.SetColor(0x128af1)
+		emb.SetDescription(body)
+		s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 	} else {
 		slug = strings.ToLower(
 			strings.ReplaceAll(
@@ -86,7 +101,6 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 		)
 	}
 	country := total.GetCountry(slug)
-	p := message.NewPrinter(language.English)
 	body := "**New**\n"
 	body += p.Sprintf("Cases: %d\n", country.NewConfirmed)
 	body += p.Sprintf("Deaths: %d\n", country.NewDeaths)
@@ -100,5 +114,6 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	emb.SetTitle(strings.Join([]string{title, strings.Title(strings.ReplaceAll(slug, "-", " "))}, " "))
 	emb.SetDescription(body)
 	emb.SetFooter(fmt.Sprintf("As of %s", country.Date.Format(layoutIE)))
+	emb.SetColor(0x9b12f1)
 	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 }
