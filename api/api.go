@@ -12,6 +12,7 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	fb "github.com/huandu/facebook/v2"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -22,6 +23,26 @@ type returnEvent struct {
 	ImageURL    string `json:"image_url"`
 	Date        int64  `json:"date"`
 }
+
+// type returnFacebookEvent struct {
+// 	Title       string `facebook:"name"`
+// 	Description string `facebook:"description"`
+// 	ImageURL    string `facebook:"cover.source"`
+// }
+
+type returnFacebookEvent struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+	Place       struct {
+		Name string `json:"name"`
+	} `json:"place"`
+	Cover struct {
+		Source string `json:"source"`
+	} `json:"cover"`
+}
+
 type returnAnnouncement struct {
 	Date     int64  `json:"date"`
 	Content  string `json:"content"`
@@ -54,6 +75,7 @@ func Run(s *discordgo.Session) {
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
 	http.HandleFunc("/getMembers", getMembers)
+	http.HandleFunc("/fbEvents", getFacebookEvents)
 
 	http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("api.port")), nil)
 }
@@ -122,6 +144,37 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 			event.Date.Unix(),
 		})
 	}
+
+	b, err := json.Marshal(returnEvents)
+	if err != nil {
+		log.WithFields(log.Fields{"events": returnEvents}).WithError(err).Error("Error marshalling events")
+		return
+	}
+	w.Write(b)
+}
+
+func getFacebookEvents(w http.ResponseWriter, r *http.Request) {
+	// TODO: Format time codes, schedule with bot, cache daily
+	// Query facebook api
+	res, err := fb.Get("/"+fmt.Sprintf("%s", viper.Get("facebook.pageID"))+"/events",
+		fb.Params{
+			"time_filter":  "upcoming",
+			"fields":       "name,description,cover{source},start_time,end_time,place",
+			"access_token": fmt.Sprintf("%s", viper.Get("facebook.page.access.token"))})
+	if err != nil {
+		log.WithError(err).Error("Error querying events for api")
+		return
+	}
+
+	returnEvents := []returnFacebookEvent{}
+	decerr := res.DecodeField("data", &returnEvents)
+
+	if decerr != nil {
+		log.WithFields(log.Fields{"result": res}).WithError(decerr).Error("Error marshalling events")
+		return
+	}
+	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	b, err := json.Marshal(returnEvents)
 	if err != nil {

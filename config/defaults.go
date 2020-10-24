@@ -25,7 +25,6 @@ func initDefaults() {
 	viper.SetDefault("discord.autoregister", true)
 	viper.SetDefault("discord.charlimit", 280) // Limit for event description
 	viper.SetDefault("discord.quote_blacklist", &[]string{})
-
 	// Sendgrid
 	viper.SetDefault("sendgrid.token", "")
 	// Twitter
@@ -33,6 +32,11 @@ func initDefaults() {
 	viper.SetDefault("twitter.secret", "")
 	viper.SetDefault("twitter.access.key", "")
 	viper.SetDefault("twitter.access.secret", "")
+	// Facebook
+	viper.SetDefault("facebook.appID", "1809168605905513")
+	viper.SetDefault("facebook.app.secret", "1507576e6ccdcf31fc8af828c856420f")
+	viper.SetDefault("facebook.pageID", "106033244624746")
+	viper.SetDefault("facebook.page.access.token", "EAAZAtbeQYAmkBANnZCK4MYJvvXLJvBQSI6DentkTiT3NIx50A4vI8tnYKcpHX9PgOmBcG6hAw80JP5pSsrsdO7cAwgDbgsAuMI2cX8g1Qo2okUEpIcXcnSxHQPGqx0mWspMwOL4rPThwqB8geVD42AeCZCgJE0oOTZB9hAurZCKBWGe1vZAZAUJbUcIkvbmbZBEZD")
 	// Rest API
 	viper.SetDefault("api.port", 80)
 	viper.SetDefault("api.event_query_limit", 20)

@@ -12,6 +12,7 @@ require (
 	github.com/ericm/go-twitter v0.0.0-20200605182549-dd530d8e2eea
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/hashicorp/consul/api v1.4.0
+	github.com/huandu/facebook/v2 v2.5.2
 	github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2
 	github.com/miekg/dns v1.1.30
 	github.com/patrickmn/go-cache v2.1.0+incompatible
