@@ -49,4 +49,6 @@ func initDefaults() {
 	viper.SetDefault("mysql.url", "mysql.netsoc.local:3306")
 	viper.SetDefault("mysql.username", "root")
 	viper.SetDefault("mysql.password", "password")
+	// Corona
+	viper.SetDefault("corona.default", "ireland")
 }

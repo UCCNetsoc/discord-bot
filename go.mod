@@ -21,4 +21,5 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
+	golang.org/x/text v0.3.2
 )
