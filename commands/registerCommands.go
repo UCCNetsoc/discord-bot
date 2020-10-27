@@ -89,6 +89,12 @@ func Register(s *discordgo.Session) {
 		recall,
 		true,
 	)
+	command(
+		"upcoming",
+		"replies with embed of the nearest upcoming netsoc event, queried from facebook",
+		upcomingEvent,
+		true,
+	)
 	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
 
 	// Setup APIs

@@ -10,6 +10,7 @@ require (
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/ericm/go-twitter v0.0.0-20200605182549-dd530d8e2eea
+	github.com/go-co-op/gocron v0.3.1 // indirect
 	github.com/go-sql-driver/mysql v1.5.0
 	github.com/hashicorp/consul/api v1.4.0
 	github.com/huandu/facebook/v2 v2.5.2
@@ -22,4 +23,5 @@ require (
 	github.com/spf13/viper v1.7.0
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de // indirect
+	golang.org/x/text v0.3.2
 )

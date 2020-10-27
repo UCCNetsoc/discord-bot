@@ -10,9 +10,12 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -72,6 +75,26 @@ func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 	}
 }
 
+func upcomingEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	upcomingEvents, err := api.ParseFacebookEvents()
+	nearest := upcomingEvents[len(upcomingEvents)-1]
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error occured parsing upcoming event")
+		log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
+	}
+	title := "Netsoc Upcoming Event"
+	p := message.NewPrinter(language.English)
+	body := p.Sprintf("**%s**\n", nearest.Name)
+	body += p.Sprintf("%s\n", nearest.Description)
+
+	emb := embed.NewEmbed()
+	emb.SetColor(0xc20002)
+	emb.SetTitle(title)
+	emb.SetDescription(body)
+	emb.SetImage(nearest.Cover.Source)
+	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+}
+
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	announcement(ctx, s, m, "@everyone\n")
 }
@@ -89,7 +112,6 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 			s.ChannelMessageSend(m.ChannelID, "Error sending announcement: "+err.Error())
 			return
 		}
-
 		if announcement.ImgData != nil {
 			b := bytes.NewBuffer([]byte{})
 			s.ChannelFileSendWithMessage(

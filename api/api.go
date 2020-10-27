@@ -24,12 +24,6 @@ type returnEvent struct {
 	Date        int64  `json:"date"`
 }
 
-// type returnFacebookEvent struct {
-// 	Title       string `facebook:"name"`
-// 	Description string `facebook:"description"`
-// 	ImageURL    string `facebook:"cover.source"`
-// }
-
 type returnFacebookEvent struct {
 	Name        string `json:"name"`
 	Description string `json:"description"`
@@ -53,8 +47,9 @@ type returnMembers struct {
 }
 
 var (
-	cached  *cache.Cache
-	session *discordgo.Session
+	cached   *cache.Cache
+	session  *discordgo.Session
+	cachedFB *cache.Cache
 )
 
 type sortEvents []*Event
@@ -70,6 +65,8 @@ func (e *sortEvents) Swap(i, j int) {
 // Run the REST API
 func Run(s *discordgo.Session) {
 	cached = cache.New(3*time.Minute, 3*time.Minute)
+	cachedFB = cache.New(12*time.Hour, 12*time.Hour)
+
 	session = s
 
 	http.HandleFunc("/events", getEvents)
@@ -154,34 +151,47 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 }
 
 func getFacebookEvents(w http.ResponseWriter, r *http.Request) {
-	// TODO: Format time codes, schedule with bot, cache daily
-	// Query facebook api
-	res, err := fb.Get("/"+fmt.Sprintf("%s", viper.Get("facebook.pageID"))+"/events",
-		fb.Params{
-			"time_filter":  "upcoming",
-			"fields":       "name,description,cover{source},start_time,end_time,place",
-			"access_token": fmt.Sprintf("%s", viper.Get("facebook.page.access.token"))})
-	if err != nil {
-		log.WithError(err).Error("Error querying events for api")
-		return
-	}
+	// TODO: Format time codes so event message can be scheduled
 
-	returnEvents := []returnFacebookEvent{}
-	decerr := res.DecodeField("data", &returnEvents)
-
-	if decerr != nil {
-		log.WithFields(log.Fields{"result": res}).WithError(decerr).Error("Error marshalling events")
+	fbEvents, parseerr := ParseFacebookEvents()
+	if parseerr != nil {
+		fmt.Errorf("Error parsing.")
 		return
 	}
 	w.Header().Set("content-type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-
-	b, err := json.Marshal(returnEvents)
+	b, err := json.Marshal(fbEvents)
 	if err != nil {
-		log.WithFields(log.Fields{"events": returnEvents}).WithError(err).Error("Error marshalling events")
+		log.WithFields(log.Fields{"events": fbEvents}).WithError(parseerr).Error("Error marshalling events")
 		return
 	}
 	w.Write(b)
+}
+
+func ParseFacebookEvents() ([]returnFacebookEvent, error) {
+	returnEvents := []returnFacebookEvent{}
+	cachedEvents, found := cachedFB.Get("events")
+	if found {
+		returnEvents = cachedEvents.([]returnFacebookEvent)
+		fmt.Println("found cache")
+	} else {
+		// Query facebook api
+		res, err := fb.Get("/"+fmt.Sprintf("%s", viper.Get("facebook.pageID"))+"/events",
+			fb.Params{
+				"time_filter":  "upcoming",
+				"fields":       "name,description,cover{source},start_time,end_time,place",
+				"access_token": fmt.Sprintf("%s", viper.Get("facebook.page.access.token"))})
+		if err != nil {
+			return nil, fmt.Errorf("Error parsing.")
+
+		}
+		decerr := res.DecodeField("data", &returnEvents)
+		if decerr != nil {
+			return nil, fmt.Errorf("Error parsing.")
+		}
+		cachedFB.Set("events", returnEvents, cache.DefaultExpiration)
+	}
+	return returnEvents, nil
 }
 
 type sortAnnouncements []*Announcement
