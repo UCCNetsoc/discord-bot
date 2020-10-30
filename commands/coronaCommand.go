@@ -14,18 +14,33 @@ import (
 	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
+	"github.com/vincent-petithory/dataurl"
+	"github.com/wcharczuk/go-chart"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
 
 const (
 	covidSummary = "https://api.covid19api.com/summary"
+	covidDayOne  = "https://api.covid19api.com/dayone/country/%s"
 )
+
+// CountryBase is the basic country stats.
+type CountryBase struct {
+	Country     string
+	CountryCode string
+	Date        time.Time
+}
+
+// CountryDaily contains daily confirmed cases.
+type CountryDaily struct {
+	CountryBase
+	Confirmed int
+}
 
 // CountrySummary contains covid data.
 type CountrySummary struct {
-	Country        string
-	CountryCode    string
+	CountryBase
 	Slug           string
 	NewConfirmed   int
 	TotalConfirmed int
@@ -33,7 +48,46 @@ type CountrySummary struct {
 	TotalDeaths    int
 	NewRecovered   int
 	TotalRecovered int
-	Date           time.Time
+}
+
+func (c *CountrySummary) getHistory() ([]CountryDaily, error) {
+	resp, err := http.Get(fmt.Sprintf(covidDayOne, c.Slug))
+	if err != nil {
+		return nil, err
+	}
+	country := []CountryDaily{}
+	if err = json.NewDecoder(resp.Body).Decode(&country); err != nil {
+		return nil, err
+	}
+	return country, nil
+}
+
+// Graph generated a graph of historic cases.
+func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
+	history, err := c.getHistory()
+	if err != nil {
+		return nil, err
+	}
+	dates := []time.Time{}
+	totalCases := []float64{}
+	for _, cases := range history {
+		totalCases = append([]float64{float64(cases.Confirmed)}, totalCases...)
+		dates = append([]time.Time{cases.Date}, dates...)
+	}
+	graph := chart.Chart{
+		Series: []chart.Series{
+			chart.TimeSeries{
+				XValues: dates,
+				YValues: totalCases,
+				Name:    fmt.Sprintf("Cases per day for %s", c.Country),
+			},
+		},
+	}
+	buffer := bytes.NewBuffer([]byte{})
+	if err = graph.Render(chart.PNG, buffer); err != nil {
+		return nil, err
+	}
+	return buffer, nil
 }
 
 // TotalSummary contains global data.
@@ -71,6 +125,7 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	if err != nil {
 		s.ChannelMessageSend(m.ChannelID, "Error occured parsing covid stats")
 		log.WithError(err).WithContext(ctx).Error("covid summary invalid output")
+		return
 	}
 	cm, slug := extractCommand(m.Content)
 	title := "Covid-19 Stats for"
@@ -115,5 +170,13 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	emb.SetDescription(body)
 	emb.SetFooter(fmt.Sprintf("As of %s", country.Date.Format(layoutIE)))
 	emb.SetColor(0x9b12f1)
+
+	graph, err := country.Graph()
+	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Error occured generating graph")
+		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
+		return
+	}
+	img := dataurl.EncodeBytes(graph.Bytes())
 	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 }
