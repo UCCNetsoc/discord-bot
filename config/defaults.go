@@ -16,6 +16,7 @@ func initDefaults() {
 	viper.SetDefault("discord.public.channel", "")
 	viper.SetDefault("discord.public.general", "")
 	viper.SetDefault("discord.public.welcome", "")
+	viper.SetDefault("discord.public.corona", "")
 	viper.SetDefault("discord.committee.server", "")
 	viper.SetDefault("discord.committee.channel", "")
 
@@ -51,5 +52,6 @@ func initDefaults() {
 	viper.SetDefault("mysql.password", "password")
 	// Corona
 	viper.SetDefault("corona.default", "ireland")
+	viper.SetDefault("corona.webhook", "https://events.netsoc.dev/corona")
 	viper.SetDefault("freeimage.key", "")
 }
