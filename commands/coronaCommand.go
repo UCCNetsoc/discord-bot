@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -48,5 +49,9 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 		)
 	}
 	country := total.GetCountry(slug)
-	corona.CreateEmbed(country, s, m.ChannelID, ctx)
+	if country != nil {
+		corona.CreateEmbed(country, s, m.ChannelID, ctx)
+	} else {
+		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Couldn't find a country called %s", slug))
+	}
 }
