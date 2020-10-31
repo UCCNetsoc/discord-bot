@@ -16,6 +16,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/vincent-petithory/dataurl"
 	"github.com/wcharczuk/go-chart"
+	"github.com/wcharczuk/go-chart/drawing"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -23,6 +24,7 @@ import (
 const (
 	covidSummary = "https://api.covid19api.com/summary"
 	covidDayOne  = "https://api.covid19api.com/dayone/country/%s"
+	imgHost      = "https://freeimage.host/api/1/upload"
 )
 
 // CountryBase is the basic country stats.
@@ -70,16 +72,33 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 	}
 	dates := []time.Time{}
 	totalCases := []float64{}
+	aggregate := 0
 	for _, cases := range history {
-		totalCases = append([]float64{float64(cases.Confirmed)}, totalCases...)
+		totalCases = append([]float64{float64(cases.Confirmed - aggregate)}, totalCases...)
+		aggregate = cases.Confirmed
 		dates = append([]time.Time{cases.Date}, dates...)
 	}
 	graph := chart.Chart{
+		Title: fmt.Sprintf("Cases per day for %s", c.Country),
+		XAxis: chart.XAxis{
+			Name:           "Date",
+			Style:          chart.StyleShow(),
+			ValueFormatter: chart.TimeDateValueFormatter,
+		},
+		YAxis: chart.YAxis{
+			Name:           "New Cases",
+			ValueFormatter: func(v interface{}) string { return chart.FloatValueFormatterWithFormat(v, "%.0f") },
+			Style:          chart.StyleShow(),
+		},
 		Series: []chart.Series{
 			chart.TimeSeries{
+				Style: chart.Style{
+					StrokeWidth: 5,
+					StrokeColor: drawing.ColorFromHex("9b12f1"),
+					Show:        true,
+				},
 				XValues: dates,
 				YValues: totalCases,
-				Name:    fmt.Sprintf("Cases per day for %s", c.Country),
 			},
 		},
 	}
@@ -171,12 +190,36 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	emb.SetFooter(fmt.Sprintf("As of %s", country.Date.Format(layoutIE)))
 	emb.SetColor(0x9b12f1)
 
-	graph, err := country.Graph()
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error occured generating graph")
-		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
-		return
+	// Upload graph to freeimage.
+	if apiKey := viper.GetString("freeimage.key"); apiKey != "" {
+		graph, err := country.Graph()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error occured generating graph")
+			log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
+			return
+		}
+		img := dataurl.EncodeBytes(graph.Bytes())
+		img = img[22:]
+		resp, err := http.PostForm(imgHost, map[string][]string{
+			"key":    {apiKey},
+			"source": {img},
+		})
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error occured uploading graph")
+			log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
+			return
+		}
+		imgResp := struct {
+			Image struct {
+				URL string `json:"url"`
+			} `json:"image"`
+		}{}
+		if err = json.NewDecoder(resp.Body).Decode(&imgResp); err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error occured parsing graph url")
+			log.WithError(err).WithContext(ctx).Error("Error occured parsing graph url")
+			return
+		}
+		emb.SetImage(imgResp.Image.URL)
 	}
-	img := dataurl.EncodeBytes(graph.Bytes())
 	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 }

@@ -51,4 +51,5 @@ func initDefaults() {
 	viper.SetDefault("mysql.password", "password")
 	// Corona
 	viper.SetDefault("corona.default", "ireland")
+	viper.SetDefault("freeimage.key", "")
 }
