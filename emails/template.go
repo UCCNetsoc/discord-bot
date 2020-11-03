@@ -36,12 +36,7 @@ const template = `
                 <p style="border-top: 1px solid rgb(55,55,55);border-bottom: 1px solid rgb(55,55,55);color: white;text-align: center;max-width: 500px;color: #fff;padding: 1em;">
                     %s
                 </p>
-				<div style="background-color: #111;max-width: max-content; margin: 10px auto 15px auto;padding: 10px; border-left: #2196F3 solid 4px;">%s</div
-				<footer style="color: white;font-size: .8em;text-align: center;max-width: 500px;margin: 1em auto 3em auto;padding-bottom:3em;">
-					<a target="_blank" clicktracking="off" style="color: white;" href="https://wiki.netsoc.co/en/services/terms-of-service">Terms of Service</a>
-					<span> &bull; </span>
-					<a target="_blank" clicktracking="off" style="color: white;" href="https://wiki.netsoc.co/en/services/privacy-policy">Privacy Policy</a>
-				</footer>
+				<div style="background-color: #111;max-width: max-content; margin: 10px auto 15px auto;padding: 10px; border-left: #2196F3 solid 4px;">%s</div>
             </div>
         </div>
     </body>
