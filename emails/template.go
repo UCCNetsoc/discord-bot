@@ -32,7 +32,7 @@ const template = `
 			<h1 style="color: white; font-size: 18px;font-weight: 200;text-align: center;padding: 8px 0;">
 				%s
             </h1>
-            <div style="max-width: 500px; margin: 1em auto">
+            <div style="max-width: 460px; margin: 1em auto">
                 <p style="border-top: 1px solid rgb(55,55,55);border-bottom: 1px solid rgb(55,55,55);color: white;text-align: center;max-width: 500px;color: #fff;padding: 1em;">
                     %s
                 </p>
