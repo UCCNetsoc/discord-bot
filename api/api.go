@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/corona"
 	"github.com/bwmarrin/discordgo"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
@@ -54,8 +56,37 @@ func Run(s *discordgo.Session) {
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
 	http.HandleFunc("/getMembers", getMembers)
+	http.HandleFunc("/corona", postCorona)
+	setWebook()
 
 	http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("api.port")), nil)
+}
+
+func setWebook() {
+	b := bytes.NewBuffer([]byte{})
+	json.NewEncoder(b).Encode(struct {
+		URL string
+	}{
+		viper.GetString("corona.webhook"),
+	})
+	resp, _ := http.Post("https://api.covid19api.com/webhook", "application/json", b)
+	b.ReadFrom(resp.Body)
+	log.Info(fmt.Sprintf("Corona webhook actiavtion: %s %d", b.String(), resp.StatusCode))
+}
+
+func postCorona(w http.ResponseWriter, r *http.Request) {
+	if r.Body == nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+	total := &corona.TotalSummary{}
+	if err := json.NewDecoder(r.Body).Decode(total); err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
+	country := total.GetCountry(viper.GetString("corona.default"))
+	log.WithContext(r.Context()).Info("New COVID data. Sending.")
+	corona.CreateEmbed(country, session, viper.GetString("discord.public.corona"), r.Context())
 }
 
 func getEvents(w http.ResponseWriter, r *http.Request) {
