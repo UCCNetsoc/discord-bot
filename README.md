@@ -19,7 +19,7 @@ The UCC Netsoc discord bot has the following features:
 
 When we decided to implement the features allowing the posting of events/announcements, we realised that the bot could no longer be server agnostic.
 
-For that reason we decided to reimplement the bot with the ability to watch/read our consul K/V store to allow for real time configuration of what servers/channels require elevated permissions.
+For that reason we decided to reimplement the bot with the ability be configured with servers/channels which require elevated permissions.
 
 ## Running locally
 
