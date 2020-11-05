@@ -77,7 +77,7 @@ steps:
     image: sourcegraph/lsif-go
     environment:
       GITHUB_TOKEN:
-        from_secret: github_token
+        from_secret: public_repo_token
     commands:
       - lsif-go
       - src lsif upload -github-token=$${GITHUB_TOKEN}
@@ -121,38 +121,3 @@ steps:
         - master
       status:
         - failure
-
----
-kind: secret
-name: discord_webhook_id
-get:
-  path: discord/sysadmins_webhook
-  name: discord_webhook_id
-
----
-kind: secret
-name: discord_webhook_token
-get:
-  path: discord/sysadmins_webhook
-  name: discord_webhook_token
-
----
-kind: secret
-name: docker_hub_user
-get:
-  path: docker_registry/docker_hub
-  name: docker_hub_user
-
----
-kind: secret
-name: docker_hub_token
-get:
-  path: docker_registry/docker_hub
-  name: docker_hub_token
-
----
-kind: secret
-name: github_token
-get:
-  path: github/personal_access_tokens
-  name: public_repo_token
