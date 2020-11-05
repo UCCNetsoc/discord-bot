@@ -99,7 +99,6 @@ steps:
         from_secret: vault_pass
     settings:
       playbook: .ansible/provision-infra-web.yml
-      galaxy: .ansible/requirements.yml
       inventory: .ansible/proxmox_inventory.py
       private_key:
         from_secret: key_web
