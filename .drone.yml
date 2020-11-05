@@ -88,7 +88,7 @@ steps:
       - git clone https://github.com/UCCNetsoc/NaC.git .ansible
 
   - name: ansible_deploy
-    image: plugins/ansible:1
+    image: uccnetsoc/drone-ansible
     environment:
       PM_HOST: '10.0.30.53'
       PM_USER:
@@ -99,6 +99,7 @@ steps:
         from_secret: vault_pass
     settings:
       playbook: .ansible/provision-infra-web.yml
+      requirements: .ansible/requirements.txt
       inventory: .ansible/proxmox_inventory.py
       private_key:
         from_secret: key_web
