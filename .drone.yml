@@ -105,6 +105,8 @@ steps:
         from_secret: key_web
       vault_password:
         from_secret: vault_pass
+      tags:
+        - discord-bot
 
   - name: discord_notif_success
     image: appleboy/drone-discord
