@@ -85,7 +85,7 @@ steps:
   - name: clone_nac
     image: docker:git
     commands:
-      - git clone https://git.company.com/UCCNetsoc/NaC.git .ansible
+      - git clone https://github.com/UCCNetsoc/NaC.git .ansible
 
   - name: ansible_deploy
     image: plugins/ansible:1
