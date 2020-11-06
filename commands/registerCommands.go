@@ -91,7 +91,7 @@ func Register(s *discordgo.Session) {
 	)
 	command(
 		"upcoming",
-		"replies with embed of the nearest upcoming netsoc event, queried from facebook",
+		"replies with embed of the the next upcoming netsoc event, queried from facebook",
 		upcomingEvent,
 		true,
 	)
