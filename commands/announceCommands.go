@@ -76,25 +76,31 @@ func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 	}
 }
 
-func upcomingEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate, mention string) {
+func upcomingEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	upcomingEvents, err := api.QueryFacebookEvents()
-	nearest := upcomingEvents[0]
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error occured parsing upcoming event")
-		log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
-	}
+
 	title := "Netsoc Upcoming Event"
-	p := message.NewPrinter(language.English)
-	body := p.Sprintf("**%s**\n", nearest.Title)
-	body += p.Sprintf("%s\n", nearest.Description)
-
-	body += p.Sprintf("**When?**\n%s\n", time.Unix(nearest.Date, 0).Format("Jan 2 at 3:04 PM"))
-
 	emb := embed.NewEmbed()
 	emb.SetColor(0xc20002)
 	emb.SetTitle(title)
+
+	p := message.NewPrinter(language.English)
+	body := ""
+	if len(upcomingEvents) > 0 {
+		nearest := upcomingEvents[0]
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error occured parsing upcoming event")
+			log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
+		}
+		body += p.Sprintf("**%s**\n", nearest.Title)
+		body += p.Sprintf("%s\n", nearest.Description)
+		body += p.Sprintf("**When?**\n%s\n", time.Unix(nearest.Date, 0).Format("Jan 2 at 3:04 PM"))
+		emb.SetImage(nearest.ImageURL)
+	} else {
+		body += "There are currently no events scheduled, Stay tuned!"
+	}
+
 	emb.SetDescription(body)
-	emb.SetImage(nearest.ImageURL)
 	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 }
 
