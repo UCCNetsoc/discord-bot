@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/UCCNetsoc/discord-bot/commands"
 
@@ -15,6 +16,7 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
+	"github.com/go-co-op/gocron"
 	"github.com/spf13/viper"
 )
 
@@ -46,6 +48,13 @@ func main() {
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)
 	go prometheus.CreateExporter(session)
+
+	// Initialise scheduler if enabled in viper defaults
+	if viper.GetString("schedule.enable") == "True" {
+		scheduler := gocron.NewScheduler(time.UTC)
+		scheduler.StartAsync()
+		scheduler.Every(1).Day().Do(commands.RefeshSchedule, scheduler, session)
+	}
 
 	// Update the bot status periodically
 	go status.Status(session)

@@ -75,10 +75,17 @@ func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
 	}
 }
+func upcomingEventMessage(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 
-func upcomingEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+	upcomingEvent(ctx, s, m.ChannelID, "")
+}
+func UpcomingEventAnnounce(ctx context.Context, s *discordgo.Session) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	upcomingEvent(ctx, s, channels.PublicAnnouncements, "@here\nEvent starting in 10 minutes!\n\n")
+}
+
+func upcomingEvent(ctx context.Context, s *discordgo.Session, channel string, mention string) {
 	upcomingEvents, err := api.QueryFacebookEvents()
-
 	title := "Netsoc Upcoming Event"
 	emb := embed.NewEmbed()
 	emb.SetColor(0xc20002)
@@ -89,19 +96,20 @@ func upcomingEvent(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 	if len(upcomingEvents) > 0 {
 		nearest := upcomingEvents[0]
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error occured parsing upcoming event")
+			s.ChannelMessageSend(channel, "Error occured parsing upcoming event")
 			log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
 		}
 		body += p.Sprintf("**%s**\n", nearest.Title)
 		body += p.Sprintf("%s\n", nearest.Description)
 		body += p.Sprintf("**When?**\n%s\n", time.Unix(nearest.Date, 0).Format("Jan 2 at 3:04 PM"))
 		emb.SetImage(nearest.ImageURL)
+		s.ChannelMessageSend(channel, mention)
 	} else {
 		body += "There are currently no events scheduled, Stay tuned!"
 	}
 
 	emb.SetDescription(body)
-	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+	s.ChannelMessageSendEmbed(channel, emb.MessageEmbed)
 }
 
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {

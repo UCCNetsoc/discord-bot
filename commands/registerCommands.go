@@ -92,7 +92,7 @@ func Register(s *discordgo.Session) {
 	command(
 		"upcoming",
 		"replies with embed of the the next upcoming netsoc event, queried from facebook",
-		upcomingEvent,
+		upcomingEventMessage,
 		true,
 	)
 	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)

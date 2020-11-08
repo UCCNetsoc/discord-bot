@@ -172,7 +172,6 @@ func QueryFacebookEvents() ([]returnEvent, error) {
 	cachedEvents, found := cachedFB.Get("events")
 	if found {
 		events = cachedEvents.([]*Event)
-		fmt.Println("found cache")
 	} else {
 		returnEvents := []returnFacebookEvent{}
 		events = []*Event{}
@@ -190,7 +189,6 @@ func QueryFacebookEvents() ([]returnEvent, error) {
 			return nil, fmt.Errorf("Error decoding raw facebook events: %w", decerr)
 		}
 		for _, event := range returnEvents {
-			fmt.Println(event)
 			parsed, err := ParseFacebookEvent(event)
 			if err == nil {
 				// Message successfully parsed as an event.
