@@ -88,8 +88,8 @@ steps:
       - git clone https://github.com/UCCNetsoc/NaC.git .ansible
       - mkdir -p ./keys/infra/web/
       - mkdir -p ./keys/infra/databases/
-      - sh -c "echo $KEY_WEB > ./keys/infra/web/id_rsa"
-      - sh -c "echo $KEY_DATABASES > ./keys/infra/databases/id_rsa"
+      - printf '%s\n' "$KEY_WEB" >./keys/infra/web/id_rsa
+      - printf '%s\n' "$KEY_DATABASES" >./keys/infra/databases/id_rsa
       - chmod 0600 ./keys/infra/web/id_rsa
       - chmod 0600 ./keys/infra/databases/id_rsa
       - ls -al ./keys/infra/web
