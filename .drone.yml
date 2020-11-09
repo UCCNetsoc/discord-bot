@@ -90,6 +90,8 @@ steps:
       - mkdir -p ./keys/infra/databases/
       - echo $KEY_WEB > ./keys/infra/web/id_rsa
       - echo $KEY_DATABASES > ./keys/infra/databases/id_rsa
+      - chmod 0600 ./keys/infra/web/id_rsa
+      - chmod 0600 ./keys/infra/databases/id_rsa
     environment:
       KEY_WEB:
         from_secret: key_web
