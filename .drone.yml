@@ -139,7 +139,7 @@ steps:
       username: Netsoc CI
       avatar_url: https://raw.githubusercontent.com/drone/brand/3051b0d85318a2a20b62927ba19fc07e24c0d751/logos/png/white/drone-logo-png-white-256.png
       color: "#e04414"
-      message: discord-bot failed for {{build.author}}. Build num {{build.number}}. {{build.link}}
+      message: discord-bot failed. Build num {{build.number}}. {{build.link}}
     when:
       event:
         - push
