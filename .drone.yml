@@ -83,7 +83,7 @@ steps:
       - src lsif upload -github-token=$${GITHUB_TOKEN}
       
   - name: clone_nac
-    image: ubuntu
+    image: docker:git
     commands:
       - >
         bash -s <<SCRIPT
