@@ -61,3 +61,26 @@ func ParseEvent(m *discordgo.MessageCreate, help string) (*Event, error) {
 		},
 	}, nil
 }
+
+// ParseFacebookEvent will give an event object
+func ParseFacebookEvent(fbEvent returnFacebookEvent) (*Event, error) {
+
+	parseTime := strings.Split(fbEvent.StartTime, "+")
+	rfc3339t := parseTime[0] + "Z"
+
+	dateTime, err := time.Parse(time.RFC3339, rfc3339t)
+	if err != nil {
+		return nil, fmt.Errorf("Error parsing date. Should be in the format yyyy-mm-dd")
+	}
+
+	return &Event{
+		Title:       fbEvent.Name,
+		Description: fbEvent.Description,
+		Date:        dateTime,
+		Image: &Image{
+			ImgData:   nil,
+			ImgURL:    fbEvent.Cover.Source,
+			ImgHeader: nil,
+		},
+	}, nil
+}

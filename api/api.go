@@ -14,6 +14,7 @@ import (
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/corona"
 	"github.com/bwmarrin/discordgo"
+	fb "github.com/huandu/facebook/v2"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -24,6 +25,20 @@ type returnEvent struct {
 	ImageURL    string `json:"image_url"`
 	Date        int64  `json:"date"`
 }
+
+type returnFacebookEvent struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+	Place       struct {
+		Name string `json:"name"`
+	} `json:"place"`
+	Cover struct {
+		Source string `json:"source"`
+	} `json:"cover"`
+}
+
 type returnAnnouncement struct {
 	Date     int64  `json:"date"`
 	Content  string `json:"content"`
@@ -34,8 +49,9 @@ type returnMembers struct {
 }
 
 var (
-	cached  *cache.Cache
-	session *discordgo.Session
+	cached   *cache.Cache
+	session  *discordgo.Session
+	cachedFB *cache.Cache
 )
 
 type sortEvents []*Event
@@ -51,11 +67,15 @@ func (e *sortEvents) Swap(i, j int) {
 // Run the REST API
 func Run(s *discordgo.Session) {
 	cached = cache.New(3*time.Minute, 3*time.Minute)
+	cachedFB = cache.New(12*time.Hour, 12*time.Hour)
+
 	session = s
 
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
 	http.HandleFunc("/getMembers", getMembers)
+	http.HandleFunc("/fbEvents", getFacebookEvents)
+
 	http.HandleFunc("/corona", postCorona)
 	setWebook()
 
@@ -160,6 +180,77 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+}
+
+func getFacebookEvents(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	returnEvents, qerr := QueryFacebookEvents()
+	if qerr != nil {
+		log.WithFields(log.Fields{"events": returnEvents}).WithError(qerr).Error("Error running querry")
+		return
+	}
+	b, err := json.Marshal(returnEvents)
+	if err != nil {
+		log.WithFields(log.Fields{"events": returnEvents}).WithError(err).Error("Error marshalling events")
+		return
+	}
+	w.Write(b)
+}
+
+// QueryFacebookEvents queries the facebook api then returns them parsed in a struct
+func QueryFacebookEvents() ([]returnEvent, error) {
+	var events []*Event
+	cachedEvents, found := cachedFB.Get("events")
+	if found {
+		events = cachedEvents.([]*Event)
+	} else {
+		returnEvents := []returnFacebookEvent{}
+		events = []*Event{}
+		// Query facebook api
+		res, err := fb.Get("/"+fmt.Sprintf("%s", viper.Get("facebook.pageID"))+"/events",
+			fb.Params{
+				"time_filter":  "upcoming",
+				"fields":       "name,description,cover{source},start_time,end_time,place",
+				"access_token": fmt.Sprintf("%s", viper.Get("facebook.page.access.token"))})
+		if err != nil {
+			return nil, fmt.Errorf("Error querying raw facebook events: %w", err)
+		}
+		decerr := res.DecodeField("data", &returnEvents)
+		if decerr != nil {
+			return nil, fmt.Errorf("Error decoding raw facebook events: %w", decerr)
+		}
+		for _, event := range returnEvents {
+			parsed, err := ParseFacebookEvent(event)
+			if err == nil {
+				// Message successfully parsed as an event.
+				events = append(events, parsed)
+			}
+		}
+		cachedFB.Set("events", events, cache.DefaultExpiration)
+	}
+	// Filter out events that have already passed
+	allEvents := make([]*Event, len(events))
+	copy(allEvents, events)
+	events = []*Event{}
+	for _, event := range allEvents {
+		if event.Date.Unix() > time.Now().AddDate(0, 0, 0).Unix() {
+			events = append(events, event)
+		}
+	}
+	sortE := sortEvents(events)
+	sort.Sort(&sortE)
+
+	returnEvents := []returnEvent{}
+	for _, event := range events {
+		returnEvents = append(returnEvents, returnEvent{
+			event.Title,
+			event.Description,
+			event.ImgURL,
+			event.Date.Unix(),
+		})
+	}
+	return returnEvents, nil
 }
 
 type sortAnnouncements []*Announcement

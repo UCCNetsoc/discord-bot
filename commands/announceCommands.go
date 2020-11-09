@@ -6,13 +6,17 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"time"
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func addEvent(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -71,6 +75,42 @@ func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 		s.ChannelMessageSend(m.ChannelID, "This command is unavailable")
 	}
 }
+func upcomingEventMessage(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+
+	upcomingEvent(ctx, s, m.ChannelID, "")
+}
+func UpcomingEventAnnounce(ctx context.Context, s *discordgo.Session) {
+	channels := viper.Get("discord.channels").(*config.Channels)
+	upcomingEvent(ctx, s, channels.PublicAnnouncements, "@here\nEvent starting in 10 minutes!\n\n")
+}
+
+func upcomingEvent(ctx context.Context, s *discordgo.Session, channel string, mention string) {
+	upcomingEvents, err := api.QueryFacebookEvents()
+	title := "Netsoc Upcoming Event"
+	emb := embed.NewEmbed()
+	emb.SetColor(0xc20002)
+	emb.SetTitle(title)
+
+	p := message.NewPrinter(language.English)
+	body := ""
+	if len(upcomingEvents) > 0 {
+		nearest := upcomingEvents[0]
+		if err != nil {
+			s.ChannelMessageSend(channel, "Error occured parsing upcoming event")
+			log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
+		}
+		body += p.Sprintf("**%s**\n", nearest.Title)
+		body += p.Sprintf("%s\n", nearest.Description)
+		body += p.Sprintf("**When?**\n%s\n", time.Unix(nearest.Date, 0).Format("Jan 2 at 3:04 PM"))
+		emb.SetImage(nearest.ImageURL)
+		s.ChannelMessageSend(channel, mention)
+	} else {
+		body += "There are currently no events scheduled, Stay tuned!"
+	}
+
+	emb.SetDescription(body)
+	s.ChannelMessageSendEmbed(channel, emb.MessageEmbed)
+}
 
 func addAnnouncement(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	announcement(ctx, s, m, "@everyone\n")
@@ -89,7 +129,6 @@ func announcement(ctx context.Context, s *discordgo.Session, m *discordgo.Messag
 			s.ChannelMessageSend(m.ChannelID, "Error sending announcement: "+err.Error())
 			return
 		}
-
 		if announcement.ImgData != nil {
 			b := bytes.NewBuffer([]byte{})
 			s.ChannelFileSendWithMessage(
