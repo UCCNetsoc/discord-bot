@@ -48,7 +48,7 @@ func initDefaults() {
 	viper.SetDefault("api.remove_symbols", []string{"@everyone", "@here"})
 	// Up sites
 	viper.SetDefault("netsoc.sites", "https://uccexpress.ie,https://netsoc.co,https://motley.ie,https://admin.netsoc.co,https://hlm.netsoc.co,https://uccnetsoc.netsoc.co,https://wiki.netsoc.co")
-	viper.SetDefault("minecraft.host", "games.vm.netsoc.co:1194")
+	viper.SetDefault("minecraft.host", "minecraft.netsoc.co:1194")
 	// Prometheus exporter
 	viper.SetDefault("prom.port", 2112)
 	viper.SetDefault("prom.dbname", "promexporter")
