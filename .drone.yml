@@ -86,10 +86,10 @@ steps:
     image: docker:git
     commands:
       - git clone https://github.com/UCCNetsoc/NaC.git .ansible
-      - mkdir -p .ansible/keys/infra/web/
-      - mkdir -p .ansible/keys/infra/databases/
-      - echo $KEY_WEB > .ansible/keys/infra/web/id_rsa
-      - echo $KEY_DATABASES > .ansible/keys/infra/databases/id_rsa
+      - mkdir -p ./keys/infra/web/
+      - mkdir -p ./keys/infra/databases/
+      - echo $KEY_WEB > ./keys/infra/web/id_rsa
+      - echo $KEY_DATABASES > ./keys/infra/databases/id_rsa
     environment:
       KEY_WEB:
         from_secret: key_web
