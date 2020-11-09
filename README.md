@@ -1,7 +1,7 @@
 <img src="https://raw.githubusercontent.com/UCCNetsoc/wiki/master/assets/logo-service-discord-bot.svg" width="360"/>
 
 
-[![](https://ci.netsoc.dev/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.dev/UCCNetsoc/discord-bot)
+[![](https://ci.infra.netsoc.co/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.infra.netsoc.co/UCCNetsoc/discord-bot)
 
 The UCC Netsoc discord bot has the following features:
 
@@ -19,7 +19,7 @@ The UCC Netsoc discord bot has the following features:
 
 When we decided to implement the features allowing the posting of events/announcements, we realised that the bot could no longer be server agnostic.
 
-For that reason we decided to reimplement the bot with the ability to watch/read our consul K/V store to allow for real time configuration of what servers/channels require elevated permissions.
+For that reason we decided to reimplement the bot with the ability be configured with servers/channels which require elevated permissions.
 
 ## Running locally
 
