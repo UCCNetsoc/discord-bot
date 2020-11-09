@@ -86,7 +86,7 @@ steps:
     image: docker:git
     commands:
       - >
-        bash -s <<SCRIPT
+        sh -s <<SCRIPT
           git clone https://github.com/UCCNetsoc/NaC.git .ansible
           
           mkdir -p ./keys/infra/web/
