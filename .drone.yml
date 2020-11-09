@@ -97,6 +97,9 @@ steps:
           
           chmod 0600 ./keys/infra/web/id_rsa
           chmod 0600 ./keys/infra/databases/id_rsa
+          
+          ls -al ./keys/infra/web
+          ls -al ./keys/infra/databases
         SCRIPT
 
     environment:
