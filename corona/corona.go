@@ -23,7 +23,7 @@ import (
 
 const (
 	covidSummary = "https://api.covid19api.com/summary"
-	covidDayOne  = "https://api.covid19api.com/dayone/country/%s"
+	covidDayOne  = "https://api.covid19api.com/total/dayone/country/%s/status/confirmed"
 	imgHost      = "https://freeimage.host/api/1/upload"
 	layoutIE     = "02/01/06"
 )
@@ -38,7 +38,7 @@ type CountryBase struct {
 // CountryDaily contains daily confirmed cases.
 type CountryDaily struct {
 	CountryBase
-	Confirmed int
+	Cases int
 }
 
 // CountrySummary contains covid data.
@@ -75,8 +75,17 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 	totalCases := []float64{}
 	aggregate := 0
 	for _, cases := range history {
-		totalCases = append([]float64{float64(cases.Confirmed - aggregate)}, totalCases...)
-		aggregate = cases.Confirmed
+		newCases := float64(cases.Cases - aggregate)
+		fmt.Println(cases)
+		fmt.Println(aggregate)
+		if newCases < 0 {
+			continue
+		}
+		if aggregate > 0 && newCases > float64(aggregate)*5 {
+			continue
+		}
+		totalCases = append([]float64{newCases}, totalCases...)
+		aggregate = cases.Cases
 		dates = append([]time.Time{cases.Date}, dates...)
 	}
 	graph := chart.Chart{
