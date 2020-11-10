@@ -147,22 +147,54 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 		dates = append([]time.Time{cases.Date}, dates...)
 	}
 	graph := chart.Chart{
+		Canvas: chart.Style{
+			StrokeWidth: 0,
+			FillColor:   drawing.ColorFromHex("2f3136"),
+			Show:        true,
+		},
+
+		Background: chart.Style{
+			StrokeWidth: 0,
+			FillColor:   drawing.ColorFromHex("2f3136"),
+			Show:        true,
+		},
 		Title: fmt.Sprintf("Cases per day for %s", c.Country),
 		XAxis: chart.XAxis{
-			Name:           "Date",
-			Style:          chart.StyleShow(),
+			Name: "Date",
+			TickStyle: chart.Style{
+				StrokeWidth: 1,
+				StrokeColor: drawing.ColorFromHex("ffffff"),
+				FillColor:   drawing.ColorFromHex("2f3136"),
+				Show:        true,
+			},
+			Style: chart.Style{
+				FontColor: drawing.ColorFromHex("ffffff"),
+				FillColor: drawing.ColorFromHex("2f3136"),
+				Show:      true,
+			},
 			ValueFormatter: chart.TimeDateValueFormatter,
 		},
 		YAxis: chart.YAxis{
 			Name:           "New Cases",
 			ValueFormatter: func(v interface{}) string { return chart.FloatValueFormatterWithFormat(v, "%.0f") },
-			Style:          chart.StyleShow(),
+			TickStyle: chart.Style{
+				StrokeWidth: 1,
+				StrokeColor: drawing.ColorFromHex("ffffff"),
+				FillColor:   drawing.ColorFromHex("2f3136"),
+				Show:        true,
+			},
+			Style: chart.Style{
+				FontColor: drawing.ColorFromHex("ffffff"),
+				FillColor: drawing.ColorFromHex("2f3136"),
+				Show:      true,
+			},
 		},
 		Series: []chart.Series{
 			chart.TimeSeries{
 				Style: chart.Style{
 					StrokeWidth: 5,
-					StrokeColor: drawing.ColorFromHex("9b12f1"),
+					StrokeColor: drawing.ColorFromHex("ffffff"),
+					FillColor:   drawing.ColorFromHex("2f3136"),
 					Show:        true,
 				},
 				XValues: dates,
