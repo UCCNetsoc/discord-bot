@@ -25,6 +25,7 @@ const (
 	covidSummary = "https://api.covid19api.com/summary"
 	covidDayOne  = "https://api.covid19api.com/total/dayone/country/%s/status/confirmed"
 	imgHost      = "https://freeimage.host/api/1/upload"
+	arcgis       = "https://services1.arcgis.com/eNO7HHeQ3rUcBllm/arcgis/rest/services/CovidStatisticsProfileHPSCIrelandOpenData/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Date%20asc&resultOffset=0&resultRecordCount=32000&resultType=standard&cacheHint=true"
 	layoutIE     = "02/01/06"
 )
 
@@ -53,7 +54,63 @@ type CountrySummary struct {
 	TotalRecovered int
 }
 
+// Get Arcgis data.
+func GetArcgis() (daily []CountryDaily, summary *CountrySummary, err error) {
+	var resp *http.Response
+	if resp, err = http.Get(arcgis); err != nil {
+		return
+	}
+	data := struct {
+		Features []struct {
+			Attributes struct {
+				Date                     int64
+				ConfirmedCovidCases      int
+				TotalConfirmedCovidCases int
+				ConfirmedCovidDeaths     int
+				TotalCovidDeaths         int
+			} `json:"attributes"`
+		} `json:"features"`
+	}{}
+	if err = json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return
+	}
+	for _, attrs := range data.Features {
+		country := attrs.Attributes
+		daily = append(daily, CountryDaily{
+			CountryBase: CountryBase{
+				Date:        time.Unix(country.Date/1000, 0),
+				Country:     "Ireland",
+				CountryCode: "IE",
+			},
+			Cases: country.TotalConfirmedCovidCases,
+		})
+	}
+	if len(data.Features) > 0 {
+		last := data.Features[len(data.Features)-1].Attributes
+		summary = &CountrySummary{
+			CountryBase: CountryBase{
+				Country:     "Ireland",
+				CountryCode: "IE",
+				Date:        time.Now(),
+			},
+			Slug:           "ireland",
+			NewConfirmed:   last.ConfirmedCovidCases,
+			NewDeaths:      last.ConfirmedCovidDeaths,
+			TotalConfirmed: last.TotalConfirmedCovidCases,
+			TotalDeaths:    last.TotalCovidDeaths,
+		}
+	}
+	return
+}
+
 func (c *CountrySummary) getHistory() ([]CountryDaily, error) {
+	if c.Slug == viper.GetString("corona.default") {
+		daily, _, err := GetArcgis()
+		if err != nil {
+			return nil, err
+		}
+		return daily, nil
+	}
 	resp, err := http.Get(fmt.Sprintf(covidDayOne, c.Slug))
 	if err != nil {
 		return nil, err
@@ -76,8 +133,6 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 	aggregate := 0
 	for _, cases := range history {
 		newCases := float64(cases.Cases - aggregate)
-		fmt.Println(cases)
-		fmt.Println(aggregate)
 		if newCases < 0 {
 			continue
 		}
@@ -156,11 +211,9 @@ func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string
 	body := "**New**\n"
 	body += p.Sprintf("Cases: %d\n", country.NewConfirmed)
 	body += p.Sprintf("Deaths: %d\n", country.NewDeaths)
-	body += p.Sprintf("Recoveries: %d\n", country.NewRecovered)
 	body += "\n**Total**\n"
 	body += p.Sprintf("Cases: %d\n", country.TotalConfirmed)
 	body += p.Sprintf("Deaths: %d\n", country.TotalDeaths)
-	body += p.Sprintf("Recoveries: %d\n", country.TotalRecovered)
 
 	emb := embed.NewEmbed()
 	emb.SetTitle(strings.Join([]string{title, strings.Title(strings.ReplaceAll(country.Slug, "-", " "))}, " "))

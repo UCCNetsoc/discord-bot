@@ -48,7 +48,17 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 			),
 		)
 	}
-	country := total.GetCountry(slug)
+	var country *corona.CountrySummary
+	if slug == viper.GetString("corona.default") {
+		_, country, err = corona.GetArcgis()
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Error occured parsing covid stats")
+			log.WithError(err).WithContext(ctx).Error("covid arcgis invalid output")
+			return
+		}
+	} else {
+		country = total.GetCountry(slug)
+	}
 	if country != nil {
 		corona.CreateEmbed(country, s, m.ChannelID, ctx)
 	} else {
