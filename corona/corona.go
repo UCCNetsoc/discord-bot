@@ -27,7 +27,10 @@ const (
 	imgHost      = "https://freeimage.host/api/1/upload"
 	arcgis       = "https://services1.arcgis.com/eNO7HHeQ3rUcBllm/arcgis/rest/services/CovidStatisticsProfileHPSCIrelandOpenData/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Date%20asc&resultOffset=0&resultRecordCount=32000&resultType=standard&cacheHint=true"
 	layoutIE     = "02/01/06"
+	sleepTime    = time.Duration(3 * time.Minute)
 )
+
+var currentDate *time.Time
 
 // CountryBase is the basic country stats.
 type CountryBase struct {
@@ -91,7 +94,7 @@ func GetArcgis() (daily []CountryDaily, summary *CountrySummary, err error) {
 			CountryBase: CountryBase{
 				Country:     "Ireland",
 				CountryCode: "IE",
-				Date:        time.Now(),
+				Date:        time.Unix(last.Date/1000, 0),
 			},
 			Slug:           "ireland",
 			NewConfirmed:   last.ConfirmedCovidCases,
@@ -252,4 +255,23 @@ func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string
 		emb.SetImage(imgResp.Image.URL)
 	}
 	s.ChannelMessageSendEmbed(channelID, emb.MessageEmbed)
+}
+
+// Listen for new covid cases.
+func Listen(s *discordgo.Session) error {
+	for {
+		_, data, err := GetArcgis()
+		if err != nil {
+			return err
+		}
+		if currentDate == nil {
+			currentDate = &data.Date
+		} else if data.Date.Unix() != currentDate.Unix() {
+			// New data found.
+			channelID := viper.GetString("discord.public.corona")
+			s.ChannelMessageSend(channelID, "The HSE has released new case numbers for Ireland:")
+			CreateEmbed(data, s, channelID, context.Background())
+		}
+		<-time.After(sleepTime)
+	}
 }

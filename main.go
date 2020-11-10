@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/UCCNetsoc/discord-bot/commands"
+	"github.com/UCCNetsoc/discord-bot/corona"
 
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
@@ -47,6 +48,7 @@ func main() {
 
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)
+	go corona.Listen(session)
 	go prometheus.CreateExporter(session)
 
 	// Initialise scheduler if enabled in viper defaults
