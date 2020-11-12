@@ -139,7 +139,7 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 		if newCases < 0 {
 			continue
 		}
-		if aggregate > 0 && newCases > float64(aggregate)*5 {
+		if aggregate > 0 && newCases > 1000 && newCases > float64(aggregate)*5 {
 			continue
 		}
 		totalCases = append([]float64{newCases}, totalCases...)
