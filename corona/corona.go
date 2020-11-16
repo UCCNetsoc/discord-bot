@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -102,6 +103,8 @@ func GetArcgis() (daily []CountryDaily, summary *CountrySummary, err error) {
 			TotalConfirmed: last.TotalConfirmedCovidCases,
 			TotalDeaths:    last.TotalCovidDeaths,
 		}
+	} else {
+		err = errors.New("No data received from arcgis")
 	}
 	return
 }
@@ -294,7 +297,8 @@ func Listen(s *discordgo.Session) error {
 	for {
 		_, data, err := GetArcgis()
 		if err != nil {
-			return err
+			log.WithError(err).Error("Error occured listening for HSE corona updates")
+			continue
 		}
 		if currentDate == nil {
 			currentDate = &data.Date
