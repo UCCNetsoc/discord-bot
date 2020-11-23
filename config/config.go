@@ -1,9 +1,9 @@
 package config
 
 import (
-	"fmt"
 	"strings"
 
+	"github.com/Strum355/log"
 	"github.com/spf13/viper"
 )
 
@@ -19,6 +19,8 @@ type Channels struct {
 	PublicGeneral       string `json:"public_general"`       // On public server
 	PrivateEvents       string `json:"private_events"`       // On committee server
 }
+
+const limitChars = 8
 
 // InitConfig sets up viper and consul.
 func InitConfig() error {
@@ -45,19 +47,21 @@ func InitConfig() error {
 }
 
 func printAll() {
-	fmt.Println("Startup variables:")
+	store := log.Fields{}
 	for k, v := range viper.AllSettings() {
-		fmt.Println(k + ":")
+		localStore := map[string]interface{}{}
 		for sk, sv := range v.(map[string]interface{}) {
 			if strval, ok := sv.(string); ok {
-				if len(strval) > 5 {
-					fmt.Printf("%s: %s...\n", sk, strval[:5])
+				if len(strval) > limitChars {
+					localStore[sk] = strval[:limitChars] + "..."
 				} else {
-					fmt.Printf("%s: %s\n", sk, strval)
+					localStore[sk] = strval
 				}
 			} else {
-				fmt.Printf("%s: %v\n", sk, sv)
+				localStore[sk] = sv
 			}
 		}
+		store[k] = localStore
 	}
+	log.WithFields(store).Info("Discord Bot startup config values")
 }

@@ -306,6 +306,7 @@ func Listen(s *discordgo.Session) error {
 			// New data found.
 			currentDate = &data.Date
 			channelID := viper.GetString("discord.public.corona")
+			log.WithFields(log.Fields{"arcGis": *data}).Info("Found new COVID cases from the HSE")
 			s.ChannelMessageSend(channelID, "The HSE has released new case numbers for Ireland:")
 			CreateEmbed(data, s, channelID, context.Background())
 		}
