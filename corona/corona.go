@@ -297,7 +297,7 @@ func Listen(s *discordgo.Session) error {
 	for {
 		_, data, err := GetArcgis()
 		if err != nil {
-			log.WithError(err).Error("Error occured listening for HSE corona updates")
+			log.WithError(err).Error("error occured listening for HSE corona updates")
 			continue
 		}
 		if currentDate == nil {

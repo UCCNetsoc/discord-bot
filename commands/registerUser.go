@@ -65,6 +65,8 @@ func initiatedRegistration(ctx context.Context, s *discordgo.Session, m *discord
 	// Success
 	if response.StatusCode < 300 && response.StatusCode > 199 {
 		verifyCodes[m.Author.ID] = randomCode
+		log.WithContext(ctx).
+			WithFields(log.Fields{"username": m.Author.Username, "uuid": m.Author.ID, "email": content}).Info("user requested signup email")
 		s.ChannelMessageSendEmbed(m.ChannelID, embed.NewEmbed().
 			SetTitle("UCC Netsoc Server Registration").
 			SetDescription("Please reply with the token that has been emailed to you. If you wish to enter another email, type `!register`.").

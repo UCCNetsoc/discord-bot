@@ -63,5 +63,5 @@ func printAll() {
 		}
 		store[k] = localStore
 	}
-	log.WithFields(store).Info("Discord Bot startup config values")
+	log.WithFields(store).Info("discord bot startup config values")
 }
