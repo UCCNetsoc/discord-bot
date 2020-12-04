@@ -97,6 +97,12 @@ func Register(s *discordgo.Session) {
 		false,
 	)
 	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
+	command(
+		"shorten",
+		"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-url]`*",
+		shortenCommand,
+		true,
+	)
 
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
