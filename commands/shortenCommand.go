@@ -34,7 +34,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	*/
 
 	originalURL := params[1]
-	domain := "www.google.com"
+	domain := viper.GetString("shorten.host")
 	slug := ""
 	if len(params) > 2 {
 		re := regexp.MustCompile("^http(s)?://")
@@ -53,13 +53,15 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	values := map[string]string{"Slug": slug, "Domain": domain, "Target": originalURL}
 	jsonValue, _ := json.Marshal(values)
-	req, err := http.NewRequest("POST", viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
+	req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
 		log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
+		return
 	}
 	defer resp.Body.Close()
 
