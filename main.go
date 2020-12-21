@@ -1,7 +1,9 @@
 package main
 
 import (
+	"crypto/tls"
 	"flag"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -24,6 +26,8 @@ import (
 var production *bool
 
 func main() {
+	http.DefaultTransport.(*http.Transport).TLSClientConfig = &tls.Config{InsecureSkipVerify: true} // Take this out when corona API is deborked
+
 	// Check for flags
 	production = flag.Bool("p", false, "enables production with json logging")
 	flag.Parse()
