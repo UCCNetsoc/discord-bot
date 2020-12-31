@@ -302,7 +302,7 @@ func Listen(s *discordgo.Session) error {
 		}
 		if currentDate == nil {
 			currentDate = &data.Date
-		} else if data.Date.Unix() != currentDate.Unix() {
+		} else if data.Date.Unix() > currentDate.Unix() {
 			// New data found.
 			currentDate = &data.Date
 			channelID := viper.GetString("discord.public.corona")
