@@ -151,12 +151,23 @@ func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
 	commandStr, body := extractCommand(m.Content)
 	// if command is a normal command
 	if command, ok := commandsMap[commandStr]; ok {
+		var channelName string
+		if len(m.ChannelID) > 0 {
+			if channel, err := s.Channel(m.ChannelID); err != nil {
+				log.WithError(err).Error("Couldn't query channel")
+				return
+			} else {
+				channelName = channel.Name
+			}
+		}
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
-			"author_id":  m.Author.ID,
-			"channel_id": m.ChannelID,
-			"guild_id":   m.GuildID,
-			"command":    commandStr,
-			"body":       body,
+			"author_id":    m.Author.ID,
+			"channel_id":   m.ChannelID,
+			"guild_id":     m.GuildID,
+			"user":         m.Author.Username,
+			"channel_name": channelName,
+			"command":      commandStr,
+			"body":         body,
 		})
 		log.WithContext(ctx).Info("invoking standard command")
 		command(ctx, s, m)
