@@ -298,6 +298,7 @@ func Listen(s *discordgo.Session) error {
 		_, data, err := GetArcgis()
 		if err != nil {
 			log.WithError(err).Error("error occured listening for HSE corona updates")
+			time.Sleep(30 * time.Second)
 			continue
 		}
 		if currentDate == nil {
