@@ -22,7 +22,7 @@ func minecraftPlayerCount(s *discordgo.Session) {
 	resp, err := commands.Query()
 	if err != nil {
 		log.Error("Failed to query MC Server status: " + err.Error())
-		time.Sleep(6 * time.Hour)
+		time.Sleep(time.Hour)
 	} else {
 		plural := "players"
 		if resp.Players.Online == 1 {
