@@ -8,10 +8,11 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
+	"github.com/UCCNetsoc/discord-bot/utils"
 	"github.com/bwmarrin/discordgo"
 
 	// Needed for mysql
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,12 +43,12 @@ var (
 // MemberJoinLeave should be called every time a member joins or leaves.
 func MemberJoinLeave() {
 	servers := viper.Get("discord.servers").(*config.Servers)
-	publicServer, err := globalSession.Guild(servers.PublicServer)
+	publicServer, err := utils.GetGuildPreview(globalSession, servers.PublicServer)
 	if err != nil {
 		log.WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
-	membersJoined.Set(float64(publicServer.MemberCount))
+	membersJoined.Set(float64(publicServer.ApproximateMemberCount))
 }
 
 // EventCreate is called whenever an event is created
@@ -110,17 +111,9 @@ func createTables() {
 func setup(s *discordgo.Session) {
 	globalSession = s
 	createTables()
-	servers := viper.Get("discord.servers").(*config.Servers)
+	MemberJoinLeave()
 
-	publicServer, err := s.Guild(servers.PublicServer)
-	if err != nil {
-		log.WithError(err).Error("Failed to get Public Server guild")
-		return
-	}
-	membersJoined.Set(float64(publicServer.MemberCount))
-
-	var result *sql.Rows
-	result, err = globalDB.Query("SELECT value FROM stats WHERE name = 'eventCount'")
+	result, err := globalDB.Query("SELECT value FROM stats WHERE name = 'eventCount'")
 	defer result.Close()
 	if err != nil {
 		log.WithError(err).Error("Failed to get stats")

@@ -5,7 +5,7 @@ go 1.14
 require (
 	github.com/Strum355/log v1.1.0
 	github.com/blend/go-sdk v1.1.1 // indirect
-	github.com/bwmarrin/discordgo v0.22.0
+	github.com/bwmarrin/discordgo v0.22.1
 	github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927 // indirect
 	github.com/dghubble/oauth1 v0.6.0
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
@@ -16,6 +16,7 @@ require (
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/huandu/facebook/v2 v2.5.2
 	github.com/kr/pretty v0.2.0 // indirect
+	github.com/lib/pq v1.0.0
 	github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2
 	github.com/miekg/dns v1.1.30
 	github.com/patrickmn/go-cache v2.1.0+incompatible

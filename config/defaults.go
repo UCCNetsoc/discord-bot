@@ -53,7 +53,7 @@ func initDefaults() {
 	viper.SetDefault("prom.port", 2112)
 	viper.SetDefault("prom.dbname", "promexporter")
 	// Database
-	viper.SetDefault("sql.url", "postgres.netsoc.local")
+	viper.SetDefault("sql.host", "postgres.netsoc.local")
 	viper.SetDefault("sql.port", 5432)
 	viper.SetDefault("sql.username", "root")
 	viper.SetDefault("sql.password", "password")
