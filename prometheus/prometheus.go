@@ -3,6 +3,9 @@ package prometheus
 import (
 	"fmt"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"database/sql"
 
@@ -55,7 +58,7 @@ func MemberJoinLeave() {
 // It increments eventCount
 func EventCreate() {
 	eventCount.Dec()
-	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 1) ON DUPLICATE KEY UPDATE value = value + 1;")
+	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 1) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -66,7 +69,7 @@ func EventCreate() {
 // Decrements eventCount
 func EventRevoke() {
 	eventCount.Dec()
-	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 0) ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 0) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -77,7 +80,7 @@ func EventRevoke() {
 // Increments messageCount for the given server and channel
 func MessageCreate(server string, channel string) {
 	messageCount.WithLabelValues(server, channel).Inc()
-	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON DUPLICATE KEY UPDATE value = value + 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -88,7 +91,7 @@ func MessageCreate(server string, channel string) {
 // Decrements messageCount for the given server and channel
 func MessageDelete(server string, channel string) {
 	messageCount.WithLabelValues(server, channel).Dec()
-	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON DUPLICATE KEY UPDATE value = value - 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -171,4 +174,7 @@ func CreateExporter(s *discordgo.Session) {
 	globalDB = db
 	setup(s)
 	http.Handle("/metrics", promhttp.Handler())
+	sc := make(chan os.Signal, 1)
+	signal.Notify(sc, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
+	<-sc
 }
