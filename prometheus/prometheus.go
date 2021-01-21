@@ -19,10 +19,6 @@ import (
 )
 
 var (
-	memberCount = promauto.NewGauge(prometheus.GaugeOpts{
-		Name: "member_count",
-		Help: "The total number of members in the server",
-	})
 	membersJoined = promauto.NewGauge(prometheus.GaugeOpts{
 		Name: "members_joined",
 		Help: "The total number of members to have ever joined the server",
@@ -42,6 +38,17 @@ var (
 	globalSession *discordgo.Session
 	globalDB      *sql.DB
 )
+
+// MemberJoinLeave should be called every time a member joins or leaves.
+func MemberJoinLeave() {
+	servers := viper.Get("discord.servers").(*config.Servers)
+	publicServer, err := globalSession.Guild(servers.PublicServer)
+	if err != nil {
+		log.WithError(err).Error("Failed to get Public Server guild")
+		return
+	}
+	membersJoined.Set(float64(publicServer.MemberCount))
+}
 
 // EventCreate is called whenever an event is created
 // It increments eventCount
@@ -96,11 +103,6 @@ func createTables() {
 	_, err = globalDB.Exec("CREATE TABLE IF NOT EXISTS messageCount(server VARCHAR(20), channel VARCHAR(20), value INT, PRIMARY KEY (server, channel));")
 	if err != nil {
 		log.WithError(err).Error("Failed to create table messageCount")
-		return
-	}
-	_, err = globalDB.Exec("CREATE TABLE IF NOT EXISTS joined(id VARCHAR(20));")
-	if err != nil {
-		log.WithError(err).Error("Failed to create table joined")
 		return
 	}
 }

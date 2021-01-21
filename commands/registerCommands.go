@@ -217,7 +217,7 @@ func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
 }
 
 func memberLeave(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
-	prometheus.MemberLeave(m.User.ID)
+	prometheus.MemberJoinLeave()
 }
 
 func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
