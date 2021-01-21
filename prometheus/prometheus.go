@@ -3,7 +3,6 @@ package prometheus
 import (
 	"fmt"
 	"net/http"
-	"strings"
 
 	"database/sql"
 
@@ -43,57 +42,6 @@ var (
 	globalSession *discordgo.Session
 	globalDB      *sql.DB
 )
-
-// MemberJoin is called whenever a member joins the server
-// Increments memberCount and increments membersJoined if member hasn't joined in the past
-func MemberJoin(id string) {
-	result, err := globalDB.Query("SELECT id FROM joined WHERE id = " + id)
-	defer result.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to get joined")
-		return
-	}
-	if !result.Next() {
-		membersJoined.Inc()
-		_, err = globalDB.Exec("INSERT INTO joined VALUES(" + id + ")")
-		if err != nil {
-			log.WithError(err).Error("Failed to add id to joined")
-			return
-		}
-	}
-
-	memberCount.Inc()
-
-}
-
-// MemberLeave is called whenever a member leaves the server
-// Recalculated memberCount based on number of members with roles
-// This is due to not being able to determine whether a leaving member had a role
-func MemberLeave(id string) {
-	count := 0.
-	servers := viper.Get("discord.servers").(*config.Servers)
-	publicServer, err := globalSession.Guild(servers.PublicServer)
-	if err != nil {
-		log.WithError(err).Error("Failed to get Public Server guild")
-		return
-	}
-	for _, member := range publicServer.Members {
-		found := false
-		for _, roleID := range strings.Split(viper.GetString("discord.roles"), ",") {
-			for _, role := range member.Roles {
-				if role == roleID {
-					found = true
-					count++
-					break
-				}
-			}
-			if found {
-				break
-			}
-		}
-	}
-	memberCount.Set(count)
-}
 
 // EventCreate is called whenever an event is created
 // It increments eventCount
@@ -161,62 +109,15 @@ func setup(s *discordgo.Session) {
 	globalSession = s
 	createTables()
 	servers := viper.Get("discord.servers").(*config.Servers)
+
 	publicServer, err := s.Guild(servers.PublicServer)
 	if err != nil {
 		log.WithError(err).Error("Failed to get Public Server guild")
 		return
 	}
-	newMembers := []string{}
-	for _, member := range publicServer.Members {
-		found := false
-		for _, roleID := range strings.Split(viper.GetString("discord.roles"), ",") {
-			for _, role := range member.Roles {
-				if role == roleID {
-					found = true
-					break
-				}
-			}
-			if found {
-				break
-			}
-		}
-		if found {
-			result, err := globalDB.Query("SELECT id FROM joined WHERE id = " + member.User.ID)
-			defer result.Close()
-			if err != nil {
-				log.WithError(err).Error("Failed to get joined")
-				return
-			}
-			if !result.Next() {
-				newMembers = append(newMembers, member.User.ID)
-				membersJoined.Inc()
-			}
-			memberCount.Inc()
-		}
-	}
-	if len(newMembers) > 0 {
-		_, err = globalDB.Exec("INSERT INTO joined VALUES (" + strings.Join(newMembers, "), (") + ")")
-		if err != nil {
-			log.WithError(err).Error("Failed to add id to joined")
-			return
-		}
-	}
+	membersJoined.Set(float64(publicServer.MemberCount))
 
-	result, err := globalDB.Query("SELECT COUNT(*) FROM joined")
-	defer result.Close()
-	if err != nil {
-		log.WithError(err).Error("Failed to get joined")
-		return
-	}
-	if result.Next() {
-		var value float64
-		if err := result.Scan(&value); err != nil {
-			log.WithError(err).Error("Failed to read row")
-			return
-		}
-		membersJoined.Set(value)
-	}
-
+	var result *sql.Rows
 	result, err = globalDB.Query("SELECT value FROM stats WHERE name = 'eventCount'")
 	defer result.Close()
 	if err != nil {
@@ -254,7 +155,15 @@ func setup(s *discordgo.Session) {
 // CreateExporter should be called when bot is starting
 // to set up database tables and start the prometheus exporter http server
 func CreateExporter(s *discordgo.Session) {
-	db, err := sql.Open("mysql", fmt.Sprintf("%s:%s@tcp(%s)/%s", viper.GetString("mysql.username"), viper.GetString("mysql.password"), viper.GetString("mysql.url"), viper.GetString("prom.dbname")))
+	db, err := sql.Open("postgres",
+		fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			viper.GetString("sql.host"),
+			viper.GetInt("sql.port"),
+			viper.GetString("sql.username"),
+			viper.GetString("sql.password"),
+			viper.GetString("prom.dbname"),
+		),
+	)
 	if err != nil {
 		log.WithError(err).Error("Failed to connect to db")
 		return
@@ -267,5 +176,4 @@ func CreateExporter(s *discordgo.Session) {
 	globalDB = db
 	setup(s)
 	http.Handle("/metrics", promhttp.Handler())
-	http.ListenAndServe(":2112", nil)
 }

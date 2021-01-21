@@ -53,9 +53,10 @@ func initDefaults() {
 	viper.SetDefault("prom.port", 2112)
 	viper.SetDefault("prom.dbname", "promexporter")
 	// Database
-	viper.SetDefault("mysql.url", "mysql.netsoc.local:3306")
-	viper.SetDefault("mysql.username", "root")
-	viper.SetDefault("mysql.password", "password")
+	viper.SetDefault("sql.url", "postgres.netsoc.local")
+	viper.SetDefault("sql.port", 3306)
+	viper.SetDefault("sql.username", "root")
+	viper.SetDefault("sql.password", "password")
 	// Corona
 	viper.SetDefault("corona.default", "ireland")
 	viper.SetDefault("corona.webhook", "https://events.netsoc.dev/corona")
