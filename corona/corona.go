@@ -214,7 +214,7 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 
 // TotalSummary contains global data.
 type TotalSummary struct {
-	Global    map[string]int
+	Global    map[string]interface{}
 	Countries []CountrySummary
 }
 
@@ -239,6 +239,13 @@ func GetCorona() (total *TotalSummary, err error, raw bytes.Buffer) {
 	if err = json.NewDecoder(io.TeeReader(resp.Body, &raw)).Decode(total); err != nil {
 		return
 	}
+	temp := make(map[string]interface{})
+	for col, val := range total.Global {
+		if _, ok := val.(int); ok {
+			temp[col] = val
+		}
+	}
+	total.Global = temp
 	return
 }
 
