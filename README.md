@@ -15,7 +15,7 @@ The UCC Netsoc discord bot has the following features:
 
 - And much more!
 
-## Why make a new Discord Bot
+## Why make a new Discord Bot?
 
 When we decided to implement the features allowing the posting of events/announcements, we realised that the bot could no longer be server agnostic.
 
