@@ -27,13 +27,13 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 		slug = viper.GetString("corona.default")
 		// Also send global stats
 		body := "**New**\n"
-		body += p.Sprintf("Cases: %d\n", total.Global["NewConfirmed"])
-		body += p.Sprintf("Deaths: %d\n", total.Global["NewDeaths"])
-		body += p.Sprintf("Recoveries: %d\n", total.Global["NewRecovered"])
+		body += p.Sprintf("Cases: %d\n", total.Global["NewConfirmed"].(int))
+		body += p.Sprintf("Deaths: %d\n", total.Global["NewDeaths"].(int))
+		body += p.Sprintf("Recoveries: %d\n", total.Global["NewRecovered"].(int))
 		body += "\n**Total**\n"
-		body += p.Sprintf("Cases: %d\n", total.Global["TotalConfirmed"])
-		body += p.Sprintf("Deaths: %d\n", total.Global["TotalDeaths"])
-		body += p.Sprintf("Recoveries: %d\n", total.Global["TotalRecovered"])
+		body += p.Sprintf("Cases: %d\n", total.Global["TotalConfirmed"].(int))
+		body += p.Sprintf("Deaths: %d\n", total.Global["TotalDeaths"].(int))
+		body += p.Sprintf("Recoveries: %d\n", total.Global["TotalRecovered"].(int))
 
 		emb := embed.NewEmbed()
 		emb.SetTitle("Covid-19 Global Stats")

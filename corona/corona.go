@@ -241,8 +241,8 @@ func GetCorona() (total *TotalSummary, err error, raw bytes.Buffer) {
 	}
 	temp := make(map[string]interface{})
 	for col, val := range total.Global {
-		if _, ok := val.(int); ok {
-			temp[col] = val
+		if f, ok := val.(float64); ok {
+			temp[col] = int(f)
 		}
 	}
 	total.Global = temp
