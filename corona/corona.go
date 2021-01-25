@@ -329,7 +329,7 @@ func Listen(s *discordgo.Session) error {
 			continue
 		}
 		if currentDateVaccines == nil {
-			currentDate = &vaccines.Date
+			currentDateVaccines = &vaccines.Date
 		} else if vaccines.Date.Unix() > currentDateVaccines.Unix() {
 			// New vaccines found.
 			s.ChannelMessageSendEmbed(channelID, vaccines.Embed())
