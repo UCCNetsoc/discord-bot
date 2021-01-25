@@ -23,12 +23,13 @@ import (
 )
 
 const (
-	covidSummary = "https://api.covid19api.com/summary"
-	covidDayOne  = "https://api.covid19api.com/total/dayone/country/%s/status/confirmed"
-	imgHost      = "https://freeimage.host/api/1/upload"
-	arcgis       = "https://services1.arcgis.com/eNO7HHeQ3rUcBllm/arcgis/rest/services/CovidStatisticsProfileHPSCIrelandOpenData/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Date%20asc&resultOffset=0&resultRecordCount=32000&resultType=standard&cacheHint=true"
-	layoutIE     = "02/01/06"
-	sleepTime    = time.Duration(3 * time.Minute)
+	covidSummary  = "https://api.covid19api.com/summary"
+	covidDayOne   = "https://api.covid19api.com/total/dayone/country/%s/status/confirmed"
+	imgHost       = "https://freeimage.host/api/1/upload"
+	arcgis        = "https://services1.arcgis.com/eNO7HHeQ3rUcBllm/arcgis/rest/services/CovidStatisticsProfileHPSCIrelandOpenData/FeatureServer/0/query?f=json&where=1%3D1&returnGeometry=false&spatialRel=esriSpatialRelIntersects&outFields=*&orderByFields=Date%20asc&resultOffset=0&resultRecordCount=32000&resultType=standard&cacheHint=true"
+	covidVaccines = "https://services-eu1.arcgis.com/z6bHNio59iTqqSUY/arcgis/rest/services/Covid19_Vaccine_Administration_Data/FeatureServer/0/query?f=json&where=1%3D1&outFields=*&returnGeometry=false"
+	layoutIE      = "02/01/06"
+	sleepTime     = time.Duration(3 * time.Minute)
 )
 
 var currentDate *time.Time

@@ -103,6 +103,7 @@ func Register(s *discordgo.Session) {
 		shortenCommand,
 		true,
 	)
+	command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines, false)
 
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
