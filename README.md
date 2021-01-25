@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/UCCNetsoc/wiki/master/assets/logo-service-discord-bot.svg" width="360"/>
 
-[![](https://ci.netsoc.co/api/badges/uccnetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
+[![](https://ci.netsoc.co/api/badges/UCCNetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
 
 The UCC Netsoc discord bot has the following features:
 
@@ -14,7 +14,7 @@ The UCC Netsoc discord bot has the following features:
 
 - And much more!
 
-## Why make a new Discord Bot
+## Why make a new Discord Bot?
 
 When we decided to implement the features allowing the posting of events/announcements, we realised that the bot could no longer be server agnostic.
 
