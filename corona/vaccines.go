@@ -3,14 +3,27 @@ package corona
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/UCCNetsoc/discord-bot/embed"
+	"github.com/bwmarrin/discordgo"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 // Vaccines from the HSE arcGIS.
 type Vaccines struct {
 	First int
 	Date  time.Time
+}
+
+func (v *Vaccines) Embed() *discordgo.MessageEmbed {
+	p := message.NewPrinter(language.English)
+	return embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(p.Sprintf(`
+				**First installment**: %d
+			`, v.First)).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
 }
 
 // GetVaccines will query HSE arcGIS and return vaccine stats.

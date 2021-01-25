@@ -332,10 +332,7 @@ func Listen(s *discordgo.Session) error {
 			currentDate = &vaccines.Date
 		} else if vaccines.Date.Unix() > currentDateVaccines.Unix() {
 			// New vaccines found.
-			p := message.NewPrinter(language.English)
-			s.ChannelMessageSendEmbed(channelID, embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(p.Sprintf(`
-				**First installment**: %d
-			`, vaccines.First)).SetFooter(fmt.Sprintf("As of %s", vaccines.Date.Format(layoutIE))).MessageEmbed)
+			s.ChannelMessageSendEmbed(channelID, vaccines.Embed())
 		}
 		<-time.After(sleepTime)
 	}
