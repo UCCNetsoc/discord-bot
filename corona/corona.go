@@ -152,13 +152,13 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 	graph := chart.Chart{
 		Canvas: chart.Style{
 			StrokeWidth: 0,
-			FillColor:   drawing.ColorFromHex("2f313600"),
+			FillColor:   drawing.ColorFromHex("2f3136"),
 			Show:        true,
 		},
 
 		Background: chart.Style{
 			StrokeWidth: 0,
-			FillColor:   drawing.ColorFromHex("2f313600"),
+			FillColor:   drawing.ColorFromHex("2f3136"),
 			Show:        true,
 		},
 		Title: fmt.Sprintf("Cases per day for %s", c.Country),
