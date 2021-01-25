@@ -32,7 +32,10 @@ const (
 	sleepTime     = time.Duration(3 * time.Minute)
 )
 
-var currentDate *time.Time
+var (
+	currentDate         *time.Time
+	currentDateVaccines *time.Time
+)
 
 // CountryBase is the basic country stats.
 type CountryBase struct {
@@ -302,6 +305,7 @@ func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string
 
 // Listen for new covid cases.
 func Listen(s *discordgo.Session) error {
+	channelID := viper.GetString("discord.public.corona")
 	for {
 		_, data, err := GetArcgis()
 		if err != nil {
@@ -314,10 +318,24 @@ func Listen(s *discordgo.Session) error {
 		} else if data.Date.Unix() > currentDate.Unix() {
 			// New data found.
 			currentDate = &data.Date
-			channelID := viper.GetString("discord.public.corona")
 			log.WithFields(log.Fields{"arcGis": *data}).Info("Found new COVID cases from the HSE")
 			s.ChannelMessageSend(channelID, "The HSE has released new case numbers for Ireland:")
 			CreateEmbed(data, s, channelID, context.Background())
+		}
+		vaccines, err := GetVaccines()
+		if err != nil {
+			log.WithError(err).Error("error occured listening for HSE vaccine updates")
+			time.Sleep(30 * time.Second)
+			continue
+		}
+		if currentDateVaccines == nil {
+			currentDate = &vaccines.Date
+		} else if vaccines.Date.Unix() > currentDateVaccines.Unix() {
+			// New vaccines found.
+			p := message.NewPrinter(language.English)
+			s.ChannelMessageSendEmbed(channelID, embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(p.Sprintf(`
+				**First installment**: %d
+			`, vaccines.First)).SetFooter(fmt.Sprintf("As of %s", vaccines.Date.Format(layoutIE))).MessageEmbed)
 		}
 		<-time.After(sleepTime)
 	}
