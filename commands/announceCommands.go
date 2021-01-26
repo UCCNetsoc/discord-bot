@@ -12,7 +12,6 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/embed"
-	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 	"golang.org/x/text/language"
@@ -64,7 +63,6 @@ func event(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate
 			"poster.jpg",
 			io.TeeReader(event.ImgData, b),
 		)
-		prometheus.EventCreate()
 		event.ImgData = b
 		if len(event.Description) < viper.GetInt("discord.charlimit") {
 			s.MessageReactionAdd(m.ChannelID, m.ID, string(twitter))
@@ -205,7 +203,6 @@ func recall(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreat
 					if content == publicMessage.Content {
 						s.ChannelMessageDelete(channels.PublicAnnouncements, publicMessage.ID)
 						s.ChannelMessageSend(m.ChannelID, "Successfully recalled event\n"+fmt.Sprintf("**%s**\n%s", event.Title, event.Description))
-						prometheus.EventRevoke()
 						return
 					}
 				}

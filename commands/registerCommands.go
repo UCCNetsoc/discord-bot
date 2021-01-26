@@ -113,6 +113,7 @@ func Register(s *discordgo.Session) {
 
 	s.AddHandler(messageCreate)
 	s.AddHandler(messageReaction)
+	s.AddHandler(messageDelete)
 	s.AddHandler(serverJoin)
 	s.AddHandler(memberLeave)
 }

@@ -54,33 +54,11 @@ func MemberJoinLeave() {
 	membersJoined.Set(float64(publicServer.ApproximateMemberCount))
 }
 
-// EventCreate is called whenever an event is created
-// It increments eventCount
-func EventCreate() {
-	eventCount.Dec()
-	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 1) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value + 1;")
-	if err != nil {
-		log.WithError(err).Error("Failed to update messageCount")
-		return
-	}
-}
-
-// EventRevoke is called whenever an event is revoked
-// Decrements eventCount
-func EventRevoke() {
-	eventCount.Dec()
-	_, err := globalDB.Exec("INSERT INTO stats VALUES('eventCount', 0) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value - 1;")
-	if err != nil {
-		log.WithError(err).Error("Failed to update messageCount")
-		return
-	}
-}
-
 // MessageCreate is called whenever a message is sent
 // Increments messageCount for the given server and channel
 func MessageCreate(server string, channel string) {
 	messageCount.WithLabelValues(server, channel).Inc()
-	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value + 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 1) ON CONFLICT (server, channel) DO UPDATE SET value = messageCount.value + 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
@@ -91,7 +69,7 @@ func MessageCreate(server string, channel string) {
 // Decrements messageCount for the given server and channel
 func MessageDelete(server string, channel string) {
 	messageCount.WithLabelValues(server, channel).Dec()
-	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON CONFLICT (server, channel) DO UPDATE SET value = excluded.value - 1;")
+	_, err := globalDB.Exec("INSERT INTO messageCount VALUES(" + server + ", " + channel + ", 0) ON CONFLICT (server, channel) DO UPDATE SET value = messageCount.value - 1;")
 	if err != nil {
 		log.WithError(err).Error("Failed to update messageCount")
 		return
