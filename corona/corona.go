@@ -332,8 +332,8 @@ func Listen(s *discordgo.Session) error {
 			currentDateVaccines = &vaccines.Date
 		} else if vaccines.Date.Unix() > currentDateVaccines.Unix() {
 			// New vaccines found.
-			s.ChannelMessageSend(channelID, "The HSE has released new vaccine numbers for Ireland:")
-			s.ChannelMessageSendEmbed(channelID, vaccines.Embed())
+			// s.ChannelMessageSend(channelID, "The HSE has released new vaccine numbers for Ireland:")
+			// s.ChannelMessageSendEmbed(channelID, vaccines.Embed())
 		}
 		<-time.After(sleepTime)
 	}
