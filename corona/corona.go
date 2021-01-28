@@ -157,7 +157,6 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 		if newDeaths < 0 {
 			continue
 		}
-		fmt.Println(newDeaths)
 		totalDeaths = append([]float64{newDeaths}, totalDeaths...)
 		aggregateDeaths = cases.Deaths
 		totalCases = append([]float64{newCases}, totalCases...)
