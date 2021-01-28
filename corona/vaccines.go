@@ -15,15 +15,17 @@ import (
 
 // Vaccines from the HSE arcGIS.
 type Vaccines struct {
-	First int
-	Date  time.Time
+	First  int
+	Second int
+	Date   time.Time
 }
 
 func (v *Vaccines) Embed() *discordgo.MessageEmbed {
 	p := message.NewPrinter(language.English)
 	return embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(p.Sprintf(`
 				**First installment**: %d
-			`, v.First)).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
+				**Second installment**: %d
+			`, v.First, v.Second)).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
 }
 
 // GetVaccines will query HSE arcGIS and return vaccine stats.
@@ -35,8 +37,9 @@ func GetVaccines() (*Vaccines, error) {
 	vaccines := &struct {
 		Features []struct {
 			Attributes struct {
-				First int `json:"total_number_of_1st_dose_admini"`
-				Date  int `json:"data_relevent_up_to_date"`
+				First  int `json:"total_number_of_1st_dose_admini"`
+				Second int `json:"total_number_of_2nd_dose_admini"`
+				Date   int `json:"data_relevent_up_to_date"`
 			} `json:"attributes"`
 		} `json:"features"`
 	}{}
@@ -47,7 +50,8 @@ func GetVaccines() (*Vaccines, error) {
 		return nil, errors.New("no features")
 	}
 	return &Vaccines{
-		First: vaccines.Features[0].Attributes.First,
-		Date:  time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
+		First:  vaccines.Features[0].Attributes.First,
+		Second: vaccines.Features[0].Attributes.Second,
+		Date:   time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
 	}, nil
 }
