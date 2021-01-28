@@ -47,7 +47,8 @@ type CountryBase struct {
 // CountryDaily contains daily confirmed cases.
 type CountryDaily struct {
 	CountryBase
-	Cases int
+	Cases  int
+	Deaths int
 }
 
 // CountrySummary contains covid data.
@@ -90,7 +91,8 @@ func GetArcgis() (daily []CountryDaily, summary *CountrySummary, err error) {
 				Country:     "Ireland",
 				CountryCode: "IE",
 			},
-			Cases: country.TotalConfirmedCovidCases,
+			Cases:  country.TotalConfirmedCovidCases,
+			Deaths: country.TotalCovidDeaths,
 		})
 	}
 	if len(data.Features) > 0 {
@@ -140,7 +142,9 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 	}
 	dates := []time.Time{}
 	totalCases := []float64{}
+	totalDeaths := []float64{}
 	aggregate := 0
+	aggregateDeaths := 0
 	for _, cases := range history {
 		newCases := float64(cases.Cases - aggregate)
 		if newCases < 0 {
@@ -149,6 +153,13 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 		if aggregate > 0 && newCases > 1000 && newCases > float64(aggregate)*5 {
 			continue
 		}
+		newDeaths := float64(cases.Deaths - aggregateDeaths)
+		if newDeaths < 0 {
+			continue
+		}
+		fmt.Println(newDeaths)
+		totalDeaths = append([]float64{newDeaths}, totalDeaths...)
+		aggregateDeaths = cases.Deaths
 		totalCases = append([]float64{newCases}, totalCases...)
 		aggregate = cases.Cases
 		dates = append([]time.Time{cases.Date}, dates...)
@@ -206,6 +217,16 @@ func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
 				},
 				XValues: dates,
 				YValues: totalCases,
+			},
+			chart.TimeSeries{
+				Style: chart.Style{
+					StrokeWidth: 2,
+					StrokeColor: drawing.ColorFromHex("ffffff"),
+					FillColor:   drawing.ColorFromHex("2f3136"),
+					Show:        true,
+				},
+				XValues: dates,
+				YValues: totalDeaths,
 			},
 		},
 	}
