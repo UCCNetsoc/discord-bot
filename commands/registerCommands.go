@@ -7,8 +7,6 @@ import (
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/config"
-	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
 	"github.com/dghubble/oauth1"
@@ -106,6 +104,7 @@ func Register(s *discordgo.Session) {
 		true,
 	)
 	command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines, false)
+	command("boosters", "check current nitro boosters", boostersCommand, false)
 
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
@@ -123,12 +122,7 @@ func Register(s *discordgo.Session) {
 // Called whenever a message is sent in a server the bot has access to
 func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	if m.Type == discordgo.MessageTypeUserPremiumGuildSubscription && m.Author != nil {
-		em := embed.NewEmbed()
-		em.SetTitle("New Nitro Boost 🎉")
-		em.SetDescription(fmt.Sprintf("Thank you %s for boosting the server!", m.Author.Mention()))
-		em.SetColor(0xdccb01)
-		channels := viper.Get("discord.channels").(*config.Channels)
-		s.ChannelMessageSendEmbed(channels.PublicGeneral, em.MessageEmbed)
+		nitroAnnounce(s, m)
 		return
 	}
 	if m.Author.Bot {
