@@ -33,7 +33,7 @@ func boostersCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 	}
 	boosters := []*discordgo.Member{}
 	for _, member := range guild.Members {
-		if member.User.PremiumType > 0 {
+		if len(member.PremiumSince) > 0 {
 			boosters = append(boosters, member)
 		}
 	}
