@@ -37,12 +37,11 @@ func boostersCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 			boosters = append(boosters, member)
 		}
 	}
-	s.GuildMembers(servers.PublicServer, "", 1000)
-	em := embed.NewEmbed()
 	if len(boosters) == 0 {
 		s.ChannelMessageSend(m.ChannelID, "There are currently no nitro boosters for this server")
 		return
 	}
+	em := embed.NewEmbed()
 	desc := ""
 	for i, member := range boosters {
 		desc += fmt.Sprintf("\n%d\t\t**%s**", i+1, member.User.Mention())
