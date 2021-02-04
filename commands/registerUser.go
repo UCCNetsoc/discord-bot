@@ -122,7 +122,7 @@ func submittedEmail(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	s.ChannelMessageSendEmbed(channels.PublicGeneral, embed.NewEmbed().
 		SetTitle("Welcome").
-		SetDescription(fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering. Some channels are hidden by default so head over to #roles to get access to them :).", m.Author.Mention())).
+		SetDescription(fmt.Sprintf("Welcome to the Netsoc Discord Server %s! Thanks for registering. Some channels are hidden by default so head over to <#769360801332461569> to get access to them :).", m.Author.Mention())).
 		MessageEmbed)
 
 	prometheus.MemberJoinLeave()
