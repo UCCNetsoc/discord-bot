@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -20,12 +21,33 @@ type Vaccines struct {
 	Date   time.Time
 }
 
-func (v *Vaccines) Embed() *discordgo.MessageEmbed {
+func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	p := message.NewPrinter(language.English)
-	return embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(p.Sprintf(`
+	var description string
+	if prev == nil {
+		description = p.Sprintf(`
 				**First installment**: %d
 				**Second installment**: %d
-			`, v.First, v.Second)).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
+			`, v.First, v.Second)
+	} else {
+		description = p.Sprintf(`
+				__**New**__
+				**First installment**: %d (+%d)
+				**Second installment**: %d (+%d)
+
+				__**Previously**__
+				**First installment**: %d
+				**Second installment**: %d
+			`,
+			v.First,
+			int64(math.Abs(float64(v.First-prev.First))),
+			v.Second,
+			int64(math.Abs(float64(v.Second-prev.Second))),
+			prev.First,
+			prev.Second,
+		)
+	}
+	return embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(description).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
 }
 
 // GetVaccines will query HSE arcGIS and return vaccine stats.

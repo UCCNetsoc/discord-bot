@@ -33,8 +33,8 @@ const (
 )
 
 var (
-	currentDate         *time.Time
-	currentDateVaccines *time.Time
+	currentDate     *time.Time
+	currentVaccines *Vaccines
 )
 
 // CountryBase is the basic country stats.
@@ -348,13 +348,13 @@ func Listen(s *discordgo.Session) error {
 			time.Sleep(30 * time.Second)
 			continue
 		}
-		if currentDateVaccines == nil {
-			currentDateVaccines = &vaccines.Date
-		} else if vaccines.Date.Unix() > currentDateVaccines.Unix() {
+		if currentVaccines == nil {
+			currentVaccines = vaccines
+		} else if vaccines.Date.Unix() > currentVaccines.Date.Unix() {
 			// New vaccines found.
-			currentDateVaccines = &vaccines.Date
 			s.ChannelMessageSend(channelID, "The HSE has released new vaccine numbers for Ireland:")
-			s.ChannelMessageSendEmbed(channelID, vaccines.Embed())
+			s.ChannelMessageSendEmbed(channelID, vaccines.Embed(currentVaccines))
+			currentVaccines = vaccines
 		}
 		<-time.After(sleepTime)
 	}

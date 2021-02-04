@@ -14,5 +14,5 @@ func vaccines(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCre
 		log.WithContext(ctx).WithError(err).Error("Error querying vaccines from arcgis")
 		return
 	}
-	s.ChannelMessageSendEmbed(m.ChannelID, vaccines.Embed())
+	s.ChannelMessageSendEmbed(m.ChannelID, vaccines.Embed(nil))
 }
