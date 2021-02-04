@@ -21,19 +21,24 @@ type Vaccines struct {
 	Date   time.Time
 }
 
+// Population of Ireland
+const Population = 4900000
+
 func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	p := message.NewPrinter(language.English)
+	firstPercentage := (float64(v.First) / float64(Population)) * 100
+	secondPercentage := (float64(v.Second) / float64(Population)) * 100
 	var description string
 	if prev == nil {
 		description = p.Sprintf(`
-				**First installment**: %d
-				**Second installment**: %d
-			`, v.First, v.Second)
+				**First installment**: %d (%.2f%% of population)
+				**Second installment**: %d (%.2f%% of population)
+			`, v.First, firstPercentage, v.Second, secondPercentage)
 	} else {
 		description = p.Sprintf(`
 				__**New**__
-				**First installment**: %d (+%d)
-				**Second installment**: %d (+%d)
+				**First installment**: %d (+%d) (%.2f%% of population)
+				**Second installment**: %d (+%d) (%.2f%% of population)
 
 				__**Previously**__
 				**First installment**: %d
@@ -41,8 +46,10 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			`,
 			v.First,
 			int64(math.Abs(float64(v.First-prev.First))),
+			firstPercentage,
 			v.Second,
 			int64(math.Abs(float64(v.Second-prev.Second))),
+			secondPercentage,
 			prev.First,
 			prev.Second,
 		)
