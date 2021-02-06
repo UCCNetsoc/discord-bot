@@ -11,7 +11,6 @@ require (
 	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/ericm/go-twitter v0.0.0-20200605182549-dd530d8e2eea
 	github.com/go-co-op/gocron v0.3.1
-	github.com/go-sql-driver/mysql v1.5.0
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/golang/protobuf v1.4.3 // indirect
 	github.com/huandu/facebook/v2 v2.5.2
