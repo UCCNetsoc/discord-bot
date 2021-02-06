@@ -34,7 +34,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	*/
 
 	// delete option
-	if params[1] == "delete" {
+	if len(params) > 1 && params[1] == "delete" {
 		slug := params[2]
 		req, err := http.NewRequest("DELETE", "https://"+viper.GetString("shorten.host")+"/"+slug, nil)
 		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
@@ -50,7 +50,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
 			return
 		}
-		if resp.StatusCode != 202 {
+		if resp.StatusCode != http.StatusAccepted {
 			s.ChannelMessageSend(m.ChannelID, "Error deleting shortened URL.")
 			log.WithContext(ctx).WithError(err).Error("Error deleting shortened URL")
 			return
@@ -93,13 +93,13 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	shortenedURL := "https://" + domain + "/" + slug
 	switch resp.StatusCode {
-	case 201:
+	case http.StatusCreated:
 		emb := embed.NewEmbed().SetTitle(shortenedURL)
 		emb.AddField("Original URL", originalURL)
 		// emb.URL = shortenedURL
 		s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 		break
-	case 409:
+	case http.StatusConflict:
 		s.ChannelMessageSend(m.ChannelID, "<"+shortenedURL+"> already exists!")
 		break
 	default:
