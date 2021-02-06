@@ -37,10 +37,11 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	if params[1] == "delete" {
 		slug := params[2]
 		req, err := http.NewRequest("DELETE", "https://"+viper.GetString("shorten.host")+"/"+slug, nil)
+		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
 			log.WithContext(ctx).WithError(err).Error("Error forming request")
-
+			return
 		}
 		client := http.Client{}
 		resp, err := client.Do(req)
@@ -79,6 +80,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	jsonValue, _ := json.Marshal(values)
 	req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
+	req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
