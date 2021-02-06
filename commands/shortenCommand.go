@@ -85,6 +85,9 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
+		s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
+		log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
+		return
 	}
 	defer resp.Body.Close()
 
