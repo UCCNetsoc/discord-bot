@@ -33,6 +33,31 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	slug (default domain will be used here)
 	*/
 
+	// delete option
+	if params[1] == "delete" {
+		slug := params[2]
+		req, err := http.NewRequest("DELETE", "https://"+viper.GetString("shorten.host")+"/"+slug, nil)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
+			log.WithContext(ctx).WithError(err).Error("Error forming request")
+
+		}
+		client := http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
+			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
+			return
+		}
+		if resp.StatusCode != 202 {
+			s.ChannelMessageSend(m.ChannelID, "Error deleting shortened URL.")
+			log.WithContext(ctx).WithError(err).Error("Error deleting shortened URL")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
+		return
+	}
+
 	originalURL := params[1]
 	domain := viper.GetString("shorten.host")
 	slug := ""
@@ -48,10 +73,9 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			s.ChannelMessageSend(m.ChannelID, "Invalid short URL format!")
 			return
 		}
-
 	}
 
-	values := map[string]string{"Slug": slug, "Domain": domain, "Target": originalURL}
+	values := map[string]string{"slug": slug, "url": originalURL}
 	jsonValue, _ := json.Marshal(values)
 	req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
 	req.Header.Set("Content-Type", "application/json")
@@ -59,9 +83,6 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
-		log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
-		return
 	}
 	defer resp.Body.Close()
 
@@ -86,5 +107,4 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
 		break
 	}
-
 }
