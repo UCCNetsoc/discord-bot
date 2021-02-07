@@ -22,7 +22,11 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	params := strings.Split(m.Content, " ")
 	if len(params) < 3 {
-		s.ChannelMessageSend(m.ChannelID, "Missing parameter: shortened-url")
+		if len(params) == 2 {
+			s.ChannelMessageSend(m.ChannelID, "Missing argument: shortened-slug")
+			return
+		}
+		s.ChannelMessageSend(m.ChannelID, "Missing arguments: original-url, shortened-slug")
 		return
 	}
 	method := ""
@@ -45,7 +49,6 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		log.WithContext(ctx).Error("Slug did not match regex")
 		return
 	}
-
 	if method == "DELETE" {
 		req, err := http.NewRequest("DELETE", "https://"+viper.GetString("shorten.host")+"/"+params[2], nil)
 		if err != nil {
