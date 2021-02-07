@@ -64,16 +64,18 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
 			return
 		}
-		if resp.StatusCode != http.StatusAccepted {
+		switch resp.StatusCode {
+		case http.StatusAccepted:
+			s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
+			break
+		case http.StatusNotFound:
+			s.ChannelMessageSend(m.ChannelID, "Couldn't find given shortened URL.")
+		default:
 			s.ChannelMessageSend(m.ChannelID, "Error deleting shortened URL.")
-			log.WithContext(ctx).WithError(err).Error("Error deleting shortened URL")
-			return
 		}
-		s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
 		return
 	}
 	if method == "POST" {
-
 		values := map[string]string{"slug": params[2], "url": params[1]}
 		jsonValue, _ := json.Marshal(values)
 		req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
