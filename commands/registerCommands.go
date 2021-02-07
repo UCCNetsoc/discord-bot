@@ -99,7 +99,7 @@ func Register(s *discordgo.Session) {
 	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
 	command(
 		"shorten",
-		"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-url]`*",
+		"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-slug]`* or delete a shortened url with *`!shorten delete [shortened-slug]`*",
 		shortenCommand,
 		true,
 	)

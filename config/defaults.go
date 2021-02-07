@@ -61,4 +61,9 @@ func initDefaults() {
 	viper.SetDefault("corona.default", "ireland")
 	viper.SetDefault("corona.webhook", "https://events.netsoc.dev/corona")
 	viper.SetDefault("freeimage.key", "6d207e02198a847aa98d0a2a901485a5")
+
+	viper.SetDefault("shorten.domain", "links.netsoc.co")
+	viper.SetDefault("shorten.username", "")
+	viper.SetDefault("shorten.password", "")
+
 }
