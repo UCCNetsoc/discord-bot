@@ -71,7 +71,13 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		case http.StatusNotFound:
 			s.ChannelMessageSend(m.ChannelID, "Couldn't find given shortened URL.")
 		default:
-			s.ChannelMessageSend(m.ChannelID, "Error deleting shortened URL.")
+			log.WithContext(ctx).WithFields(log.Fields{
+				"method":       method,
+				"shortenedUrl": "https://" + viper.GetString("shorten.domain") + "/" + params[2],
+				"responseCode": resp.Status,
+			}).Error("Error while trying to shorten URL!")
+			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
+			break
 		}
 		return
 	}
@@ -105,6 +111,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			break
 		default:
 			log.WithContext(ctx).WithFields(log.Fields{
+				"method":       method,
 				"originalUrl":  params[1],
 				"shortenedUrl": "https://" + viper.GetString("shorten.domain") + "/" + params[2],
 				"responseCode": resp.Status,
