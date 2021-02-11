@@ -41,7 +41,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 		description = p.Sprintf(`
 				**First installment**: %d (%.2f%% of population)
 				**Second installment**: %d (%.2f%% of population)
-				**Total administered**: %d (%.2f%% of population)
+				**Fully vaccinated**: %d (%.2f%% of population)
 
 				***Pfizer***: %d (%.2f%% of population)
 				***Moderna***: %d (%.2f%% of population)
@@ -62,7 +62,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				__**New**__
 				**First installment**: %d (+%d) (%.2f%% of population)
 				**Second installment**: %d (+%d) (%.2f%% of population)
-				**Total administered**: %d (+%d) (%.2f%% of population)
+				**Fully vaccinated**: %d (+%d) (%.2f%% of population)
 
 				***Pfizer***: %d (+%d) (%.2f%% of population)
 				***Moderna***: %d (+%d) (%.2f%% of population)
@@ -70,7 +70,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				__**Previously**__
 				**First installment**: %d
 				**Second installment**: %d
-				**Total administered**: %d
+				**Fully vaccinated**: %d
 
 				***Pfizer***: %d
 				***Moderna***: %d 
@@ -118,7 +118,7 @@ func GetVaccines() (*Vaccines, error) {
 	return &Vaccines{
 		First:   vaccines.Features[0].Attributes.First,
 		Second:  vaccines.Features[0].Attributes.Second,
-		Total:   vaccines.Features[0].Attributes.Total,
+		Total:   vaccines.Features[0].Attributes.Second,
 		Pfizer:  vaccines.Features[0].Attributes.Pfizer,
 		Moderna: vaccines.Features[0].Attributes.Moderna,
 		Date:    time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
