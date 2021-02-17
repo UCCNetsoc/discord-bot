@@ -16,12 +16,13 @@ import (
 
 // Vaccines from the HSE arcGIS.
 type Vaccines struct {
-	First   int
-	Second  int
-	Total   int
-	Pfizer  int
-	Moderna int
-	Date    time.Time
+	First       int
+	Second      int
+	Total       int
+	Pfizer      int
+	Moderna     int
+	AstraZeneca int
+	Date        time.Time
 }
 
 // Population of Ireland.
@@ -34,6 +35,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	totalPercentage := (float64(v.Total) / float64(Population)) * 100
 
 	pfPercentage := (float64(v.Pfizer) / float64(Population)) * 100
+	azPercentage := (float64(v.AstraZeneca) / float64(Population)) * 100
 	mdPercentage := (float64(v.Moderna) / float64(Population)) * 100
 
 	var description string
@@ -44,6 +46,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**Fully vaccinated**: %d (%.2f%% of population)
 
 				***Pfizer***: %d (%.2f%% of population)
+				***AstraZeneca***: %d (%.2f%% of population)
 				***Moderna***: %d (%.2f%% of population)
 			`,
 			v.First,
@@ -54,6 +57,8 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			totalPercentage,
 			v.Pfizer,
 			pfPercentage,
+			v.AstraZeneca,
+			azPercentage,
 			v.Moderna,
 			mdPercentage,
 		)
@@ -65,6 +70,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**Fully vaccinated**: %d (+%d) (%.2f%% of population)
 
 				***Pfizer***: %d (+%d) (%.2f%% of population)
+				***AstraZeneca***: %d (+%d) (%.2f%% of population)
 				***Moderna***: %d (+%d) (%.2f%% of population)
 
 				__**Previously**__
@@ -73,18 +79,21 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**Fully vaccinated**: %d
 
 				***Pfizer***: %d
+				***AstraZeneca***: %d
 				***Moderna***: %d 
 			`,
 			v.First, int64(math.Abs(float64(v.First-prev.First))), firstPercentage,
 			v.Second, int64(math.Abs(float64(v.Second-prev.Second))), secondPercentage,
 			v.Total, int64(math.Abs(float64(v.Total-prev.Total))), totalPercentage,
 			v.Pfizer, int64(math.Abs(float64(v.Pfizer-prev.Pfizer))), pfPercentage,
+			v.AstraZeneca, int64(math.Abs(float64(v.AstraZeneca-prev.AstraZeneca))), azPercentage,
 			v.Moderna, int64(math.Abs(float64(v.Moderna-prev.Moderna))), mdPercentage,
 
 			prev.First,
 			prev.Second,
 			prev.Total,
 			prev.Pfizer,
+			prev.AstraZeneca,
 			prev.Moderna,
 		)
 	}
@@ -106,6 +115,7 @@ func GetVaccines() (*Vaccines, error) {
 				Date    int `json:"relDate"`
 				Pfizer  int `json:"pf"`
 				Moderna int `json:"modern"`
+				Az      int `json:"az"`
 			} `json:"attributes"`
 		} `json:"features"`
 	}{}
@@ -116,11 +126,12 @@ func GetVaccines() (*Vaccines, error) {
 		return nil, errors.New("no features")
 	}
 	return &Vaccines{
-		First:   vaccines.Features[0].Attributes.First,
-		Second:  vaccines.Features[0].Attributes.Second,
-		Total:   vaccines.Features[0].Attributes.Second,
-		Pfizer:  vaccines.Features[0].Attributes.Pfizer,
-		Moderna: vaccines.Features[0].Attributes.Moderna,
-		Date:    time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
+		First:       vaccines.Features[0].Attributes.First,
+		Second:      vaccines.Features[0].Attributes.Second,
+		Total:       vaccines.Features[0].Attributes.Second,
+		Pfizer:      vaccines.Features[0].Attributes.Pfizer,
+		Moderna:     vaccines.Features[0].Attributes.Moderna,
+		AstraZeneca: vaccines.Features[0].Attributes.Az,
+		Date:        time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
 	}, nil
 }
