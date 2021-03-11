@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -84,7 +85,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	if method == "POST" {
 		values := map[string]string{"slug": params[2], "url": params[1]}
 		jsonValue, _ := json.Marshal(values)
-		req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host")+"/api", bytes.NewBuffer(jsonValue))
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
 			log.WithContext(ctx).WithError(err).Error("Error forming request")
@@ -95,7 +96,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		client := http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
+			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Could not reach URL shortening server. Status Code: %d", resp.StatusCode))
 			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
 			return
 		}
