@@ -19,6 +19,7 @@ type Vaccines struct {
 	First       int
 	Second      int
 	Total       int
+	TotalAdmin  int
 	Pfizer      int
 	Moderna     int
 	AstraZeneca int
@@ -33,6 +34,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	firstPercentage := (float64(v.First) / float64(Population)) * 100
 	secondPercentage := (float64(v.Second) / float64(Population)) * 100
 	totalPercentage := (float64(v.Total) / float64(Population)) * 100
+	adminPercentage := (float64(v.TotalAdmin) / float64(Population)) * 100
 
 	pfPercentage := (float64(v.Pfizer) / float64(Population)) * 100
 	azPercentage := (float64(v.AstraZeneca) / float64(Population)) * 100
@@ -44,6 +46,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**First installment**: %d (%.2f%% of population)
 				**Second installment**: %d (%.2f%% of population)
 				**Fully vaccinated**: %d (%.2f%% of population)
+				**Total Administered**: %d (%.2f%% of population)
 
 				***Pfizer***: %d (%.2f%% of population)
 				***AstraZeneca***: %d (%.2f%% of population)
@@ -55,6 +58,8 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			secondPercentage,
 			v.Total,
 			totalPercentage,
+			v.TotalAdmin,
+			adminPercentage,
 			v.Pfizer,
 			pfPercentage,
 			v.AstraZeneca,
@@ -68,6 +73,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**First installment**: %d (+%d) (%.2f%% of population)
 				**Second installment**: %d (+%d) (%.2f%% of population)
 				**Fully vaccinated**: %d (+%d) (%.2f%% of population)
+				**Total Administered**: %d (+%d) (%.2f%% of population)
 
 				***Pfizer***: %d (+%d) (%.2f%% of population)
 				***AstraZeneca***: %d (+%d) (%.2f%% of population)
@@ -77,6 +83,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 				**First installment**: %d
 				**Second installment**: %d
 				**Fully vaccinated**: %d
+				**Total Administered**: %d 
 
 				***Pfizer***: %d
 				***AstraZeneca***: %d
@@ -85,6 +92,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			v.First, int64(math.Abs(float64(v.First-prev.First))), firstPercentage,
 			v.Second, int64(math.Abs(float64(v.Second-prev.Second))), secondPercentage,
 			v.Total, int64(math.Abs(float64(v.Total-prev.Total))), totalPercentage,
+			v.TotalAdmin, int64(math.Abs(float64(v.TotalAdmin-prev.TotalAdmin))), adminPercentage,
 			v.Pfizer, int64(math.Abs(float64(v.Pfizer-prev.Pfizer))), pfPercentage,
 			v.AstraZeneca, int64(math.Abs(float64(v.AstraZeneca-prev.AstraZeneca))), azPercentage,
 			v.Moderna, int64(math.Abs(float64(v.Moderna-prev.Moderna))), mdPercentage,
@@ -92,6 +100,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			prev.First,
 			prev.Second,
 			prev.Total,
+			prev.TotalAdmin,
 			prev.Pfizer,
 			prev.AstraZeneca,
 			prev.Moderna,
@@ -129,6 +138,7 @@ func GetVaccines() (*Vaccines, error) {
 		First:       vaccines.Features[0].Attributes.First,
 		Second:      vaccines.Features[0].Attributes.Second,
 		Total:       vaccines.Features[0].Attributes.Second,
+		TotalAdmin:  vaccines.Features[0].Attributes.Total,
 		Pfizer:      vaccines.Features[0].Attributes.Pfizer,
 		Moderna:     vaccines.Features[0].Attributes.Moderna,
 		AstraZeneca: vaccines.Features[0].Attributes.Az,
