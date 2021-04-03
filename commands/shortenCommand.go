@@ -73,7 +73,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		default:
 			log.WithContext(ctx).WithFields(log.Fields{
 				"method":       method,
-				"shortenedUrl": "https://" + viper.GetString("shorten.domain") + "/" + params[2],
+				"shortenedUrl": "https://" + viper.GetString("shorten.host") + "/" + params[2],
 				"responseCode": resp.Status,
 			}).Error("Error while trying to shorten URL!")
 			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
@@ -113,7 +113,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			log.WithContext(ctx).WithFields(log.Fields{
 				"method":       method,
 				"originalUrl":  params[1],
-				"shortenedUrl": "https://" + viper.GetString("shorten.domain") + "/" + params[2],
+				"shortenedUrl": "https://" + viper.GetString("shorten.host") + "/" + params[2],
 				"responseCode": resp.Status,
 			}).Error("Error while trying to shorten URL!")
 			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
