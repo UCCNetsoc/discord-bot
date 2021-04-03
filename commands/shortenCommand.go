@@ -17,6 +17,7 @@ import (
 func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Check if committee channel, don't allow in public server
 	if !isCommittee(s, m) {
+		s.ChannelMessageSend(m.ChannelID, "You must be a committee member to use this command")
 		return
 	}
 
