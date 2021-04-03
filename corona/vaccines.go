@@ -34,56 +34,44 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	firstPercentage := (float64(v.First) / float64(Population)) * 100
 	secondPercentage := (float64(v.Second) / float64(Population)) * 100
 	totalPercentage := (float64(v.Total) / float64(Population)) * 100
-	adminPercentage := (float64(v.TotalAdmin) / float64(Population)) * 100
-
-	pfPercentage := (float64(v.Pfizer) / float64(Population)) * 100
-	azPercentage := (float64(v.AstraZeneca) / float64(Population)) * 100
-	mdPercentage := (float64(v.Moderna) / float64(Population)) * 100
 
 	var description string
 	if prev == nil {
 		description = p.Sprintf(`
-				**First installment**: %d (%.2f%% of population)
-				**Second installment**: %d (%.2f%% of population)
-				**Fully vaccinated**: %d (%.2f%% of population)
-				**Total Administered**: %d (%.2f%% of population)
+**First installment**: %d (%.2f%% of population)
+**Second installment**: %d (%.2f%% of population)
+**Fully vaccinated**: %d (%.2f%% of population)
+**Total Administered**: %d 
 
-				***Pfizer***: %d (%.2f%% of population)
-				***AstraZeneca***: %d (%.2f%% of population)
-				***Moderna***: %d (%.2f%% of population)
+***Pfizer***: %d 
+***AstraZeneca***: %d 
+***Moderna***: %d 
 			`,
-			v.First,
-			firstPercentage,
-			v.Second,
-			secondPercentage,
-			v.Total,
-			totalPercentage,
+			v.First, firstPercentage,
+			v.Second, secondPercentage,
+			v.Total, totalPercentage,
 			v.TotalAdmin,
-			adminPercentage,
 			v.Pfizer,
-			pfPercentage,
 			v.AstraZeneca,
-			azPercentage,
 			v.Moderna,
-			mdPercentage,
 		)
 	} else {
 		description = p.Sprintf(`
-				**First installment**: %d (+%d) (%.2f%% of population)
-				**Second installment**: %d (+%d) (%.2f%% of population)
-				**Fully vaccinated**: %d (+%d) (%.2f%% of population)
-				**Total Administered**: %d (+%d) 
+**First installment**: %d (+%d) (%.2f%% of population)
+**Second installment**: %d (+%d) (%.2f%% of population)
+**Fully vaccinated**: %d (+%d) (%.2f%% of population)
+**Total Administered**: %d (+%d) 
 
-				***Pfizer***: %d (+%d) 
-                ***AstraZeneca***: %d (+%d) 
-                ***Moderna***: %d (+%d) 
+***Pfizer***: %d (+%d) 
+***AstraZeneca***: %d (+%d) 
+***Moderna***: %d (+%d) 
                 `,
 			v.First, int64(math.Abs(float64(v.First-prev.First))), firstPercentage,
 			v.Second, int64(math.Abs(float64(v.Second-prev.Second))), secondPercentage,
 			v.Total, int64(math.Abs(float64(v.Total-prev.Total))), totalPercentage,
 			v.TotalAdmin, int64(math.Abs(float64(v.TotalAdmin-prev.TotalAdmin))),
 			v.Pfizer, int64(math.Abs(float64(v.Pfizer-prev.Pfizer))),
-            v.AstraZeneca, int64(math.Abs(float64(v.AstraZeneca-prev.AstraZeneca))),
+			v.AstraZeneca, int64(math.Abs(float64(v.AstraZeneca-prev.AstraZeneca))),
 			v.Moderna, int64(math.Abs(float64(v.Moderna-prev.Moderna))),
 		)
 	}
