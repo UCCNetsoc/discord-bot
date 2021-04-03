@@ -103,6 +103,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		case http.StatusCreated:
 			emb := embed.NewEmbed().SetTitle(params[2])
 			emb.AddField("Original URL", params[1])
+			emb.AddField("Shortened URL", "https://"+strings.Split(viper.GetString("shorten.host"), "api")[0]+params[2])
 			// emb.URL = shortenedURL
 			s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 			break
