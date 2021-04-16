@@ -135,22 +135,31 @@ func (c *CountrySummary) getHistory() ([]CountryDaily, error) {
 }
 
 // Graph generated a graph of historic cases.
-func (c *CountrySummary) Graph() (*bytes.Buffer, error) {
+func (c *CountrySummary) Graph(month bool) (*bytes.Buffer, error) {
 	history, err := c.getHistory()
 	if err != nil {
 		return nil, err
+	}
+	var first CountryDaily
+	if month {
+		first = history[len(history)-32]
+		history = history[len(history)-31:]
 	}
 	dates := []time.Time{}
 	totalCases := []float64{}
 	totalDeaths := []float64{}
 	aggregate := 0
 	aggregateDeaths := 0
+	if month {
+		aggregate = first.Cases
+		aggregateDeaths = first.Deaths
+	}
 	for _, cases := range history {
 		newCases := float64(cases.Cases - aggregate)
 		if newCases < 0 {
 			continue
 		}
-		if aggregate > 0 && newCases > 1000 && newCases > float64(aggregate)*5 {
+		if !month && aggregate > 0 && newCases > 1000 && newCases > float64(aggregate)*5 {
 			continue
 		}
 		newDeaths := float64(cases.Deaths - aggregateDeaths)
@@ -290,37 +299,64 @@ func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string
 	emb.SetFooter(fmt.Sprintf("As of %s", country.Date.Format(layoutIE)))
 	emb.SetColor(0x9b12f1)
 	// Upload graph to freeimage.
-	if apiKey := viper.GetString("freeimage.key"); apiKey != "" {
-		graph, err := country.Graph()
-		if err != nil {
-			s.ChannelMessageSend(channelID, "Error occured generating graph")
-			log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
-			return
-		}
-		img := dataurl.EncodeBytes(graph.Bytes())
-		img = img[22:]
-		resp, err := http.PostForm(imgHost, map[string][]string{
-			"key":    {apiKey},
-			"source": {img},
-		})
-		if err != nil {
-			s.ChannelMessageSend(channelID, "Error occured uploading graph")
-			log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
-			return
-		}
-		imgResp := struct {
-			Image struct {
-				URL string `json:"url"`
-			} `json:"image"`
-		}{}
-		if err = json.NewDecoder(resp.Body).Decode(&imgResp); err != nil {
-			s.ChannelMessageSend(channelID, "Error occured parsing graph url")
-			log.WithError(err).WithContext(ctx).Error("Error occured parsing graph url")
-			return
-		}
-		emb.SetImage(imgResp.Image.URL)
+	graph, err := country.Graph(false)
+	if err != nil {
+		s.ChannelMessageSend(channelID, "Error occured generating graph")
+		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
+		return
 	}
+	img, err := upload(graph)
+	if err != nil {
+		s.ChannelMessageSend(channelID, "Error occured uploading graph")
+		log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
+		return
+	}
+	emb.SetImage(img)
 	s.ChannelMessageSendEmbed(channelID, emb.MessageEmbed)
+
+	// monthly graph embed
+	monthlyGraph, err := country.Graph(true)
+	if err != nil {
+		s.ChannelMessageSend(channelID, "Error occured generating graph")
+		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
+		return
+	}
+	monthlyImg, err := upload(monthlyGraph)
+	if err != nil {
+		s.ChannelMessageSend(channelID, "Error occured uploading graph")
+		log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
+		return
+	}
+	monthlyEmb := embed.NewEmbed()
+	monthlyEmb.SetImage(monthlyImg)
+	monthlyEmb.SetTitle(fmt.Sprintf("Last 31 days cases for %s", strings.Title(strings.ReplaceAll(country.Slug, "-", " "))))
+	monthlyEmb.SetColor(0x9b12f1)
+	s.ChannelMessageSendEmbed(channelID, monthlyEmb.MessageEmbed)
+}
+
+func upload(b *bytes.Buffer) (string, error) {
+	img := dataurl.EncodeBytes(b.Bytes())
+	img = img[22:]
+	var apiKey string
+	if apiKey = viper.GetString("freeimage.key"); apiKey == "" {
+		return "", errors.New("No freeimage key")
+	}
+	resp, err := http.PostForm(imgHost, map[string][]string{
+		"key":    {apiKey},
+		"source": {img},
+	})
+	if err != nil {
+		return "", err
+	}
+	imgResp := struct {
+		Image struct {
+			URL string `json:"url"`
+		} `json:"image"`
+	}{}
+	if err = json.NewDecoder(resp.Body).Decode(&imgResp); err != nil {
+		return "", err
+	}
+	return imgResp.Image.URL, nil
 }
 
 // Listen for new covid cases.

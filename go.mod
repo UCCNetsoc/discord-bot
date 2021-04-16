@@ -18,6 +18,7 @@ require (
 	github.com/lib/pq v1.0.0
 	github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2
 	github.com/miekg/dns v1.1.30
+	github.com/ozankasikci/go-image-merge v0.2.2 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v1.7.1
 	github.com/sendgrid/rest v2.6.0+incompatible
