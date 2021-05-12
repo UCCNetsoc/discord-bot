@@ -23,6 +23,7 @@ type Vaccines struct {
 	Pfizer      int
 	Moderna     int
 	AstraZeneca int
+	Janssen     int
 	Date        time.Time
 }
 
@@ -46,6 +47,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 ***Pfizer***: %d 
 ***AstraZeneca***: %d 
 ***Moderna***: %d 
+***J&J/Janssen***: %d 
 			`,
 			v.First, firstPercentage,
 			v.Second, secondPercentage,
@@ -54,6 +56,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			v.Pfizer,
 			v.AstraZeneca,
 			v.Moderna,
+			v.Janssen,
 		)
 	} else {
 		description = p.Sprintf(`
@@ -65,6 +68,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 ***Pfizer***: %d (+%d) 
 ***AstraZeneca***: %d (+%d) 
 ***Moderna***: %d (+%d) 
+***J&J/Janssen***: %d (+%d) 
                 `,
 			v.First, int64(math.Abs(float64(v.First-prev.First))), firstPercentage,
 			v.Second, int64(math.Abs(float64(v.Second-prev.Second))), secondPercentage,
@@ -73,6 +77,7 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 			v.Pfizer, int64(math.Abs(float64(v.Pfizer-prev.Pfizer))),
 			v.AstraZeneca, int64(math.Abs(float64(v.AstraZeneca-prev.AstraZeneca))),
 			v.Moderna, int64(math.Abs(float64(v.Moderna-prev.Moderna))),
+			v.Janssen, int64(math.Abs(float64(v.Janssen-prev.Janssen))),
 		)
 	}
 	return embed.NewEmbed().SetTitle("Vaccines Rollout in Ireland").SetDescription(description).SetFooter(fmt.Sprintf("As of %s", v.Date.Format(layoutIE))).MessageEmbed
@@ -100,17 +105,37 @@ func GetVaccines() (*Vaccines, error) {
 	if err = json.NewDecoder(resp.Body).Decode(vaccines); err != nil {
 		return nil, err
 	}
-	if len(vaccines.Features) < 1 {
+	respTypes, err := http.Get(covidVaccinesType)
+	if err != nil {
+		return nil, err
+	}
+	vaccineTypes := &struct {
+		Features []struct {
+			Attributes struct {
+				Date    int `json:"relDate"`
+				Pfizer  int `json:"pf"`
+				Moderna int `json:"modern"`
+				Az      int `json:"az"`
+				Janssen int `json:"janssen"`
+			} `json:"attributes"`
+		} `json:"features"`
+	}{}
+	if err = json.NewDecoder(respTypes.Body).Decode(vaccineTypes); err != nil {
+		return nil, err
+	}
+
+	if len(vaccines.Features) < 1 || len(vaccineTypes.Features) < 1 {
 		return nil, errors.New("no features")
 	}
 	return &Vaccines{
 		First:       vaccines.Features[0].Attributes.First,
 		Second:      vaccines.Features[0].Attributes.Second,
-		Total:       vaccines.Features[0].Attributes.Second,
+		Total:       vaccines.Features[0].Attributes.Second + vaccineTypes.Features[0].Attributes.Janssen,
 		TotalAdmin:  vaccines.Features[0].Attributes.Total,
-		Pfizer:      vaccines.Features[0].Attributes.Pfizer,
-		Moderna:     vaccines.Features[0].Attributes.Moderna,
-		AstraZeneca: vaccines.Features[0].Attributes.Az,
+		Pfizer:      vaccineTypes.Features[0].Attributes.Pfizer,
+		Moderna:     vaccineTypes.Features[0].Attributes.Moderna,
+		AstraZeneca: vaccineTypes.Features[0].Attributes.Az,
+		Janssen:     vaccineTypes.Features[0].Attributes.Janssen,
 		Date:        time.Unix(int64(vaccines.Features[0].Attributes.Date)/1000, 0),
 	}, nil
 }
