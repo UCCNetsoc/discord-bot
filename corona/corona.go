@@ -143,8 +143,8 @@ func (c *CountrySummary) Graph(month bool) (*bytes.Buffer, error) {
 	}
 	var first CountryDaily
 	if month {
-		first = history[len(history)-32]
-		history = history[len(history)-31:]
+		first = history[len(history)-33]
+		history = history[len(history)-32:]
 	}
 	dates := []time.Time{}
 	totalCases := []float64{}
