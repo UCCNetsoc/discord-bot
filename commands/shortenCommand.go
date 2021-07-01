@@ -51,7 +51,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		return
 	}
 	if method == "DELETE" {
-		req, err := http.NewRequest("DELETE", "https://"+viper.GetString("shorten.host")+"/"+params[2], nil)
+		req, err := http.NewRequest("DELETE", viper.GetString("shorten.host")+"/"+params[2], nil)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
 			log.WithContext(ctx).WithError(err).Error("Error forming request")
@@ -74,7 +74,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		default:
 			log.WithContext(ctx).WithFields(log.Fields{
 				"method":       method,
-				"shortenedUrl": "https://" + viper.GetString("shorten.host") + "/" + params[2],
+				"shortenedUrl": viper.GetString("shorten.host") + "/" + params[2],
 				"responseCode": resp.Status,
 			}).Error("Error while trying to shorten URL!")
 			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
@@ -85,7 +85,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	if method == "POST" {
 		values := map[string]string{"slug": params[2], "url": params[1]}
 		jsonValue, _ := json.Marshal(values)
-		req, err := http.NewRequest("POST", "https://"+viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
+		req, err := http.NewRequest("POST", viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
 			log.WithContext(ctx).WithError(err).Error("Error forming request")
@@ -104,7 +104,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		case http.StatusCreated:
 			emb := embed.NewEmbed().SetTitle(params[2])
 			emb.AddField("Original URL", params[1])
-			emb.AddField("Shortened URL", "https://"+strings.Split(viper.GetString("shorten.host"), "api")[0]+params[2])
+			emb.AddField("Shortened URL", strings.Split(viper.GetString("shorten.host"), "api")[0]+params[2])
 			// emb.URL = shortenedURL
 			s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 			break
@@ -115,7 +115,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			log.WithContext(ctx).WithFields(log.Fields{
 				"method":       method,
 				"originalUrl":  params[1],
-				"shortenedUrl": "https://" + viper.GetString("shorten.host") + "/" + params[2],
+				"shortenedUrl": viper.GetString("shorten.host") + "/" + params[2],
 				"responseCode": resp.Status,
 			}).Error("Error while trying to shorten URL!")
 			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
