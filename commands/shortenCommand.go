@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -31,11 +30,12 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	if len(params) < 2 {
 		req, err := http.NewRequest("GET", viper.GetString("shorten.host")+"/links", nil)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not create request")
-				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
-				return
-			}
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not create request")
+			log.WithContext(ctx).WithError(err).Error("Failed to make request object")
+			return
+		}
+
 		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
 		client := http.Client{}
 		resp, err := client.Do(req)
@@ -46,13 +46,8 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		}
 
 		data := []Link{}
-		bd, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not read data from server")
-			log.WithContext(ctx).WithError(err).Error("Failed to read json data")
-		}
+		err = json.NewDecoder(resp.Body).Decode(&data)
 
-		err = json.Unmarshal(bd, &data)
 		if err != nil {
 			s.ChannelMessageSend(m.ChannelID, "Could not parse data")
 			log.WithContext(ctx).WithError(err).Error("Failed to unmarshall json data")
@@ -105,7 +100,6 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 					"method": method,
 					"shortenedUrl": params[2],
 					"responseCode": resp.Status,
-
 				}).Error("Error while tryiung to shorten URL")
 				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
 			}
@@ -160,17 +154,11 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			switch resp.StatusCode {
 			case http.StatusCreated:
 				data := make(map[string]interface{})
-				bd, err := ioutil.ReadAll(resp.Body)
-				log.WithContext(ctx).Info(string(bd))
+
+				err = json.NewDecoder(resp.Body).Decode(&data)
 				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not get response from server")
-					log.WithContext(ctx).WithError(err).Error("Couldn't read json response")
-					return
-				}
-				err = json.Unmarshal(bd, &data)
-				if err != nil {
-					s.ChannelMessageSend(m.ChannelID, "Could not parse response from server")
-					log.WithContext(ctx).WithError(err).Error("Couldn't parse json response")
+					s.ChannelMessageSend(m.ChannelID, "Failed to decode json")
+					log.WithContext(ctx).WithError(err)
 					return
 				}
 
@@ -195,9 +183,9 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 					"responseCode": resp.Status,
 				}).Error("Error while trying to shorten URL!")
 				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
-			}
 			return
-		}
+			}
 		s.ChannelMessageSend(m.ChannelID, "Missing argument original-url")
 	}
+}
 }
