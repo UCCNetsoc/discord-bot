@@ -17,7 +17,7 @@ import (
 
 type Link struct {
 	Slug string `json:"slug"`
-	URL string `json:"url"`
+	URL string 	`json:"url"`
 }
 
 func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -30,7 +30,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	params := strings.Split(m.Content, " ")
 
 	if len(params) < 2 {
-		req, err := http.NewRequest("GET", viper.GetString("shorten.host")+"links", nil)
+		req, err := http.NewRequest("GET", viper.GetString("shorten.host")+"/links", nil)
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Could not create request")
 				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
@@ -161,6 +161,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			case http.StatusCreated:
 				data := make(map[string]interface{})
 				bd, err := ioutil.ReadAll(resp.Body)
+				log.WithContext(ctx).Info(string(bd))
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Could not get response from server")
 					log.WithContext(ctx).WithError(err).Error("Couldn't read json response")
