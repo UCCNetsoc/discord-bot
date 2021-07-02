@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -22,104 +23,139 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	}
 
 	params := strings.Split(m.Content, " ")
-	if len(params) < 3 {
-		if len(params) == 2 {
-			s.ChannelMessageSend(m.ChannelID, "Missing argument: shortened-slug")
-			return
-		}
-		s.ChannelMessageSend(m.ChannelID, "Missing arguments: original-url, shortened-slug")
+
+	if len(params) < 2 {
+		// s.ChannelMessageSend(m.ChannelID, "Missing arguments: original-url, shortened-slug")
 		return
 	}
-	method := ""
-	if params[1] == "delete" {
+
+	var method string
+
+	if strings.ToLower(params[1]) == "delete" {
 		method = "DELETE"
 	} else {
 		method = "POST"
-		// regex for http(s)://*.*...
-		reURL := regexp.MustCompile(`^http(s)?:\/\/*[a-zA-Z0-9/\.-]*$`)
-		if urlOk := reURL.MatchString(params[1]); !urlOk {
-			s.ChannelMessageSend(m.ChannelID, "Invalid URL format.")
-			log.WithContext(ctx).Error("URL did not match regex")
-			return
-		}
 	}
-	// regex for text characters incl. hyphens
-	reSlug := regexp.MustCompile(`^[a-zA-Z-]*$`)
-	if ok := reSlug.MatchString(params[2]); !ok {
-		s.ChannelMessageSend(m.ChannelID, "Invalid short URL format.")
-		log.WithContext(ctx).Error("Slug did not match regex")
-		return
-	}
+
 	if method == "DELETE" {
-		req, err := http.NewRequest("DELETE", viper.GetString("shorten.host")+"/"+params[2], nil)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
-			log.WithContext(ctx).WithError(err).Error("Error forming request")
+		if len(params) > 1 {
+			req, err := http.NewRequest(method, viper.GetString("shorten.host")+"/"+params[2], nil)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not create request")
+				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
+				return
+			}
+
+			req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
+			client := http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
+				log.WithContext(ctx).WithError(err).Error("Error communicating with server")
+			}
+
+			switch resp.StatusCode {
+			case http.StatusAccepted:
+				s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
+			case http.StatusNotFound:
+				s.ChannelMessageSend(m.ChannelID, "Shortened link "+params[2]+" does not exist")
+			default:
+				log.WithContext(ctx).WithFields(log.Fields{
+					"method": method,
+					"shortenedUrl": params[2],
+					"responseCode": resp.Status,
+
+				}).Error("Error while tryiung to shorten URL")
+				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
+			}
 			return
 		}
-		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
-		client := http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
-			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
-			return
-		}
-		switch resp.StatusCode {
-		case http.StatusAccepted:
-			s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
-			break
-		case http.StatusNotFound:
-			s.ChannelMessageSend(m.ChannelID, "Couldn't find given shortened URL.")
-		default:
-			log.WithContext(ctx).WithFields(log.Fields{
-				"method":       method,
-				"shortenedUrl": viper.GetString("shorten.host") + "/" + params[2],
-				"responseCode": resp.Status,
-			}).Error("Error while trying to shorten URL!")
-			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
-			break
-		}
+		s.ChannelMessageSend(m.ChannelID, "Missing argument: shortened-slug")
 		return
-	}
-	if method == "POST" {
-		values := map[string]string{"slug": params[2], "url": params[1]}
-		jsonValue, _ := json.Marshal(values)
-		req, err := http.NewRequest("POST", viper.GetString("shorten.host"), bytes.NewBuffer(jsonValue))
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not form request.")
-			log.WithContext(ctx).WithError(err).Error("Error forming request")
+	} else {
+		if len(params) >= 2 {
+			// POST request
+			method = "POST"
+			
+			var shortenedURL string
+
+			if len(params) > 2 {
+				shortenedURL = params[2]
+			}
+
+			reURL := regexp.MustCompile(`^http(s):\/\/*[a-zA-Z0-9/\.-_]*$`)
+			if ok := reURL.MatchString(params[1]); !ok {
+				s.ChannelMessageSend(m.ChannelID, "Invalid URL")
+				log.WithContext(ctx).Error("URL did not match regex")
+				return
+			}
+			values := make(map[string]interface{}, 2)
+			values["url"], values["slug"] = params[1], shortenedURL
+			encoded, err := json.Marshal(values)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not create request")
+				log.WithContext(ctx).WithError(err).Error("Failed to create encoded json")
+				return
+			}
+
+			req, err := http.NewRequest(method, viper.GetString("shorten.host"), bytes.NewBuffer((encoded)))
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not create request")
+				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
+				return
+			}
+
+			req.Header.Set("Content-Type", "application/json")
+			req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
+
+			client := http.Client{}
+			resp, err := client.Do(req)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
+				log.WithContext(ctx).WithError(err).Error("Error communicating with server")
+				return
+			}
+
+			switch resp.StatusCode {
+			case http.StatusCreated:
+				data := make(map[string]interface{})
+				bd, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not get response from server")
+					log.WithContext(ctx).WithError(err).Error("Couldn't read json response")
+					return
+				}
+				err = json.Unmarshal(bd, &data)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not parse response from server")
+					log.WithContext(ctx).WithError(err).Error("Couldn't parse json response")
+					return
+				}
+
+				emb := embed.NewEmbed().SetTitle(data["slug"].(string))
+				emb.AddField("Original URL", data["url"].(string))
+				emb.AddField("Shortened URL", viper.GetString("shorten.public.host")+"/"+data["slug"].(string))
+				s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+
+			case http.StatusConflict:
+				var returnString string
+				if len(params) < 3 {
+					returnString = "Failed to shortened link, please try again"
+				} else {
+					returnString = "Failed to shorten link, try a different shortened-slug"
+				}
+				s.ChannelMessageSend(m.ChannelID, returnString)
+			default:
+				log.WithContext(ctx).WithFields(log.Fields{
+					"method":       method,
+					"originalUrl":  params[1],
+					"shortenedUrl": viper.GetString("shorten.public.host") + "/" + params[2],
+					"responseCode": resp.Status,
+				}).Error("Error while trying to shorten URL!")
+				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
+			}
 			return
 		}
-		req.Header.Set("Content-Type", "application/json")
-		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
-		client := http.Client{}
-		resp, err := client.Do(req)
-		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server.")
-			log.WithContext(ctx).WithError(err).Error("Error communicating with shorten server")
-			return
-		}
-		switch resp.StatusCode {
-		case http.StatusCreated:
-			emb := embed.NewEmbed().SetTitle(params[2])
-			emb.AddField("Original URL", params[1])
-			emb.AddField("Shortened URL", viper.GetString("shorten.public.host")+"/"+params[2])
-			// emb.URL = shortenedURL
-			s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
-			break
-		case http.StatusConflict:
-			s.ChannelMessageSend(m.ChannelID, "<"+params[2]+"> already exists!")
-			break
-		default:
-			log.WithContext(ctx).WithFields(log.Fields{
-				"method":       method,
-				"originalUrl":  params[1],
-				"shortenedUrl": viper.GetString("shorten.public.host") + "/" + params[2],
-				"responseCode": resp.Status,
-			}).Error("Error while trying to shorten URL!")
-			s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
-			break
-		}
+		s.ChannelMessageSend(m.ChannelID, "Missing argument original-url")
 	}
 }
