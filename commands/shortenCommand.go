@@ -15,6 +15,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+type Link struct {
+	Slug string `json:"slug"`
+	URL string `json:"url"`
+}
+
 func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
 	// Check if committee channel, don't allow in public server
 	if !isCommittee(s, m) {
@@ -25,7 +30,42 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 	params := strings.Split(m.Content, " ")
 
 	if len(params) < 2 {
-		// s.ChannelMessageSend(m.ChannelID, "Missing arguments: original-url, shortened-slug")
+		req, err := http.NewRequest("GET", viper.GetString("shorten.host")+"links", nil)
+			if err != nil {
+				s.ChannelMessageSend(m.ChannelID, "Could not create request")
+				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
+				return
+			}
+		req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
+		client := http.Client{}
+		resp, err := client.Do(req)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
+			log.WithContext(ctx).WithError(err).Error("Error communicating with server")
+			return
+		}
+
+		data := []Link{}
+		bd, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not read data from server")
+			log.WithContext(ctx).WithError(err).Error("Failed to read json data")
+		}
+
+		err = json.Unmarshal(bd, &data)
+		if err != nil {
+			s.ChannelMessageSend(m.ChannelID, "Could not parse data")
+			log.WithContext(ctx).WithError(err).Error("Failed to unmarshall json data")
+			return
+		}
+
+		emb := embed.NewEmbed().SetTitle("Links")
+
+		for _, link := range(data) {
+			emb.AddField(link.Slug, link.URL)
+		}
+
+		s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
 		return
 	}
 
@@ -52,6 +92,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 			if err != nil {
 				s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
 				log.WithContext(ctx).WithError(err).Error("Error communicating with server")
+				return
 			}
 
 			switch resp.StatusCode {
