@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
 	"regexp"
 	"strings"
@@ -16,7 +17,7 @@ import (
 
 type Link struct {
 	Slug string `json:"slug"`
-	URL string 	`json:"url"`
+	URL  string `json:"url"`
 }
 
 func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
@@ -56,7 +57,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 		emb := embed.NewEmbed().SetTitle("Links")
 
-		for _, link := range(data) {
+		for _, link := range data {
 			emb.AddField(link.Slug, link.URL)
 		}
 
@@ -97,7 +98,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				s.ChannelMessageSend(m.ChannelID, "Shortened link "+params[2]+" does not exist")
 			default:
 				log.WithContext(ctx).WithFields(log.Fields{
-					"method": method,
+					"method":       method,
 					"shortenedUrl": params[2],
 					"responseCode": resp.Status,
 				}).Error("Error while tryiung to shorten URL")
@@ -111,7 +112,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 		if len(params) >= 2 {
 			// POST request
 			method = "POST"
-			
+
 			var shortenedURL string
 
 			if len(params) > 2 {
@@ -153,19 +154,27 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 			switch resp.StatusCode {
 			case http.StatusCreated:
-				data := make(map[string]interface{})
 
-				err = json.NewDecoder(resp.Body).Decode(&data)
+				bd, err := ioutil.ReadAll(resp.Body)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Failed to decode json")
+					log.WithContext(ctx).WithError(err)
+					return
+				}
+				link := &Link{}
+
+				err = json.Unmarshal(bd, link)
 				if err != nil {
 					s.ChannelMessageSend(m.ChannelID, "Failed to decode json")
 					log.WithContext(ctx).WithError(err)
 					return
 				}
 
-				emb := embed.NewEmbed().SetTitle(data["slug"].(string))
-				emb.AddField("Original URL", data["url"].(string))
-				emb.AddField("Shortened URL", viper.GetString("shorten.public.host")+"/"+data["slug"].(string))
+				emb := embed.NewEmbed().SetTitle(link.Slug)
+				emb.AddField("Original URL", link.URL)
+				emb.AddField("Shortened URL", viper.GetString("shorten.public.host")+"/"+link.Slug)
 				s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+				return
 
 			case http.StatusConflict:
 				var returnString string
@@ -183,9 +192,9 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 					"responseCode": resp.Status,
 				}).Error("Error while trying to shorten URL!")
 				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
-			return
+				return
 			}
-		s.ChannelMessageSend(m.ChannelID, "Missing argument original-url")
+			s.ChannelMessageSend(m.ChannelID, "Missing argument original-url")
+		}
 	}
-}
 }
