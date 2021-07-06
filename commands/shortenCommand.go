@@ -75,34 +75,39 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 
 	if method == "DELETE" {
 		if len(params) > 1 {
-			req, err := http.NewRequest(method, viper.GetString("shorten.host")+"/"+params[2], nil)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not create request")
-				log.WithContext(ctx).WithError(err).Error("Failed to make request object")
-				return
-			}
 
-			req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
-			client := http.Client{}
-			resp, err := client.Do(req)
-			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
-				log.WithContext(ctx).WithError(err).Error("Error communicating with server")
-				return
-			}
+			// for each shortened link to delete, make a new request
+			for _, i := range params[2:] {
+				req, err := http.NewRequest(method, viper.GetString("shorten.host")+"/"+i, nil)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not create request")
+					log.WithContext(ctx).WithError(err).Error("Failed to make request object")
+					return
+				}
 
-			switch resp.StatusCode {
-			case http.StatusAccepted:
-				s.ChannelMessageSend(m.ChannelID, "Deleted shortened URL!")
-			case http.StatusNotFound:
-				s.ChannelMessageSend(m.ChannelID, "Shortened link "+params[2]+" does not exist")
-			default:
-				log.WithContext(ctx).WithFields(log.Fields{
-					"method":       method,
-					"shortenedUrl": params[2],
-					"responseCode": resp.Status,
-				}).Error("Error while tryiung to shorten URL")
-				s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
+				req.SetBasicAuth(viper.GetString("shorten.username"), viper.GetString("shorten.password"))
+				client := http.Client{}
+				resp, err := client.Do(req)
+				if err != nil {
+					s.ChannelMessageSend(m.ChannelID, "Could not reach URL shortening server")
+					log.WithContext(ctx).WithError(err).Error("Error communicating with server")
+					return
+				}
+
+				switch resp.StatusCode {
+				case http.StatusAccepted:
+					s.ChannelMessageSend(m.ChannelID, "Deleted \""+i+"\"")
+				case http.StatusNotFound:
+					s.ChannelMessageSend(m.ChannelID, "Shortened link \""+i+"\" does not exist")
+				default:
+					log.WithContext(ctx).WithFields(log.Fields{
+						"method": method,
+
+						"responseCode": resp.Status,
+					}).Error("Error while trying to delete shorten URL")
+					s.ChannelMessageSend(m.ChannelID, "Unexpected error occured: "+resp.Status)
+				}
+
 			}
 			return
 		}
@@ -119,7 +124,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				shortenedURL = params[2]
 			}
 
-			reURL := regexp.MustCompile(`^http(s):\/\/*[a-zA-Z0-9/\.-_]*$`)
+			reURL := regexp.MustCompile(`^http(s)?:\/\/*[a-zA-Z0-9/\.-_]*$`)
 			if ok := reURL.MatchString(params[1]); !ok {
 				s.ChannelMessageSend(m.ChannelID, "Invalid URL")
 				log.WithContext(ctx).Error("URL did not match regex")
