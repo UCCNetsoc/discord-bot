@@ -124,7 +124,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mess
 				shortenedURL = params[2]
 			}
 
-			reURL := regexp.MustCompile(`^http(s)?:\/\/*[a-zA-Z0-9/\.-_]*$`)
+			reURL := regexp.MustCompile(`^http(s)?://.*$`)
 			if ok := reURL.MatchString(params[1]); !ok {
 				s.ChannelMessageSend(m.ChannelID, "Invalid URL")
 				log.WithContext(ctx).Error("URL did not match regex")
