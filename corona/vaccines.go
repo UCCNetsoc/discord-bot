@@ -28,7 +28,7 @@ type Vaccines struct {
 }
 
 // Population of Ireland.
-const Population = 4900000
+const Population = 3763440
 
 func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	p := message.NewPrinter(language.English)
@@ -39,9 +39,9 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 	var description string
 	if prev == nil {
 		description = p.Sprintf(`
-**First installment**: %d (%.2f%% of population)
-**Second installment**: %d (%.2f%% of population)
-**Fully vaccinated**: %d (%.2f%% of population)
+**First installment**: %d (%.2f%% of adult population)
+**Second installment**: %d (%.2f%% of adult population)
+**Fully vaccinated**: %d (%.2f%% of adult population)
 **Total Administered**: %d 
 
 ***Pfizer***: %d 
@@ -60,9 +60,9 @@ func (v *Vaccines) Embed(prev *Vaccines) *discordgo.MessageEmbed {
 		)
 	} else {
 		description = p.Sprintf(`
-**First installment**: %d (+%d) (%.2f%% of population)
-**Second installment**: %d (+%d) (%.2f%% of population)
-**Fully vaccinated**: %d (+%d) (%.2f%% of population)
+**First installment**: %d (+%d) (%.2f%% of adult population)
+**Second installment**: %d (+%d) (%.2f%% of adult population)
+**Fully vaccinated**: %d (+%d) (%.2f%% of adult population)
 **Total Administered**: %d (+%d) 
 
 ***Pfizer***: %d (+%d) 
