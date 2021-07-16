@@ -321,8 +321,15 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 				content, err := message.ContentWithMoreMentionsReplaced(session)
+				var replaced bool
 				for _, symbol := range viper.GetStringSlice("api.remove_symbols") {
-					content = strings.ReplaceAll(content, symbol, "")
+					if strings.Contains(content, symbol) {
+						replaced = true
+						content = strings.ReplaceAll(content, symbol, "")
+					}
+				}
+				if !replaced {
+					continue
 				}
 				content = strings.TrimSpace(content)
 				if err != nil {
