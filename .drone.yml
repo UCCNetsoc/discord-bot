@@ -81,6 +81,11 @@ steps:
     commands:
       - lsif-go
       - src lsif upload -github-token=$${GITHUB_TOKEN}
+    when:
+      event:
+        - push
+      branch:
+        - master
       
   - name: clone_nac
     image: docker:git
