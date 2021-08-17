@@ -1,4 +1,4 @@
-FROM golang:1.14-alpine AS dev
+FROM golang:1.17-alpine AS dev
 
 WORKDIR /bot
 
