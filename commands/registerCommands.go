@@ -2,8 +2,8 @@ package commands
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
@@ -27,84 +27,83 @@ const (
 )
 
 var (
-	helpStrings          = make(map[string]string)
-	committeeHelpStrings = make(map[string]string)
-	commandsMap          = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
-	reactionMap          = make(map[string]interface{}) // Maps message ids to content
+	commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate))
+	reactionMap = make(map[string]interface{}) // Maps message ids to content
 )
 
-type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
+type commandFunc func(context.Context, *discordgo.Session, *discordgo.InteractionCreate)
 
-func command(name string, helpMessage string, function commandFunc, committee bool) {
-	if committee {
-		committeeHelpStrings[name] = helpMessage
-	} else {
-		helpStrings[name] = helpMessage
-	}
+func command(name string, function commandFunc) {
 	commandsMap[name] = function
 }
 
 // Register commands
 func Register(s *discordgo.Session) {
-	command("ping", "pong!", ping, false)
-	command("help", "displays this message", help, false)
-	command("version", "commit hash for the running bot version", version, false)
-	command("members", "returns the number of users of the given role id", members, false)
-	command("register", "registers you as a member of the server", serverRegister, false)
-	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
-	command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand, false)
-	command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand, false)
-	command(
-		"event",
-		"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
-		addEvent,
-		true,
-	)
-	command(
-		"sevent",
-		"same as *`!event`* but doesn't @ everyone",
-		addEventSilent,
-		true,
-	)
-	command(
-		"wevent",
-		"same as *`!event`* but only posts to the website, not #announcements",
-		addEventWebsite,
-		true,
-	)
-	command(
-		"announce",
-		"send a message in the format *`!announce TEXT`*",
-		addAnnouncement,
-		true,
-	)
-	command(
-		"sannounce",
-		"same as *`!announce`* but doesn't @ everyone",
-		addAnnouncementSilent,
-		true,
-	)
-	command(
-		"recall",
-		"PERMANENTLY DELETE the last announcement or event.",
-		recall,
-		true,
-	)
-	command(
-		"upcoming",
-		"replies with embed of the the next upcoming netsoc event, queried from facebook",
-		upcomingEventMessage,
-		false,
-	)
-	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
-	command(
-		"shorten",
-		"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-slug]`* or delete a shortened url with *`!shorten delete [shortened-slug]`*",
-		shortenCommand,
-		true,
-	)
-	command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines, false)
-	command("boosters", "check current nitro boosters", boostersCommand, false)
+
+	// TODO: Update the below commands to use the new Interaction api
+	// ------------------------------------------------------------------------------------------------------------------------
+	// command("ping", ping)
+	// command("version", version)
+	// command("members", "returns the number of users of the given role id", members)
+	// command("register", "registers you as a member of the server", serverRegister)
+	// command("online", "see how many people are online in minecraft.netsoc.co", online)
+	// command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand)
+	// command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand)
+	// command(
+	// 	"event",
+	// 	"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
+	// 	addEvent,
+	// 	// true,
+	// )
+	// command(
+	// 	"sevent",
+	// 	"same as *`!event`* but doesn't @ everyone",
+	// 	addEventSilent,
+	// 	// true,
+	// )
+	// command(
+	// 	"wevent",
+	// 	"same as *`!event`* but only posts to the website, not #announcements",
+	// 	addEventWebsite,
+	// 	// true,
+	// )
+	// command(
+	// 	"announce",
+	// 	"send a message in the format *`!announce TEXT`*",
+	// 	addAnnouncement,
+	// 	// true,
+	// )
+	// command(
+	// 	"sannounce",
+	// 	"same as *`!announce`* but doesn't @ everyone",
+	// 	addAnnouncementSilent,
+	// 	// true,
+	// )
+	// command(
+	// 	"recall",
+	// 	"PERMANENTLY DELETE the last announcement or event.",
+	// 	recall,
+	// 	// true,
+	// )
+	// command(
+	// 	"upcoming",
+	// 	"replies with embed of the the next upcoming netsoc event, queried from facebook",
+	// 	upcomingEventMessage,
+	// 	// false,
+	// )
+	// command("up", "check the status of various Netsoc hosted websites",
+	// 	checkUpCommand,
+	// 	// true
+	// )
+	// command(
+	// 	"shorten",
+	// 	"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-slug]`* or delete a shortened url with *`!shorten delete [shortened-slug]`*",
+	// 	shortenCommand,
+	// 	// true,
+	// )
+	// command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines)
+	// command("boosters", "check current nitro boosters", boostersCommand)
+	// ------------------------------------------------------------------------------------------------------------------------
 
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
@@ -112,6 +111,12 @@ func Register(s *discordgo.Session) {
 	httpClient := twitterConfig.Client(oauth1.NoContext, twitterToken)
 	twitterClient = twitterApi.NewClient(httpClient)
 
+	// Setup Interaction Handlers
+	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+		callCommand(s, i)
+	})
+
+	// Setup Message Handlers
 	s.AddHandler(messageCreate)
 	s.AddHandler(messageReaction)
 	s.AddHandler(messageDelete)
@@ -129,55 +134,51 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 		return
 	}
 	// Check if its a DM
-	if len(m.GuildID) == 0 {
-		ctx := context.WithValue(context.Background(), log.Key, log.Fields{
-			"author_id":  m.Author.ID,
-			"channel_id": m.ChannelID,
-			"guild_id":   "DM",
-		})
-		dmCommands(ctx, s, m)
-		return
-	} else {
+	if len(m.GuildID) != 0 {
 		go prometheus.MessageCreate(m.GuildID, m.ChannelID)
 	}
+}
 
-	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
+// Return's the User that issued the command
+func extractAuthor(i *discordgo.InteractionCreate) (*discordgo.User, error) {
+	if i.Member != nil {
+		return i.Member.User, nil // Command was used in a server
+	} else if i.User != nil {
+		return i.User, nil // Command was used in DM's
+	}
+	return nil, errors.New("couldn't extract command author")
+}
+
+func callCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
+	ctx := context.Background()
+	commandAuthor, err := extractAuthor(i)
+	if err != nil {
+		log.WithError(err)
 		return
 	}
-	callCommand(s, m)
-}
 
-func extractCommand(c string) (commandStr string, body string) {
-	body = strings.TrimPrefix(c, viper.GetString("bot.prefix"))
-	commandStr = strings.Fields(body)[0]
-	return
-}
+	channel, err := s.Channel(i.ChannelID)
+	if err != nil {
+		log.WithError(err).Error("Couldn't query channel")
+		return
+	}
 
-func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	ctx := context.Background()
-	commandStr, body := extractCommand(m.Content)
-	// if command is a normal command
-	if command, ok := commandsMap[commandStr]; ok {
-		var channelName string
-		if len(m.ChannelID) > 0 {
-			if channel, err := s.Channel(m.ChannelID); err != nil {
-				log.WithError(err).Error("Couldn't query channel")
-				return
-			} else {
-				channelName = channel.Name
-			}
-		}
+	commandName := i.ApplicationCommandData().Name
+	commandBody := i.ApplicationCommandData().Options
+
+	if command, ok := commandsMap[i.ApplicationCommandData().Name]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
-			"author_id":    m.Author.ID,
-			"channel_id":   m.ChannelID,
-			"guild_id":     m.GuildID,
-			"user":         m.Author.Username,
-			"channel_name": channelName,
-			"command":      commandStr,
-			"body":         body,
+			"author_id":    commandAuthor.ID,
+			"channel_id":   i.ChannelID,
+			"guild_id":     i.GuildID,
+			"user":         commandAuthor.Username,
+			"channel_name": channel.Name,
+			"command":      commandName,
+			"body":         commandBody,
 		})
+
 		log.WithContext(ctx).Info("invoking standard command")
-		command(ctx, s, m)
+		command(ctx, s, i)
 		return
 	}
 }
