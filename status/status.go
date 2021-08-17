@@ -28,6 +28,6 @@ func minecraftPlayerCount(s *discordgo.Session) {
 		if resp.Players.Online == 1 {
 			plural = "player"
 		}
-		s.UpdateStatus(0, fmt.Sprintf("Minecraft %d %s online minecraft.netsoc.co", resp.Players.Online, plural))
+		s.UpdateGameStatus(0, fmt.Sprintf("Minecraft %d %s online minecraft.netsoc.co", resp.Players.Online, plural))
 	}
 }
