@@ -39,11 +39,11 @@ func command(name string, function commandFunc) {
 
 // Register commands
 func Register(s *discordgo.Session) {
+	command("ping", ping)
+	command("version", version)
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
-	// command("ping", ping)
-	// command("version", version)
 	// command("members", "returns the number of users of the given role id", members)
 	// command("register", "registers you as a member of the server", serverRegister)
 	// command("online", "see how many people are online in minecraft.netsoc.co", online)
