@@ -38,17 +38,19 @@ func command(name string, function commandFunc) {
 
 // Register commands
 func Register(s *discordgo.Session) {
+	// Public commands
 	command("ping", ping)
 	command("version", version)
 	command("members", members)
 	command("dig", dig)
 	command("corona", coronaCommand)
 	command("vaccines", vaccines)
+	command("boosters", boostersCommand)
+	// Committee commands
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
 	// command("online", "see how many people are online in minecraft.netsoc.co", online)
-	// command("register", "registers you as a member of the server", serverRegister)
 	// command(
 	// 	"event",
 	// 	"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
@@ -101,7 +103,11 @@ func Register(s *discordgo.Session) {
 	// 	shortenCommand,
 	// 	// true,
 	// )
-	// command("boosters", "check current nitro boosters", boostersCommand)
+	// ------------------------------------------------------------------------------------------------------------------------
+
+	// TODO: This command is being phased out, in favour of whodis
+	// ------------------------------------------------------------------------------------------------------------------------
+	// command("register", "registers you as a member of the server", serverRegister)
 	// ------------------------------------------------------------------------------------------------------------------------
 
 	// Setup APIs
