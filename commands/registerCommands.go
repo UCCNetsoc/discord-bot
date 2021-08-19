@@ -42,12 +42,13 @@ func Register(s *discordgo.Session) {
 	command("version", version)
 	command("members", members)
 	command("dig", dig)
+	command("corona", coronaCommand)
+	command("vaccines", vaccines)
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
 	// command("online", "see how many people are online in minecraft.netsoc.co", online)
 	// command("register", "registers you as a member of the server", serverRegister)
-	// command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand)
 	// command(
 	// 	"event",
 	// 	"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
@@ -100,7 +101,6 @@ func Register(s *discordgo.Session) {
 	// 	shortenCommand,
 	// 	// true,
 	// )
-	// command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines)
 	// command("boosters", "check current nitro boosters", boostersCommand)
 	// ------------------------------------------------------------------------------------------------------------------------
 

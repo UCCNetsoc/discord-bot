@@ -106,7 +106,13 @@ func postCorona(w http.ResponseWriter, r *http.Request) {
 	}
 	country := total.GetCountry(viper.GetString("corona.default"))
 	log.WithContext(r.Context()).Info("New COVID data. Sending.")
-	corona.CreateEmbed(country, session, viper.GetString("discord.public.corona"), r.Context())
+	embs, err := corona.CreateEmbed(country, session, r.Context())
+	if err != nil {
+		return
+	}
+	for _, emb := range embs {
+		session.ChannelMessageSendEmbed(viper.GetString("discord.public.corona"), emb)
+	}
 }
 
 func getEvents(w http.ResponseWriter, r *http.Request) {
