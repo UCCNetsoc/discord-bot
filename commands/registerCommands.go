@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/Strum355/log"
@@ -44,7 +43,7 @@ func Register(s *discordgo.Session) {
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
-	// command("members", "returns the number of users of the given role id", members)
+	// command("members", members)
 	// command("register", "registers you as a member of the server", serverRegister)
 	// command("online", "see how many people are online in minecraft.netsoc.co", online)
 	// command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand)
@@ -140,33 +139,47 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 }
 
 // Return's the User that issued the command
-func extractAuthor(i *discordgo.InteractionCreate) (*discordgo.User, error) {
-	if i.Member != nil {
-		return i.Member.User, nil // Command was used in a server
-	} else if i.User != nil {
-		return i.User, nil // Command was used in DM's
+func extractCommandAuthor(i *discordgo.InteractionCreate) *discordgo.User {
+	switch i.GuildID {
+	case "0": // Command was used in DM's
+		return i.User
+	default: // Command was used in a server
+		return i.Member.User
 	}
-	return nil, errors.New("couldn't extract command author")
+}
+
+// Returns useful data about the command's contents
+func extractCommandContent(i *discordgo.InteractionCreate) (commandName string, commandBody []string) {
+	// Location of the data changes with regard to the type of interaction
+	switch i.Type {
+	case discordgo.InteractionApplicationCommand:
+		commandName = i.ApplicationCommandData().Name
+		if len(i.ApplicationCommandData().Options) > 0 {
+			for _, option := range i.ApplicationCommandData().Options {
+				commandBody = append(commandBody, fmt.Sprintf("%s : %v", option.Name, option.Value))
+			}
+		}
+	case discordgo.InteractionMessageComponent:
+		commandName = i.MessageComponentData().CustomID
+		for idx, value := range i.MessageComponentData().Values {
+			commandBody = append(commandBody, fmt.Sprintf("value %d : %s", idx, value))
+		}
+	}
+	return
 }
 
 func callCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 	ctx := context.Background()
-	commandAuthor, err := extractAuthor(i)
-	if err != nil {
-		log.WithError(err)
-		return
-	}
-
 	channel, err := s.Channel(i.ChannelID)
 	if err != nil {
 		log.WithError(err).Error("Couldn't query channel")
 		return
 	}
 
-	commandName := i.ApplicationCommandData().Name
-	commandBody := i.ApplicationCommandData().Options
+	commandAuthor := extractCommandAuthor(i)
+	commandName, commandBody := extractCommandContent(i)
 
-	if command, ok := commandsMap[i.ApplicationCommandData().Name]; ok {
+	if command, ok := commandsMap[commandName]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":    commandAuthor.ID,
 			"channel_id":   i.ChannelID,
