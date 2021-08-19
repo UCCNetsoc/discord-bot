@@ -10,22 +10,16 @@ import (
 	"github.com/miekg/dns"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/spf13/viper"
 )
 
-func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	args := strings.Fields(strings.TrimPrefix(m.Content, viper.GetString("bot.prefix")+"dig"))
+func dig(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
+	args := i.ApplicationCommandData().Options
 
-	if len(args) < 2 {
-		s.ChannelMessageSend(m.ChannelID, "Missing arguments: TYPE DOMAIN [@RESOLVER]")
-		return
-	}
-
-	domain := args[1] + "."
+	domain := args[1].StringValue() + "."
 
 	resolver := "1.1.1.1"
-	if len(args) == 3 {
-		resolver = strings.TrimPrefix(args[2], "@")
+	if len(i.ApplicationCommandData().Options) == 3 {
+		resolver = args[2].StringValue()
 	}
 
 	var (
@@ -35,18 +29,25 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 		resp *dns.Msg
 		time time.Duration
 		err  error
+
+		recordType string
 	)
 
-	switch args[0] {
-	case "A":
+	switch args[0].IntValue() {
+	case 0:
+		recordType = "A"
 		msg.SetQuestion(domain, dns.TypeA)
-	case "NS":
+	case 1:
+		recordType = "NS"
 		msg.SetQuestion(domain, dns.TypeNS)
-	case "CNAME":
+	case 2:
+		recordType = "CNAME"
 		msg.SetQuestion(domain, dns.TypeCNAME)
-	case "SRV":
+	case 3:
+		recordType = "SRV"
 		msg.SetQuestion(domain, dns.TypeSRV)
-	case "TXT":
+	case 4:
+		recordType = "TXT"
 		msg.SetQuestion(domain, dns.TypeTXT)
 	}
 
@@ -65,7 +66,13 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 
 		resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Encountered error: %v", err))
+			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+				Type: discordgo.InteractionResponseChannelMessageWithSource,
+				Data: &discordgo.InteractionResponseData{
+					Content: fmt.Sprintf("Encountered error: %v", err),
+					Flags:   1 << 6,
+				},
+			})
 			return
 		}
 
@@ -73,7 +80,13 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 			client.Net = "tcp"
 			resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 			if err != nil {
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Encountered error: %v", err))
+				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+					Type: discordgo.InteractionResponseChannelMessageWithSource,
+					Data: &discordgo.InteractionResponseData{
+						Content: fmt.Sprintf("Encountered error: %v", err),
+						Flags:   1 << 6,
+					},
+				})
 				return
 			}
 		}
@@ -101,7 +114,7 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	}
 
 	for _, r := range resp.Answer {
-		b.WriteString(fmt.Sprintf("%s\t%d\t%s\t", domain, r.Header().Ttl, args[0]))
+		b.WriteString(fmt.Sprintf("%s\t%d\t%s\t", domain, r.Header().Ttl, recordType))
 		switch rec := r.(type) {
 		case *dns.A:
 			b.WriteString(fmt.Sprintf("%s\n", rec.A.String()))
@@ -121,5 +134,13 @@ func digCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageC
 	b.WriteString(fmt.Sprintf("\nResponse time: %s\n", time.String()))
 
 	b.WriteString("```")
-	s.ChannelMessageSend(m.ChannelID, b.String())
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: b.String(),
+		},
+	})
+	if err != nil {
+		log.WithError(err)
+	}
 }

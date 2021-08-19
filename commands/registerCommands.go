@@ -41,12 +41,12 @@ func Register(s *discordgo.Session) {
 	command("ping", ping)
 	command("version", version)
 	command("members", members)
+	command("dig", dig)
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
-	// command("register", "registers you as a member of the server", serverRegister)
 	// command("online", "see how many people are online in minecraft.netsoc.co", online)
-	// command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand)
+	// command("register", "registers you as a member of the server", serverRegister)
 	// command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand)
 	// command(
 	// 	"event",
