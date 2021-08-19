@@ -2,6 +2,7 @@ package commands
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/UCCNetsoc/discord-bot/api"
@@ -65,4 +66,14 @@ func RefeshSchedule(schedule *gocron.Scheduler, s *discordgo.Session) {
 	if len(upcomingEvents) > 0 {
 		schedule.Every(1).Hour().StartAt((time.Unix((upcomingEvents[0].Date - 600), 0))).Do(UpcomingEventAnnounce, context.TODO(), s)
 	}
+}
+
+func InteractionResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Encountered error: %v", err),
+			Flags:   1 << 6,
+		},
+	})
 }

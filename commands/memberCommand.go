@@ -13,6 +13,7 @@ func members(ctx context.Context, s *discordgo.Session, i *discordgo.Interaction
 	responseContent, err := createMembersResponse(s, i)
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("failed to get members")
+		InteractionResponseError(s, i, err)
 		return
 	}
 

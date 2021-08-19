@@ -66,13 +66,7 @@ func dig(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCrea
 
 		resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 		if err != nil {
-			s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-				Type: discordgo.InteractionResponseChannelMessageWithSource,
-				Data: &discordgo.InteractionResponseData{
-					Content: fmt.Sprintf("Encountered error: %v", err),
-					Flags:   1 << 6,
-				},
-			})
+			InteractionResponseError(s, i, err)
 			return
 		}
 
@@ -80,13 +74,7 @@ func dig(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCrea
 			client.Net = "tcp"
 			resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 			if err != nil {
-				s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
-					Type: discordgo.InteractionResponseChannelMessageWithSource,
-					Data: &discordgo.InteractionResponseData{
-						Content: fmt.Sprintf("Encountered error: %v", err),
-						Flags:   1 << 6,
-					},
-				})
+				InteractionResponseError(s, i, err)
 				return
 			}
 		}
