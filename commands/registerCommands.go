@@ -46,6 +46,7 @@ func Register(s *discordgo.Session) {
 	command("corona", coronaCommand)
 	command("vaccines", vaccines)
 	command("boosters", boostersCommand)
+	command("upcoming", upcomingEvent)
 	// Committee commands
 
 	// TODO: Update the below commands to use the new Interaction api
@@ -86,12 +87,6 @@ func Register(s *discordgo.Session) {
 	// 	"PERMANENTLY DELETE the last announcement or event.",
 	// 	recall,
 	// 	// true,
-	// )
-	// command(
-	// 	"upcoming",
-	// 	"replies with embed of the the next upcoming netsoc event, queried from facebook",
-	// 	upcomingEventMessage,
-	// 	// false,
 	// )
 	// command("up", "check the status of various Netsoc hosted websites",
 	// 	checkUpCommand,
