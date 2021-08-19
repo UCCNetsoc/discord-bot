@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/embed"
 
 	"github.com/bwmarrin/discordgo"
@@ -22,19 +23,23 @@ type statusCheck struct {
 }
 
 // Up command to check the status of various websites hosted on Netsoc servers
-func checkUpCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	// Check if committee channel, don't allow in public server
-	if !isCommittee(s, m) {
-		return
-	}
-
+func checkUpCommand(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	sites := strings.Split(viper.GetString("netsoc.sites"), ",")
-
 	// Run on a separate goroutine to not block bot
-	checkStatuses(s, m, sites)
+	checkStatuses(s, i, sites)
 }
 
-func checkStatuses(s *discordgo.Session, m *discordgo.MessageCreate, sites []string) {
+func checkStatuses(s *discordgo.Session, i *discordgo.InteractionCreate, sites []string) {
+	err := s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Checking status...",
+		},
+	})
+	if err != nil {
+		log.WithError(err)
+		return
+	}
 	// Create a channel to receive the status checks, whenever they complete
 	statuses := make(chan statusCheck)
 	// Run each status check on a separate goroutine as to not block each other
@@ -58,7 +63,12 @@ func checkStatuses(s *discordgo.Session, m *discordgo.MessageCreate, sites []str
 		emb = emb.AddField(title, fmt.Sprintf("Up: %v\nLatency: %dms\nError: %+v", result.Success, result.Time, result.Error))
 	}
 
-	s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
+		Embeds: []*discordgo.MessageEmbed{emb.MessageEmbed},
+	})
+	if err != nil {
+		log.WithError(err)
+	}
 }
 
 // Check the up status of a website, returning an error if not up - checks if can connect and response is 200
