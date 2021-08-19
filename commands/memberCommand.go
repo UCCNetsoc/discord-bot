@@ -19,7 +19,8 @@ func members(ctx context.Context, s *discordgo.Session, i *discordgo.Interaction
 	response := &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: responseContent,
+			Content:         responseContent,
+			AllowedMentions: &discordgo.MessageAllowedMentions{Parse: nil},
 		},
 	}
 
