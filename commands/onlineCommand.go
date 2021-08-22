@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"time"
 
+	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
@@ -58,16 +60,24 @@ type Description struct {
 }
 
 // check the number of people online in minecraft.netsoc.co
-func online(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+func online(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	response, err := Query()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to get player count at the moment. @sysadmins if issues persist")
+		InteractionResponseError(s, i, errors.New("unable to get player count at the moment. @sysadmins if issues persist"))
 	} else {
 		plural := "players"
 		if response.Players.Online == 1 {
 			plural = "player"
 		}
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%d %s online right now", response.Players.Online, plural))
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("%d %s online right now", response.Players.Online, plural),
+			},
+		})
+		if err != nil {
+			log.WithContext(ctx).WithError(err)
+		}
 	}
 }
 

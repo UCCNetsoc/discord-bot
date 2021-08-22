@@ -47,6 +47,7 @@ func Register(s *discordgo.Session) {
 	command("vaccines", vaccines)
 	command("boosters", boostersCommand)
 	command("upcoming", upcomingEvent)
+	command("online", online)
 	// Committee commands
 	command("up", checkUpCommand)
 
@@ -164,7 +165,7 @@ func callCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.WithError(err).Error("Couldn't query channel")
 		return
 	}
-	
+
 	commandAuthor, commandName, commandBody := extractCommandContent(i)
 	if command, ok := commandsMap[commandName]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
