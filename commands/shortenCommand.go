@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -42,7 +41,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 		reURL := regexp.MustCompile(`^http(s)?://.*$`)
 		if ok := reURL.MatchString(originalURL); !ok {
 			log.WithContext(ctx).Error("URL did not match regex")
-			InteractionResponseError(s, i, errors.New("Invalid URL"))
+			InteractionResponseError(s, i, "Invalid URL", true)
 			return
 		}
 		values := make(map[string]interface{}, 2)
@@ -50,14 +49,14 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 		encoded, err := json.Marshal(values)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Failed to create encoded json")
-			InteractionResponseError(s, i, errors.New("Could not create request"))
+			InteractionResponseError(s, i, "Could not create request", true)
 			return
 		}
 
 		req, err := http.NewRequest(method, viper.GetString("shorten.host"), bytes.NewBuffer((encoded)))
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Failed to make request object")
-			InteractionResponseError(s, i, errors.New("Could not create request"))
+			InteractionResponseError(s, i, "Could not create request", true)
 			return
 		}
 
@@ -68,7 +67,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 		resp, err := client.Do(req)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Error communicating with server")
-			InteractionResponseError(s, i, errors.New("Could not reach URL shortening server"))
+			InteractionResponseError(s, i, "Could not reach URL shortening server", true)
 			return
 		}
 
@@ -77,7 +76,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 			bd, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
 				log.WithContext(ctx).WithError(err)
-				InteractionResponseError(s, i, errors.New("Failed to decode json"))
+				InteractionResponseError(s, i, "Failed to decode json", true)
 				return
 			}
 			link := &Link{}
@@ -85,7 +84,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 			err = json.Unmarshal(bd, link)
 			if err != nil {
 				log.WithContext(ctx).WithError(err)
-				InteractionResponseError(s, i, errors.New("Failed to decode json"))
+				InteractionResponseError(s, i, "Failed to decode json", true)
 				return
 			}
 
@@ -105,9 +104,9 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 			return
 		case http.StatusConflict:
 			if len(subLevelArgs) < 2 {
-				InteractionResponseError(s, i, errors.New("Failed to shortened link, please try again"))
+				InteractionResponseError(s, i, "Failed to shortened link, please try again", false)
 			} else {
-				InteractionResponseError(s, i, errors.New("Failed to shorten link, try a different shortened-slug"))
+				InteractionResponseError(s, i, "Failed to shorten link, try a different shortened-slug", false)
 			}
 		default:
 			log.WithContext(ctx).WithFields(log.Fields{
@@ -116,17 +115,17 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 				"shortenedUrl": viper.GetString("shorten.public.host") + "/" + shortenedURL,
 				"responseCode": resp.Status,
 			}).Error("Error while trying to shorten URL!")
-			InteractionResponseError(s, i, errors.New("Unexpected error occured: "+resp.Status))
+			InteractionResponseError(s, i, resp.Status, true)
 			return
 		}
-		InteractionResponseError(s, i, errors.New("Missing argument original-url"))
+		InteractionResponseError(s, i, "Missing argument original-url", true)
 
 	case "delete":
 		method = "DELETE"
 		req, err := http.NewRequest(method, fmt.Sprintf("%s/%v", viper.GetString("shorten.host"), subLevelArgs[0].Value), nil)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Failed to make request object")
-			InteractionResponseError(s, i, errors.New("Could not create request"))
+			InteractionResponseError(s, i, "Could not create request", true)
 			return
 		}
 
@@ -135,7 +134,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 		resp, err := client.Do(req)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Error communicating with server")
-			InteractionResponseError(s, i, errors.New("Could not reach URL shortening server"))
+			InteractionResponseError(s, i, "Could not reach URL shortening server", true)
 			return
 		}
 
@@ -151,21 +150,21 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 				log.WithContext(ctx).WithError(err)
 			}
 		case http.StatusNotFound:
-			InteractionResponseError(s, i, errors.New(fmt.Sprintf("Shortened link %v does not exist", subLevelArgs[0].Value)))
+			InteractionResponseError(s, i, fmt.Sprintf("Shortened link %v does not exist", subLevelArgs[0].Value), true)
 		default:
 			log.WithContext(ctx).WithFields(log.Fields{
 				"method": method,
 
 				"responseCode": resp.Status,
 			}).Error("Error while trying to delete shorten URL")
-			InteractionResponseError(s, i, errors.New("Unexpected error occured: "+resp.Status))
+			InteractionResponseError(s, i, resp.Status, true)
 		}
 
 	default:
 		req, err := http.NewRequest("GET", viper.GetString("shorten.host")+"/links", nil)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Failed to make request object")
-			InteractionResponseError(s, i, errors.New("Could not create request"))
+			InteractionResponseError(s, i, "Could not create request", true)
 			return
 		}
 
@@ -174,7 +173,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 		resp, err := client.Do(req)
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Error communicating with server")
-			InteractionResponseError(s, i, errors.New("Could not reach URL shortening server"))
+			InteractionResponseError(s, i, "Could not reach URL shortening server", true)
 			return
 		}
 
@@ -183,7 +182,7 @@ func shortenCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inte
 
 		if err != nil {
 			log.WithContext(ctx).WithError(err).Error("Failed to unmarshall json data")
-			InteractionResponseError(s, i, errors.New("Could not parse data"))
+			InteractionResponseError(s, i, "Could not parse data", true)
 			return
 		}
 

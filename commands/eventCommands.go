@@ -18,7 +18,7 @@ import (
 func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	eventEmbed, err := upcomingEventEmbed(ctx, s)
 	if err != nil {
-		InteractionResponseError(s, i, err)
+		InteractionResponseError(s, i, err.Error(), false)
 		return
 	}
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -53,7 +53,7 @@ func upcomingEventEmbed(ctx context.Context, s *discordgo.Session) (eventEmbed *
 	nearest := upcomingEvents[0]
 	if err != nil {
 		log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
-		return nil, errors.New("error occured parsing upcoming event")
+		return nil, errors.New("Encountered error: Unable to parse upcoming event")
 	}
 	body += p.Sprintf("**%s**\n", nearest.Title)
 	body += p.Sprintf("%s\n", nearest.Description)

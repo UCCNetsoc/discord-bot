@@ -2,7 +2,6 @@ package commands
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"strings"
 
@@ -22,7 +21,7 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 	total, err, _ := corona.GetCorona()
 	if err != nil {
 		log.WithError(err).WithContext(ctx).Error("covid summary invalid output")
-		InteractionResponseError(s, i, errors.New("crror occured parsing covid stats"))
+		InteractionResponseError(s, i, "Unable to parse covid stats", true)
 		return
 	}
 	p := message.NewPrinter(language.English)
@@ -56,7 +55,7 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 		_, country, err = corona.GetArcgis()
 		if err != nil {
 			log.WithError(err).WithContext(ctx).Error("covid arcgis invalid output")
-			InteractionResponseError(s, i, errors.New("crror occured parsing covid stats"))
+			InteractionResponseError(s, i, "Unable to parse covid stats", true)
 			return
 		}
 	} else {
@@ -66,7 +65,7 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 		var coronaEmbeds []*discordgo.MessageEmbed
 		coronaEmbeds, err = corona.CreateEmbed(country, s, ctx)
 		if err != nil {
-			InteractionResponseError(s, i, err)
+			InteractionResponseError(s, i, err.Error(), true)
 			return
 		}
 		embeds = append(embeds, coronaEmbeds...)
@@ -80,6 +79,6 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 			log.WithContext(ctx).WithError(err)
 		}
 	} else {
-		InteractionResponseError(s, i, fmt.Errorf("couldn't find a country called %s", countryInput))
+		InteractionResponseError(s, i, fmt.Sprintf("Couldn't find a country called %s", countryInput), false)
 	}
 }

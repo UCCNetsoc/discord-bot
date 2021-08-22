@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"net"
@@ -63,7 +62,7 @@ type Description struct {
 func online(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	response, err := Query()
 	if err != nil {
-		InteractionResponseError(s, i, errors.New("unable to get player count at the moment. @sysadmins if issues persist"))
+		InteractionResponseError(s, i, "Unable to get player count at the moment. @sysadmins if issues persist", false)
 	} else {
 		plural := "players"
 		if response.Players.Online == 1 {

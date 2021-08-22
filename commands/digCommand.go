@@ -66,7 +66,7 @@ func dig(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCrea
 
 		resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 		if err != nil {
-			InteractionResponseError(s, i, err)
+			InteractionResponseError(s, i, err.Error(), true)
 			return
 		}
 
@@ -74,7 +74,7 @@ func dig(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCrea
 			client.Net = "tcp"
 			resp, time, err = client.ExchangeContext(ctx, &msg, resolver+":53")
 			if err != nil {
-				InteractionResponseError(s, i, err)
+				InteractionResponseError(s, i, err.Error(), true)
 				return
 			}
 		}

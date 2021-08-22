@@ -28,11 +28,14 @@ func RefeshSchedule(schedule *gocron.Scheduler, s *discordgo.Session) {
 	}
 }
 
-func InteractionResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, err error) {
+func InteractionResponseError(s *discordgo.Session, i *discordgo.InteractionCreate, errorMessage string, tagError bool) {
+	if tagError {
+		errorMessage = fmt.Sprintf("Encountered error: %v", errorMessage)
+	}
 	s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
-			Content: fmt.Sprintf("Encountered error: %v", err),
+			Content: errorMessage,
 			Flags:   1 << 6,
 		},
 	})
