@@ -136,18 +136,9 @@ func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
 	}
 }
 
-// Return's the User that issued the command
-func extractCommandAuthor(i *discordgo.InteractionCreate) *discordgo.User {
-	switch i.GuildID {
-	case "0": // Command was used in DM's
-		return i.User
-	default: // Command was used in a server
-		return i.Member.User
-	}
-}
-
 // Returns useful data about the command's contents
-func extractCommandContent(i *discordgo.InteractionCreate) (commandName string, commandBody []string) {
+func extractCommandContent(i *discordgo.InteractionCreate) (commandAuthor *discordgo.User, commandName string, commandBody []string) {
+	commandAuthor = i.Member.User
 	// Location of the data changes with regard to the type of interaction
 	switch i.Type {
 	case discordgo.InteractionApplicationCommand:
@@ -173,10 +164,8 @@ func callCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.WithError(err).Error("Couldn't query channel")
 		return
 	}
-
-	commandAuthor := extractCommandAuthor(i)
-	commandName, commandBody := extractCommandContent(i)
-
+	
+	commandAuthor, commandName, commandBody := extractCommandContent(i)
 	if command, ok := commandsMap[commandName]; ok {
 		ctx := context.WithValue(ctx, log.Key, log.Fields{
 			"author_id":    commandAuthor.ID,
