@@ -50,6 +50,7 @@ func Register(s *discordgo.Session) {
 	command("online", online)
 	// Committee commands
 	command("up", checkUpCommand)
+	command("shorten", shortenCommand)
 
 	// TODO: Update the below commands to use the new Interaction api
 	// ------------------------------------------------------------------------------------------------------------------------
@@ -90,12 +91,7 @@ func Register(s *discordgo.Session) {
 	// 	recall,
 	// 	// true,
 	// )
-	// command(
-	// 	"shorten",
-	// 	"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-slug]`* or delete a shortened url with *`!shorten delete [shortened-slug]`*",
-	// 	shortenCommand,
-	// 	// true,
-	// )
+
 	// ------------------------------------------------------------------------------------------------------------------------
 
 	// TODO: This command is being phased out, in favour of whodis
