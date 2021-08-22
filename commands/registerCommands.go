@@ -52,53 +52,6 @@ func Register(s *discordgo.Session) {
 	command("up", checkUpCommand)
 	command("shorten", shortenCommand)
 
-	// TODO: Update the below commands to use the new Interaction api
-	// ------------------------------------------------------------------------------------------------------------------------
-	// command("online", "see how many people are online in minecraft.netsoc.co", online)
-	// command(
-	// 	"event",
-	// 	"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
-	// 	addEvent,
-	// 	// true,
-	// )
-	// command(
-	// 	"sevent",
-	// 	"same as *`!event`* but doesn't @ everyone",
-	// 	addEventSilent,
-	// 	// true,
-	// )
-	// command(
-	// 	"wevent",
-	// 	"same as *`!event`* but only posts to the website, not #announcements",
-	// 	addEventWebsite,
-	// 	// true,
-	// )
-	// command(
-	// 	"announce",
-	// 	"send a message in the format *`!announce TEXT`*",
-	// 	addAnnouncement,
-	// 	// true,
-	// )
-	// command(
-	// 	"sannounce",
-	// 	"same as *`!announce`* but doesn't @ everyone",
-	// 	addAnnouncementSilent,
-	// 	// true,
-	// )
-	// command(
-	// 	"recall",
-	// 	"PERMANENTLY DELETE the last announcement or event.",
-	// 	recall,
-	// 	// true,
-	// )
-
-	// ------------------------------------------------------------------------------------------------------------------------
-
-	// TODO: This command is being phased out, in favour of whodis
-	// ------------------------------------------------------------------------------------------------------------------------
-	// command("register", "registers you as a member of the server", serverRegister)
-	// ------------------------------------------------------------------------------------------------------------------------
-
 	// Setup APIs
 	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
 	twitterToken := oauth1.NewToken(viper.GetString("twitter.access.key"), viper.GetString("twitter.access.secret"))
