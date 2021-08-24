@@ -47,7 +47,7 @@ func main() {
 	exitError(err)
 	// Open websocket
 	err = session.Open()
-	commands.Register(session)
+	commands.RegisterHandlers(session)
 	exitError(err)
 
 	// Run the REST API for events/announcements in a different goroutine

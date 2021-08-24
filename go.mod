@@ -5,10 +5,9 @@ go 1.17
 require (
 	github.com/Strum355/log v1.1.0
 	github.com/blend/go-sdk v1.20210815.2 // indirect
-	github.com/bwmarrin/discordgo v0.23.3-0.20210818201646-9d9602318a29
+	github.com/bwmarrin/discordgo v0.23.3-0.20210821175000-0fad116c6c2a
 	github.com/cheekybits/is v0.0.0-20150225183255-68e9c0620927 // indirect
 	github.com/dghubble/oauth1 v0.7.0
-	github.com/dustinkirkland/golang-petname v0.0.0-20191129215211-8e5a1ed0cff0
 	github.com/ericm/go-twitter v0.0.0-20200605182549-dd530d8e2eea
 	github.com/go-co-op/gocron v1.6.2
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
