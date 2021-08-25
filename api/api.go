@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"sort"
 	"strconv"
@@ -13,8 +14,8 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/corona"
+	"github.com/apognu/gocal"
 	"github.com/bwmarrin/discordgo"
-	fb "github.com/huandu/facebook/v2"
 	"github.com/patrickmn/go-cache"
 	"github.com/spf13/viper"
 )
@@ -26,17 +27,11 @@ type returnEvent struct {
 	Date        int64  `json:"date"`
 }
 
-type returnFacebookEvent struct {
-	Name        string `json:"name"`
+type returnCalendarEvent struct {
+	Title       string `json:"title"`
 	Description string `json:"description"`
 	StartTime   string `json:"start_time"`
 	EndTime     string `json:"end_time"`
-	Place       struct {
-		Name string `json:"name"`
-	} `json:"place"`
-	Cover struct {
-		Source string `json:"source"`
-	} `json:"cover"`
 }
 
 type returnAnnouncement struct {
@@ -49,9 +44,9 @@ type returnMembers struct {
 }
 
 var (
-	cached   *cache.Cache
-	session  *discordgo.Session
-	cachedFB *cache.Cache
+	cached    *cache.Cache
+	session   *discordgo.Session
+	cachedCal *cache.Cache
 )
 
 type sortEvents []*Event
@@ -67,14 +62,14 @@ func (e *sortEvents) Swap(i, j int) {
 // Run the REST API
 func Run(s *discordgo.Session) {
 	cached = cache.New(3*time.Minute, 3*time.Minute)
-	cachedFB = cache.New(12*time.Hour, 12*time.Hour)
+	cachedCal = cache.New(1*time.Minute, 1*time.Minute)
 
 	session = s
 
 	http.HandleFunc("/events", getEvents)
 	http.HandleFunc("/announcements", getAnnouncements)
 	http.HandleFunc("/getMembers", getMembers)
-	http.HandleFunc("/fbEvents", getFacebookEvents)
+	http.HandleFunc("/calendarEvents", getCalendarEvents)
 
 	http.HandleFunc("/corona", postCorona)
 	setWebook()
@@ -188,13 +183,28 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func getFacebookEvents(w http.ResponseWriter, r *http.Request) {
+func getCalendarEvents(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "application/json")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	returnEvents, qerr := QueryFacebookEvents()
-	if qerr != nil {
-		log.WithFields(log.Fields{"events": returnEvents}).WithError(qerr).Error("Error running querry")
-		return
+
+	var events []gocal.Event
+	cachedEvents, found := cachedCal.Get("events")
+	if found {
+		events = cachedEvents.([]gocal.Event)
+	} else {
+		events = QueryCalendarEvents()
+		cached.Set("events", events, cache.DefaultExpiration)
+	}
+
+	returnEvents := []returnCalendarEvent{}
+	for _, event := range events {
+		returnEvents = append(returnEvents, returnCalendarEvent{
+			event.Summary,
+			event.Description,
+			// event.Attachments,
+			event.Start.String(),
+			event.End.String(),
+		})
 	}
 	b, err := json.Marshal(returnEvents)
 	if err != nil {
@@ -202,61 +212,31 @@ func getFacebookEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(b)
+
 }
 
-// QueryFacebookEvents queries the facebook api then returns them parsed in a struct
-func QueryFacebookEvents() ([]returnEvent, error) {
-	var events []*Event
-	cachedEvents, found := cachedFB.Get("events")
-	if found {
-		events = cachedEvents.([]*Event)
-	} else {
-		returnEvents := []returnFacebookEvent{}
-		events = []*Event{}
-		// Query facebook api
-		res, err := fb.Get("/"+fmt.Sprintf("%s", viper.Get("facebook.pageID"))+"/events",
-			fb.Params{
-				"time_filter":  "upcoming",
-				"fields":       "name,description,cover{source},start_time,end_time,place",
-				"access_token": fmt.Sprintf("%s", viper.Get("facebook.page.access.token"))})
-		if err != nil {
-			return nil, fmt.Errorf("Error querying raw facebook events: %w", err)
-		}
-		decerr := res.DecodeField("data", &returnEvents)
-		if decerr != nil {
-			return nil, fmt.Errorf("Error decoding raw facebook events: %w", decerr)
-		}
-		for _, event := range returnEvents {
-			parsed, err := ParseFacebookEvent(event)
-			if err == nil {
-				// Message successfully parsed as an event.
-				events = append(events, parsed)
-			}
-		}
-		cachedFB.Set("events", events, cache.DefaultExpiration)
+func QueryCalendarEvents() []gocal.Event {
+	resp, err := http.Get(viper.GetString("google.calendar.ics"))
+	if err != nil {
+		log.WithError(err)
 	}
-	// Filter out events that have already passed
-	allEvents := make([]*Event, len(events))
-	copy(allEvents, events)
-	events = []*Event{}
-	for _, event := range allEvents {
-		if event.Date.Unix() > time.Now().AddDate(0, 0, 0).Unix() {
-			events = append(events, event)
-		}
-	}
-	sortE := sortEvents(events)
-	sort.Sort(&sortE)
 
-	returnEvents := []returnEvent{}
-	for _, event := range events {
-		returnEvents = append(returnEvents, returnEvent{
-			event.Title,
-			event.Description,
-			event.ImgURL,
-			event.Date.Unix(),
-		})
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.WithError(err)
 	}
-	return returnEvents, nil
+
+	r := bytes.NewBuffer(body)
+
+	start, end := time.Now(), time.Now().Add(30*24*time.Hour)
+
+	c := gocal.NewParser(r)
+	c.Start, c.End = &start, &end
+	c.Parse()
+
+	return c.Events
 }
 
 type sortAnnouncements []*Announcement

@@ -3,14 +3,12 @@ package commands
 import (
 	"context"
 	"errors"
-	"time"
+	"fmt"
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/bwmarrin/discordgo"
-	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -18,12 +16,14 @@ import (
 func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	eventEmbed, err := upcomingEventEmbed(ctx, s)
 	if err != nil {
-		InteractionResponseError(s, i, err.Error(), false)
-		return
+		log.WithContext(ctx).WithError(err)
+		InteractionResponseError(s, i, err.Error(), true)
 	}
+
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseChannelMessageWithSource,
 		Data: &discordgo.InteractionResponseData{
+			Flags:  1 << 6,
 			Embeds: []*discordgo.MessageEmbed{eventEmbed},
 		},
 	})
@@ -32,32 +32,20 @@ func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 	}
 }
 
-func UpcomingEventAnnounce(ctx context.Context, s *discordgo.Session) {
-	channels := viper.Get("discord.channels").(*config.Channels)
-	eventEmbed, _ := upcomingEventEmbed(ctx, s)
-	s.ChannelMessageSend(channels.PublicAnnouncements, "@here\nEvent starting in 10 minutes!\n\n")
-	s.ChannelMessageSendEmbed(channels.PublicAnnouncements, eventEmbed)
-}
-
+// TODO: Look into the possibility of parsing images from the ics data, else consider a default banner to better fill out the embed
 func upcomingEventEmbed(ctx context.Context, s *discordgo.Session) (eventEmbed *discordgo.MessageEmbed, err error) {
-	upcomingEvents, err := api.QueryFacebookEvents()
+	upcomingEvents := api.QueryCalendarEvents()
 	if len(upcomingEvents) < 1 {
 		return nil, errors.New("There are currently no events scheduled, Stay tuned!")
 	}
-	title := "Netsoc Upcoming Event"
 	emb := embed.NewEmbed()
-	emb.SetColor(0xc20002)
-	emb.SetTitle(title)
+	emb.SetTitle(upcomingEvents[0].Summary)
+
 	p := message.NewPrinter(language.English)
-	body := ""
-	nearest := upcomingEvents[0]
-	if err != nil {
-		log.WithError(err).WithContext(ctx).Error("Error occured parsing upcoming event")
-		return nil, errors.New("Encountered error: Unable to parse upcoming event")
+	if len(upcomingEvents[0].Description) > 0 {
+		emb.SetDescription(p.Sprintf("%s\n", upcomingEvents[0].Description))
+
 	}
-	body += p.Sprintf("**%s**\n", nearest.Title)
-	body += p.Sprintf("%s\n", nearest.Description)
-	body += p.Sprintf("**When?**\n%s\n", time.Unix(nearest.Date, 0).Format("Jan 2 at 3:04 PM"))
-	emb.SetImage(nearest.ImageURL)
+	emb.AddField("When?", fmt.Sprintf("<t:%v:F>", upcomingEvents[0].Start.Unix()))
 	return emb.MessageEmbed, nil
 }
