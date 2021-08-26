@@ -27,19 +27,9 @@ func (a Announcement) GetContent() string {
 	return a.Content
 }
 
-// GetContent returns message content
-func (e Event) GetContent() string {
-	return e.Description
-}
-
 // GetImage returns Image response data
 func (a Announcement) GetImage() *Image {
 	return a.Image
-}
-
-// GetImage returns Image response data
-func (e Event) GetImage() *Image {
-	return e.Image
 }
 
 func parseImage(m *discordgo.Message) (*Image, error) {
