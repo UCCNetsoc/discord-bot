@@ -61,9 +61,7 @@ func (e *Embed) AddField(name, value string) *Embed {
 		Name:  name,
 		Value: value,
 	})
-
 	return e
-
 }
 
 //SetFooter [Text] [iconURL]
@@ -90,7 +88,6 @@ func (e *Embed) SetFooter(args ...string) *Embed {
 		Text:         text,
 		ProxyIconURL: proxyURL,
 	}
-
 	return e
 }
 
@@ -167,7 +164,6 @@ func (e *Embed) SetAuthor(args ...string) *Embed {
 		URL:          URL,
 		ProxyIconURL: proxyURL,
 	}
-
 	return e
 }
 

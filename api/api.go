@@ -230,7 +230,7 @@ func QueryCalendarEvents() []gocal.Event {
 
 	r := bytes.NewBuffer(body)
 
-	start, end := time.Now(), time.Now().Add(30*24*time.Hour)
+	start, end := time.Now(), time.Now().Add(7*24*time.Hour)
 
 	c := gocal.NewParser(r)
 	c.Start, c.End = &start, &end
