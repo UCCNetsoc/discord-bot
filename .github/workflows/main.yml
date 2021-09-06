@@ -20,6 +20,15 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
+      # Ensure latest version of git.
+      - name: Ensure latests version of git
+        run: |
+          sudo apt-get install -y software-properties-common \
+          && sudo apt-get update \
+          && sudo add-apt-repository -y ppa:git-core/ppa \
+          && sudo apt-get update \
+          && sudo apt-get install -y git
+
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
       
@@ -41,5 +50,6 @@ jobs:
         uses: docker/build-push-action@v2.7.0
         with:
           push: true
+          context: .
           tags: ghcr.io/uccnetsoc/discord-bot:dev-env, ghcr.io/uccnetsoc/discord-bot:${{ github.sha }}-dev-env
           target: dev
