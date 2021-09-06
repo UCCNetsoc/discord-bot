@@ -67,8 +67,10 @@ jobs:
       - name: Ansible playbook runner via SSH Action
         uses: UCCNetsoc/ansible-action@main
         with:
+          tags: "discord-bot"
           control_host: ${{ secrets.CONTROL_HOST }}
           control_user: ${{ secrets.CONTROL_USER }}
           control_ssh_key: ${{ secrets.SSH_KEY }}
           directory: ${{ secrets.CONTROL_DIRECTORY }}
           vault_pass: ${{ secrets.VAULT_PASS }}
+          port: ${{ secrets.CONTROL_PORT }}
