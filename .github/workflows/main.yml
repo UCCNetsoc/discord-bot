@@ -65,7 +65,7 @@ jobs:
     
     steps:
       - name: Ansible playbook runner via SSH Action
-        uses: UCCNetsoc/ansible-action@testing1
+        uses: UCCNetsoc/ansible-action@main
         with:
           control_host: ${{ secrets.CONTROL_HOST }}
           control_user: ${{ secrets.CONTROL_USER }}
