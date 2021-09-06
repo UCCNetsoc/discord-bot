@@ -53,3 +53,10 @@ jobs:
           context: .
           tags: ghcr.io/uccnetsoc/discord-bot:dev-env, ghcr.io/uccnetsoc/discord-bot:${{ github.sha }}-dev-env
           target: dev
+
+      - name: Build and push prod image
+        uses: docker/build-push-action@v2.7.0
+        with:
+          push: true
+          context: .
+          tags: ghcr.io/uccnetsoc/discord-bot:latest, ghcr.io/uccnetsoc/discord-bot:${{ github.sha }}
