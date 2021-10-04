@@ -51,6 +51,7 @@ func Register(s *discordgo.Session) {
 	command("version", "commit hash for the running bot version", version, false)
 	command("members", "returns the number of users of the given role id", members, false)
 	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
+	command("who", "see who is online in minecraft.netsoc.co", who, false)
 	command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand, false)
 	command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand, false)
 	command(
