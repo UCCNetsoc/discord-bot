@@ -62,7 +62,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 				emb.SetImage(fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:]))
 			}
 		}
-		if emb.Image == nil {
+		if emb.Image == nil && viper.GetString("google.calendar.image.default") != "" {
 			emb.SetImage(viper.GetString("google.calendar.image.default"))
 		}
 
