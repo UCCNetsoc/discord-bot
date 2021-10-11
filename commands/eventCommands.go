@@ -10,6 +10,7 @@ import (
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/bwmarrin/discordgo"
+	"github.com/spf13/viper"
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 )
@@ -55,12 +56,11 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 		re := regexp.MustCompile(`\/file\/d\/([^\/]+)`)
 		for _, attachment := range event.Attachments {
 			if attachment.Mime[:5] == "image" {
-				// TODO: Needs testing to see if this always works, else get raw image url from drive url redirect header
 				emb.SetImage(fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:]))
 			}
 		}
 		if emb.Image == nil {
-			emb.SetImage("https://avatars.githubusercontent.com/u/6690158?s=400&u=fb42911a2e865d716c137619afdf1f7a266989cf&v=4")
+			emb.SetImage(viper.GetString("google.calendar.image.default"))
 		}
 
 		emb.AddField("When?", fmt.Sprintf("<t:%v:F>", event.Start.Unix()))
