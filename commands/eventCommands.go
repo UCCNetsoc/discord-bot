@@ -50,7 +50,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 		emb.SetTitle(event.Summary)
 
 		if len(event.Description) > 0 {
-			emb.SetDescription(p.Sprintf("%s\n", event.Description))
+			emb.SetDescription(p.Sprintf("%s", event.Description))
 		}
 		if len(event.Location) > 0 {
 			emb.AddField("Where?", event.Location)
