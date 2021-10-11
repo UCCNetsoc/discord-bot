@@ -5,29 +5,12 @@ import (
 	"fmt"
 
 	"github.com/Strum355/log"
-	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
-	"github.com/dghubble/oauth1"
-	twitterApi "github.com/ericm/go-twitter/twitter"
-	"github.com/spf13/viper"
-)
-
-var (
-	// Twitter
-	twitterClient *twitterApi.Client
-)
-
-// Reaction on a user message
-type Reaction string
-
-const (
-	twitter Reaction = "🇹"
 )
 
 var (
 	commandsMap = make(map[string]func(context.Context, *discordgo.Session, *discordgo.InteractionCreate))
-	reactionMap = make(map[string]interface{}) // Maps message ids to content
 )
 
 type commandFunc func(context.Context, *discordgo.Session, *discordgo.InteractionCreate)
@@ -49,16 +32,11 @@ func RegisterHandlers(s *discordgo.Session) {
 	command("vaccines", vaccines)
 	command("boosters", boostersCommand)
 	command("upcoming", upcomingEvent)
-	command("online", online)
+	command("online", who)
+	command("who", who)
 	// Committee commands
 	command("up", checkUpCommand)
 	command("shorten", shortenCommand)
-
-	// Setup APIs
-	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
-	twitterToken := oauth1.NewToken(viper.GetString("twitter.access.key"), viper.GetString("twitter.access.secret"))
-	httpClient := twitterConfig.Client(oauth1.NoContext, twitterToken)
-	twitterClient = twitterApi.NewClient(httpClient)
 
 	// Setup Interaction Handlers
 	s.AddHandler(func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -67,9 +45,7 @@ func RegisterHandlers(s *discordgo.Session) {
 
 	// Setup Message Handlers
 	s.AddHandler(messageCreate)
-	s.AddHandler(messageReaction)
 	s.AddHandler(messageDelete)
-	s.AddHandler(serverJoin)
 	s.AddHandler(memberLeave)
 }
 
@@ -132,47 +108,6 @@ func callCommand(s *discordgo.Session, i *discordgo.InteractionCreate) {
 		log.WithContext(ctx).Info("invoking standard command")
 		command(ctx, s, i)
 		return
-	}
-}
-
-func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
-	if m.UserID == s.State.User.ID {
-		return
-	}
-	react := Reaction(m.MessageReaction.Emoji.Name)
-	if data, ok := reactionMap[m.MessageID]; ok {
-		if content, ok := data.(api.Entry); ok {
-			switch react {
-			case twitter:
-				mediaIds := []int64{}
-				image := content.GetImage()
-				if image.ImgData != nil {
-					// Contains image
-					// Upload image
-					mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
-						File:     image.ImgData.Bytes(),
-						MimeType: image.ImgHeader.Get("content-type"),
-					})
-					if err != nil {
-						log.WithError(err).Error("Failed to upload image")
-						return
-					}
-					mediaIds = append(mediaIds, mediaResponse.MediaID)
-					log.Info(mediaResponse.MediaIDString)
-					log.Info(mediaHTTP.Status)
-				}
-				// Send tweet
-				tweet, _, err := twitterClient.Statuses.Update(content.GetContent(), &twitterApi.StatusUpdateParams{
-					MediaIds: mediaIds,
-				})
-				if err != nil {
-					log.WithError(err).Error("Failed to send tweet")
-					return
-				}
-				log.Info(tweet.Text)
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
-			}
-		}
 	}
 }
 
