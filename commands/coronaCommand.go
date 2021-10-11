@@ -14,17 +14,19 @@ import (
 	"golang.org/x/text/message"
 )
 
-func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+func coronaCommand(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
+	var embeds []*discordgo.MessageEmbed
+	var countryInput string
+	args := i.ApplicationCommandData().Options
 	total, err, _ := corona.GetCorona()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Error occured parsing covid stats")
 		log.WithError(err).WithContext(ctx).Error("covid summary invalid output")
+		InteractionResponseError(s, i, "Unable to parse covid stats", true)
 		return
 	}
-	cm, slug := extractCommand(m.Content)
 	p := message.NewPrinter(language.English)
-	if slug == cm {
-		slug = viper.GetString("corona.default")
+	if len(args) < 1 {
+		countryInput = viper.GetString("corona.default")
 		// Also send global stats
 		body := "**New**\n"
 		body += p.Sprintf("Cases: %d\n", total.Global["NewConfirmed"].(int))
@@ -39,29 +41,44 @@ func coronaCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Messa
 		emb.SetTitle("Covid-19 Global Stats")
 		emb.SetColor(0x128af1)
 		emb.SetDescription(body)
-		s.ChannelMessageSendEmbed(m.ChannelID, emb.MessageEmbed)
+		embeds = append(embeds, emb.MessageEmbed)
 	} else {
-		slug = strings.ToLower(
+		countryInput = strings.ToLower(
 			strings.ReplaceAll(
-				strings.TrimSpace(strings.TrimPrefix(slug, cm)),
+				strings.TrimSpace(args[0].StringValue()),
 				" ", "-",
 			),
 		)
 	}
 	var country *corona.CountrySummary
-	if slug == viper.GetString("corona.default") {
+	if countryInput == viper.GetString("corona.default") {
 		_, country, err = corona.GetArcgis()
 		if err != nil {
-			s.ChannelMessageSend(m.ChannelID, "Error occured parsing covid stats")
 			log.WithError(err).WithContext(ctx).Error("covid arcgis invalid output")
+			InteractionResponseError(s, i, "Unable to parse covid stats", true)
 			return
 		}
 	} else {
-		country = total.GetCountry(slug)
+		country = total.GetCountry(countryInput)
 	}
 	if country != nil {
-		corona.CreateEmbed(country, s, m.ChannelID, ctx)
+		var coronaEmbeds []*discordgo.MessageEmbed
+		coronaEmbeds, err = corona.CreateEmbed(country, s, ctx)
+		if err != nil {
+			InteractionResponseError(s, i, err.Error(), true)
+			return
+		}
+		embeds = append(embeds, coronaEmbeds...)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Embeds: embeds,
+			},
+		})
+		if err != nil {
+			log.WithContext(ctx).WithError(err)
+		}
 	} else {
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Couldn't find a country called %s", slug))
+		InteractionResponseError(s, i, fmt.Sprintf("Couldn't find a country called %s", countryInput), false)
 	}
 }

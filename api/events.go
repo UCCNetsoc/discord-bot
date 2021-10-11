@@ -2,85 +2,98 @@ package api
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"strings"
+	"regexp"
+	"strconv"
 	"time"
 
-	"github.com/bwmarrin/discordgo"
+	"github.com/Strum355/log"
+	"github.com/apognu/gocal"
+	"github.com/patrickmn/go-cache"
+	"github.com/spf13/viper"
 )
 
-// Event for use in api and bot
-type Event struct {
-	Title,
-	Description string
-	Date time.Time
-	*Image
+func getEvents(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query()
+	limit := viper.GetInt("api.event_query_limit")
+	queryAmount, exists := query["q"]
+	if !exists || len(query) == 0 {
+		http.Error(w, "Please add the parameter 'q'", 400)
+		return
+	}
+	amount, err := strconv.Atoi(queryAmount[0])
+	if err != nil {
+		http.Error(w, "Please provide an int as 'q's value", 400)
+		return
+	}
+	if amount > limit {
+		http.Error(w, "Query amount exceeds the query limit", 400)
+		return
+	}
+
+	var events []gocal.Event
+	cachedEvents, found := cached.Get("events")
+	if found {
+		events = cachedEvents.([]gocal.Event)
+	} else {
+		events = QueryCalendarEvents()
+		cached.Set("events", events, cache.DefaultExpiration)
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	returnEvents := []returnEvent{}
+	for i, event := range events {
+		if i == amount {
+			break
+		}
+		eventImgURL := viper.GetString("google.calendar.image.default")
+		re := regexp.MustCompile(`\/file\/d\/([^\/]+)`)
+		for _, attachment := range event.Attachments {
+			if attachment.Mime[:5] == "image" {
+				eventImgURL = fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:])
+			}
+		}
+		returnEvents = append(returnEvents, returnEvent{
+			event.Summary,
+			event.Description,
+			eventImgURL,
+			event.Start,
+			event.End,
+		})
+	}
+	b, err := json.Marshal(returnEvents)
+	if err != nil {
+		log.WithFields(log.Fields{"events": returnEvents}).WithError(err).Error("Error marshalling events")
+		return
+	}
+	w.Write(b)
 }
 
-const layoutISO = "2006-01-02"
-
-// ParseEvent will give an event object
-func ParseEvent(m *discordgo.MessageCreate, help string) (*Event, error) {
-	// In the correct channel
-	params := strings.Split(m.Content, "\"")
-	if len(params) != 7 {
-		return nil, fmt.Errorf("Error parsing command\n```%s```", help)
-	}
-	if len(m.Attachments) != 1 || m.Attachments[0].Width == 0 {
-		return nil, fmt.Errorf("No image attached")
-	}
-	title := params[1]
-	date := params[3]
-	description := params[5]
-	dateTime, err := time.Parse(layoutISO, date)
+func QueryCalendarEvents() []gocal.Event {
+	resp, err := http.Get(viper.GetString("google.calendar.ics"))
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing date. Should be in the format yyyy-mm-dd")
+		log.WithError(err)
 	}
-	image := m.Attachments[0]
-	imageReader, err := http.Get(image.URL)
+
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("Error parsing image: %w", err)
-	}
-	defer imageReader.Body.Close()
-	imageRead, err := ioutil.ReadAll(imageReader.Body)
-	if err != nil {
-		return nil, err
-	}
-	imageBody := bytes.NewBuffer(imageRead)
-
-	return &Event{
-		Title:       title,
-		Description: description,
-		Date:        dateTime,
-		Image: &Image{
-			ImgData:   imageBody,
-			ImgURL:    imageReader.Request.URL.String(),
-			ImgHeader: &imageReader.Header,
-		},
-	}, nil
-}
-
-// ParseFacebookEvent will give an event object
-func ParseFacebookEvent(fbEvent returnFacebookEvent) (*Event, error) {
-
-	parseTime := strings.Split(fbEvent.StartTime, "+")
-	rfc3339t := parseTime[0] + "Z"
-
-	dateTime, err := time.Parse(time.RFC3339, rfc3339t)
-	if err != nil {
-		return nil, fmt.Errorf("Error parsing date. Should be in the format yyyy-mm-dd")
+		log.WithError(err)
 	}
 
-	return &Event{
-		Title:       fbEvent.Name,
-		Description: fbEvent.Description,
-		Date:        dateTime,
-		Image: &Image{
-			ImgData:   nil,
-			ImgURL:    fbEvent.Cover.Source,
-			ImgHeader: nil,
-		},
-	}, nil
+	r := bytes.NewBuffer(body)
+
+	start, end := time.Now(), time.Now().Add(30*24*time.Hour)
+
+	c := gocal.NewParser(r)
+	c.Start, c.End = &start, &end
+	c.Parse()
+
+	return c.Events
 }

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Strum355/log"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
 )
@@ -58,33 +59,31 @@ type Description struct {
 	Text string
 }
 
-// check the number of people online in minecraft.netsoc.co
-func online(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+// Get the names of the users who are online on minecraft.netsoc.co
+func who(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	response, err := Query()
 	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to get player count at the moment. @sysadmins if issues persist")
+		InteractionResponseError(s, i, "Unable to check who is online at the moment. @sysadmins if issues persist", false)
 	} else {
-		plural := "players"
-		if response.Players.Online == 1 {
-			plural = "player"
+		var respMsg string
+		if len(response.Players.Sample) > 0 {
+			names := []string{}
+			for _, player := range response.Players.Sample {
+				names = append(names, player.Name)
+			}
+			respMsg = fmt.Sprintf("%d Players online right now:\n`%s`", len(names), strings.Join(names, "\n"))
+		} else {
+			respMsg = "There is no-one online right now"
 		}
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("%d %s online right now", response.Players.Online, plural))
-	}
-}
-
-// get the names of the users who are online
-func who(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	response, err := Query()
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to check who is online at the moment. @sysadmins if issues persist")
-	} else if len(response.Players.Sample) > 0 {
-		names := []string{}
-		for _, player := range response.Players.Sample {
-			names = append(names, player.Name)
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: respMsg,
+			},
+		})
+		if err != nil {
+			log.WithContext(ctx).WithError(err)
 		}
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Online right now:\n`%s`", strings.Join(names, "\n")))
-	} else {
-		s.ChannelMessageSend(m.ChannelID, "There is no-one online right now")
 	}
 }
 

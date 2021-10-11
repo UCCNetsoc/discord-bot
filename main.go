@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/UCCNetsoc/discord-bot/commands"
 	"github.com/UCCNetsoc/discord-bot/corona"
@@ -19,7 +18,6 @@ import (
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/config"
 	"github.com/bwmarrin/discordgo"
-	"github.com/go-co-op/gocron"
 	"github.com/spf13/viper"
 )
 
@@ -47,20 +45,13 @@ func main() {
 	exitError(err)
 	// Open websocket
 	err = session.Open()
-	commands.Register(session)
+	commands.RegisterHandlers(session)
 	exitError(err)
 
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)
 	go corona.Listen(session)
 	go prometheus.CreateExporter(session)
-
-	// Initialise scheduler if enabled in viper defaults
-	if viper.GetString("schedule.enable") == "True" {
-		scheduler := gocron.NewScheduler(time.UTC)
-		scheduler.StartAsync()
-		scheduler.Every(1).Day().Do(commands.RefeshSchedule, scheduler, session)
-	}
 
 	// Update the bot status periodically
 	go status.Status(session)

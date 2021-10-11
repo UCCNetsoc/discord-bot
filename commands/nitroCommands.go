@@ -20,7 +20,7 @@ func nitroAnnounce(s *discordgo.Session, m *discordgo.MessageCreate) {
 	s.ChannelMessageSendEmbed(channels.PublicGeneral, em.MessageEmbed)
 }
 
-func boostersCommand(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+func boostersCommand(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	servers := viper.Get("discord.servers").(*config.Servers)
 	if err := s.RequestGuildMembers(servers.PublicServer, "", 0, false); err != nil {
 		log.WithContext(ctx).WithError(err).Error("Couldn't query server members")
@@ -38,7 +38,15 @@ func boostersCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 		}
 	}
 	if len(boosters) == 0 {
-		s.ChannelMessageSend(m.ChannelID, "There are currently no nitro boosters for this server")
+		err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "There are currently no nitro boosters for this server",
+			},
+		})
+		if err != nil {
+			log.WithContext(ctx).WithError(err)
+		}
 		return
 	}
 	em := embed.NewEmbed()
@@ -49,5 +57,13 @@ func boostersCommand(ctx context.Context, s *discordgo.Session, m *discordgo.Mes
 	em.SetTitle("Current Nitro Boosters")
 	em.SetColor(0xdccb01)
 	em.SetDescription(desc)
-	s.ChannelMessageSendEmbed(m.ChannelID, em.MessageEmbed)
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{em.MessageEmbed},
+		},
+	})
+	if err != nil {
+		log.WithContext(ctx).WithError(err)
+	}
 }

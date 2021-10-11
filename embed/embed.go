@@ -1,6 +1,10 @@
 package embed
 
-import "github.com/bwmarrin/discordgo"
+import (
+	"time"
+
+	"github.com/bwmarrin/discordgo"
+)
 
 // For embeded messages (from the discordgo wiki):
 
@@ -22,7 +26,10 @@ const (
 
 //NewEmbed returns a new embed object
 func NewEmbed() *Embed {
-	return &Embed{&discordgo.MessageEmbed{}}
+	return &Embed{&discordgo.MessageEmbed{
+		Color:     0x9b12f1,
+		Timestamp: time.Now().Format(time.RFC3339),
+	}}
 }
 
 //SetTitle ...
@@ -54,9 +61,7 @@ func (e *Embed) AddField(name, value string) *Embed {
 		Name:  name,
 		Value: value,
 	})
-
 	return e
-
 }
 
 //SetFooter [Text] [iconURL]
@@ -83,7 +88,6 @@ func (e *Embed) SetFooter(args ...string) *Embed {
 		Text:         text,
 		ProxyIconURL: proxyURL,
 	}
-
 	return e
 }
 
@@ -160,7 +164,6 @@ func (e *Embed) SetAuthor(args ...string) *Embed {
 		URL:          URL,
 		ProxyIconURL: proxyURL,
 	}
-
 	return e
 }
 

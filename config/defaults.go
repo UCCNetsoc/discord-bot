@@ -33,13 +33,9 @@ func initDefaults() {
 	viper.SetDefault("twitter.secret", "")
 	viper.SetDefault("twitter.access.key", "")
 	viper.SetDefault("twitter.access.secret", "")
-	// Facebook
-	viper.SetDefault("facebook.appID", "INSERT @Eric")
-	viper.SetDefault("facebook.app.secret", "INSERT @Eric")
-	viper.SetDefault("facebook.pageID", "INSERT @Eric")
-	viper.SetDefault("facebook.page.access.token", "INSERT @Eric")
-	// Event Message Scheduler
-	viper.SetDefault("schedule.enable", "True")
+	// Google Calendar
+	viper.SetDefault("google.calendar.ics", "")
+	viper.SetDefault("google.calendar.image.default", "https://avatars.githubusercontent.com/u/6690158?s=400&u=fb42911a2e865d716c137619afdf1f7a266989cf&v=4")
 	// Rest API
 	viper.SetDefault("api.port", 80)
 	viper.SetDefault("api.event_query_limit", 20)
@@ -65,5 +61,4 @@ func initDefaults() {
 	viper.SetDefault("shorten.domain", "links.netsoc.co")
 	viper.SetDefault("shorten.username", "")
 	viper.SetDefault("shorten.password", "")
-
 }

@@ -8,11 +8,19 @@ import (
 	"github.com/bwmarrin/discordgo"
 )
 
-func vaccines(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
+func vaccines(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	vaccines, err := corona.GetVaccines()
 	if err != nil {
 		log.WithContext(ctx).WithError(err).Error("Error querying vaccines from arcgis")
 		return
 	}
-	s.ChannelMessageSendEmbed(m.ChannelID, vaccines.Embed(nil))
+	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Embeds: []*discordgo.MessageEmbed{vaccines.Embed(nil)},
+		},
+	})
+	if err != nil {
+		log.WithContext(ctx).WithError(err)
+	}
 }

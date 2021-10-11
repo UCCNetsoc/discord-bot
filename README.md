@@ -4,13 +4,15 @@
 
 The UCC Netsoc discord bot has the following features:
 
-- Allows UCC students to automatically register as a member for the public Discord Server
+- Provide events and announcements to the website.
 
-- Allows committee members to publish events and announcements to multiple mediums using one command. This includes:
-  - The public discord server
-  - The website
-  - Twitter
-- Recall events/announcements from these platforms after being sent
+- Provide daily updates on covid stats and vaccines.
+
+- Provide upcoming events via a command.
+
+- Shorten URLs using our internal URL shortener.
+
+- Check if websites are up.
 
 - And much more!
 

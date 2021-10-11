@@ -1,234 +1,183 @@
 package commands
 
 import (
-	"context"
 	"fmt"
-	"strings"
 
 	"github.com/Strum355/log"
-	"github.com/UCCNetsoc/discord-bot/api"
-	"github.com/UCCNetsoc/discord-bot/prometheus"
 	"github.com/bwmarrin/discordgo"
-	"github.com/dghubble/oauth1"
-	twitterApi "github.com/ericm/go-twitter/twitter"
 	"github.com/spf13/viper"
 )
 
 var (
-	// Twitter
-	twitterClient *twitterApi.Client
+	publicCommands = []discordgo.ApplicationCommand{
+		{
+			Name:        "ping",
+			Description: "pong",
+		},
+		{
+			Name:        "version",
+			Description: "Commit hash for the running bot version",
+		},
+		{
+			Name:        "members",
+			Description: "Get number of users in the given role",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionRole,
+					Name:        "role",
+					Description: "Role option",
+					Required:    true,
+				},
+			},
+		},
+		{
+			Name:        "dig",
+			Description: "Run a DNS query",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionInteger,
+					Name:        "type",
+					Description: "Record type",
+					Required:    true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "A",
+							Value: 0,
+						},
+						{
+							Name:  "NS",
+							Value: 1,
+						},
+						{
+							Name:  "CNAME",
+							Value: 2,
+						},
+						{
+							Name:  "SRV",
+							Value: 3,
+						},
+						{
+							Name:  "TXT",
+							Value: 4,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "domain",
+					Description: "Domain name",
+					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "resolver",
+					Description: "Query resolver",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:        "corona",
+			Description: "Gives current stats on corona case numbers",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "country",
+					Description: "Query by country",
+					Required:    false,
+				},
+			},
+		},
+		{
+			Name:        "vaccines",
+			Description: "Gives current stats on the COVID-19 vaccine rollout",
+		},
+		{
+			Name:        "boosters",
+			Description: "Check current nitro boosters",
+		},
+		{
+			Name:        "upcoming",
+			Description: "Gives an embed of the the next upcoming netsoc event",
+		},
+		{
+			Name:        "online",
+			Description: "See how many people are online in minecraft.netsoc.co",
+		},
+		{
+			Name:        "who",
+			Description: "See how many people are online in minecraft.netsoc.co",
+		},
+	}
+
+	committeeCommands = []discordgo.ApplicationCommand{
+		{
+			Name:        "up",
+			Description: "Check the status of various Netsoc hosted websites",
+		},
+		{
+			Name:        "shorten",
+			Description: "URL Shortener interactions",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "create",
+					Description: "Create a shortened URL, the shortened URL is random if none is specified",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "original-url",
+							Description: "Original URL",
+							Required:    true,
+						},
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "shortened-slug",
+							Description: "Shortened Slug",
+							Required:    false,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "delete",
+					Description: "Delete a shortened URL",
+					Options: []*discordgo.ApplicationCommandOption{
+						{
+							Type:        discordgo.ApplicationCommandOptionString,
+							Name:        "shortened-slug",
+							Description: "Shortened Slug",
+							Required:    true,
+						},
+					},
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionSubCommand,
+					Name:        "list",
+					Description: "List all shortened URL's",
+				},
+			},
+		},
+	}
 )
 
-// Reaction on a user message
-type Reaction string
-
-const (
-	twitter Reaction = "🇹"
-)
-
-var (
-	helpStrings          = make(map[string]string)
-	committeeHelpStrings = make(map[string]string)
-	commandsMap          = make(map[string]func(context.Context, *discordgo.Session, *discordgo.MessageCreate))
-	reactionMap          = make(map[string]interface{}) // Maps message ids to content
-)
-
-type commandFunc func(context.Context, *discordgo.Session, *discordgo.MessageCreate)
-
-func command(name string, helpMessage string, function commandFunc, committee bool) {
-	if committee {
-		committeeHelpStrings[name] = helpMessage
-	} else {
-		helpStrings[name] = helpMessage
-	}
-	commandsMap[name] = function
-}
-
-// Register commands
-func Register(s *discordgo.Session) {
-	command("ping", "pong!", ping, false)
-	command("help", "displays this message", help, false)
-	command("version", "commit hash for the running bot version", version, false)
-	command("members", "returns the number of users of the given role id", members, false)
-	command("online", "see how many people are online in minecraft.netsoc.co", online, false)
-	command("who", "see who is online in minecraft.netsoc.co", who, false)
-	command("dig", "run a DNS query: dig TYPE DOMAIN [@RESOLVER]", digCommand, false)
-	command("corona", "gives stats on corona. usage: *`!corona`* or *`!corona country-name`*", coronaCommand, false)
-	command(
-		"event",
-		"send a message in the format: *`!event \"title\" \"yyyy-mm-dd\" \"description\"`* and make sure to have an image attached too.",
-		addEvent,
-		true,
-	)
-	command(
-		"sevent",
-		"same as *`!event`* but doesn't @ everyone",
-		addEventSilent,
-		true,
-	)
-	command(
-		"wevent",
-		"same as *`!event`* but only posts to the website, not #announcements",
-		addEventWebsite,
-		true,
-	)
-	command(
-		"announce",
-		"send a message in the format *`!announce TEXT`*",
-		addAnnouncement,
-		true,
-	)
-	command(
-		"sannounce",
-		"same as *`!announce`* but doesn't @ everyone",
-		addAnnouncementSilent,
-		true,
-	)
-	command(
-		"recall",
-		"PERMANENTLY DELETE the last announcement or event.",
-		recall,
-		true,
-	)
-	command(
-		"upcoming",
-		"replies with embed of the the next upcoming netsoc event, queried from facebook",
-		upcomingEventMessage,
-		false,
-	)
-	command("up", "check the status of various Netsoc hosted websites", checkUpCommand, true)
-	command(
-		"shorten",
-		"shorten a URL, generating a random shortened URL if none is specified: *`!shorten original-url [shortened-slug]`* or delete a shortened url with *`!shorten delete [shortened-slug]`*",
-		shortenCommand,
-		true,
-	)
-	command("vaccines", "gives current stats on the COVID-19 vaccine rollout", vaccines, false)
-	command("boosters", "check current nitro boosters", boostersCommand, false)
-
-	// Setup APIs
-	twitterConfig := oauth1.NewConfig(viper.GetString("twitter.key"), viper.GetString("twitter.secret"))
-	twitterToken := oauth1.NewToken(viper.GetString("twitter.access.key"), viper.GetString("twitter.access.secret"))
-	httpClient := twitterConfig.Client(oauth1.NoContext, twitterToken)
-	twitterClient = twitterApi.NewClient(httpClient)
-
-	s.AddHandler(messageCreate)
-	s.AddHandler(messageReaction)
-	s.AddHandler(messageDelete)
-	s.AddHandler(memberLeave)
-}
-
-// Called whenever a message is sent in a server the bot has access to
-func messageCreate(s *discordgo.Session, m *discordgo.MessageCreate) {
-	if m.Type == discordgo.MessageTypeUserPremiumGuildSubscription && m.Author != nil {
-		nitroAnnounce(s, m)
-		return
-	}
-	if m.Author.Bot {
-		return
-	}
-	// Check if its a DM
-	if len(m.GuildID) == 0 {
-		ctx := context.WithValue(context.Background(), log.Key, log.Fields{
-			"author_id":  m.Author.ID,
-			"channel_id": m.ChannelID,
-			"guild_id":   "DM",
-		})
-		dmCommands(ctx, s, m)
-		return
-	} else {
-		go prometheus.MessageCreate(m.GuildID, m.ChannelID)
-	}
-
-	if !strings.HasPrefix(m.Content, viper.GetString("bot.prefix")) {
-		return
-	}
-	callCommand(s, m)
-}
-
-func extractCommand(c string) (commandStr string, body string) {
-	body = strings.TrimPrefix(c, viper.GetString("bot.prefix"))
-	commandStr = strings.Fields(body)[0]
-	return
-}
-
-func callCommand(s *discordgo.Session, m *discordgo.MessageCreate) {
-	ctx := context.Background()
-	commandStr, body := extractCommand(m.Content)
-	// if command is a normal command
-	if command, ok := commandsMap[commandStr]; ok {
-		var channelName string
-		if len(m.ChannelID) > 0 {
-			if channel, err := s.Channel(m.ChannelID); err != nil {
-				log.WithError(err).Error("Couldn't query channel")
-				return
-			} else {
-				channelName = channel.Name
-			}
+func RegisterCommands(s *discordgo.Session) {
+	/* TODO: Edit permissions for public commands, currently not supported by discordGo, might need to manually send a bulk edit request
+	(https://discord.com/developers/docs/interactions/application-commands#batch-edit-application-command-permissions)*/
+	for _, command := range publicCommands {
+		_, err := s.ApplicationCommandCreate(s.State.User.ID, viper.GetString("discord.public.server"), &command)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Cannot create slash command %q: %v", command.Name, err))
 		}
-		ctx := context.WithValue(ctx, log.Key, log.Fields{
-			"author_id":    m.Author.ID,
-			"channel_id":   m.ChannelID,
-			"guild_id":     m.GuildID,
-			"user":         m.Author.Username,
-			"channel_name": channelName,
-			"command":      commandStr,
-			"body":         body,
-		})
-		log.WithContext(ctx).Info("invoking standard command")
-		command(ctx, s, m)
-		return
-	}
-}
-
-func messageReaction(s *discordgo.Session, m *discordgo.MessageReactionAdd) {
-	if m.UserID == s.State.User.ID {
-		return
-	}
-	react := Reaction(m.MessageReaction.Emoji.Name)
-	if data, ok := reactionMap[m.MessageID]; ok {
-		if content, ok := data.(api.Entry); ok {
-			switch react {
-			case twitter:
-				mediaIds := []int64{}
-				image := content.GetImage()
-				if image.ImgData != nil {
-					// Contains image
-					// Upload image
-					mediaResponse, mediaHTTP, err := twitterClient.Media.Upload(&twitterApi.MediaUploadParams{
-						File:     image.ImgData.Bytes(),
-						MimeType: image.ImgHeader.Get("content-type"),
-					})
-					if err != nil {
-						log.WithError(err).Error("Failed to upload image")
-						return
-					}
-					mediaIds = append(mediaIds, mediaResponse.MediaID)
-					log.Info(mediaResponse.MediaIDString)
-					log.Info(mediaHTTP.Status)
-				}
-				// Send tweet
-				tweet, _, err := twitterClient.Statuses.Update(content.GetContent(), &twitterApi.StatusUpdateParams{
-					MediaIds: mediaIds,
-				})
-				if err != nil {
-					log.WithError(err).Error("Failed to send tweet")
-					return
-				}
-				log.Info(tweet.Text)
-				s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("https://twitter.com/%s/status/%d", tweet.User.ScreenName, tweet.ID))
-			}
+		_, err = s.ApplicationCommandCreate(s.State.User.ID, viper.GetString("discord.committee.server"), &command)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Cannot create slash command %q: %v", command.Name, err))
 		}
 	}
-}
-
-func memberLeave(s *discordgo.Session, m *discordgo.GuildMemberRemove) {
-	prometheus.MemberJoinLeave()
-}
-
-func messageDelete(s *discordgo.Session, m *discordgo.MessageDelete) {
-	// Check if its not a DM
-	if len(m.GuildID) != 0 {
-		prometheus.MessageDelete(m.GuildID, m.ChannelID)
+	for _, command := range committeeCommands {
+		_, err := s.ApplicationCommandCreate(s.State.User.ID, viper.GetString("discord.committee.server"), &command)
+		if err != nil {
+			log.WithError(err).Error(fmt.Sprintf("Cannot create slash command %q: %v", command.Name, err))
+		}
 	}
 }

@@ -284,7 +284,8 @@ func GetCorona() (total *TotalSummary, err error, raw bytes.Buffer) {
 }
 
 // CreateEmbed sends a corona embed to the specified channel.
-func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string, ctx context.Context) {
+func CreateEmbed(country *CountrySummary, s *discordgo.Session, ctx context.Context) ([]*discordgo.MessageEmbed, error) {
+	var embeds []*discordgo.MessageEmbed
 	title := "Covid-19 Stats for"
 	p := message.NewPrinter(language.English)
 	body := "**New**\n"
@@ -302,37 +303,34 @@ func CreateEmbed(country *CountrySummary, s *discordgo.Session, channelID string
 	// Upload graph to freeimage.
 	graph, err := country.Graph(false)
 	if err != nil {
-		s.ChannelMessageSend(channelID, "Error occured generating graph")
 		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
-		return
+		return nil, errors.New("error occured generating graph")
 	}
 	img, err := upload(graph)
 	if err != nil {
-		s.ChannelMessageSend(channelID, "Error occured uploading graph")
 		log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
-		return
+		return nil, errors.New("error occured uploading graph")
 	}
 	emb.SetImage(img)
-	s.ChannelMessageSendEmbed(channelID, emb.MessageEmbed)
+	embeds = append(embeds, emb.MessageEmbed)
 
 	// monthly graph embed
 	monthlyGraph, err := country.Graph(true)
 	if err != nil {
-		s.ChannelMessageSend(channelID, "Error occured generating graph")
 		log.WithError(err).WithContext(ctx).Error("Error occured generating graph")
-		return
+		return nil, errors.New("error occured generating graph")
 	}
 	monthlyImg, err := upload(monthlyGraph)
 	if err != nil {
-		s.ChannelMessageSend(channelID, "Error occured uploading graph")
 		log.WithError(err).WithContext(ctx).Error("Error occured uploading graph")
-		return
+		return nil, errors.New("error occured uploading graph")
 	}
 	monthlyEmb := embed.NewEmbed()
 	monthlyEmb.SetImage(monthlyImg)
 	monthlyEmb.SetTitle(fmt.Sprintf("Last 31 days cases for %s", strings.Title(strings.ReplaceAll(country.Slug, "-", " "))))
 	monthlyEmb.SetColor(0x9b12f1)
-	s.ChannelMessageSendEmbed(channelID, monthlyEmb.MessageEmbed)
+	embeds = append(embeds, monthlyEmb.MessageEmbed)
+	return embeds, nil
 }
 
 func upload(b *bytes.Buffer) (string, error) {
@@ -377,7 +375,14 @@ func Listen(s *discordgo.Session) error {
 			currentDate = &data.Date
 			log.WithFields(log.Fields{"arcGis": *data}).Info("Found new COVID cases from the HSE")
 			s.ChannelMessageSend(channelID, "The HSE has released new case numbers for Ireland:")
-			CreateEmbed(data, s, channelID, context.Background())
+			coronaEmbeds, err := CreateEmbed(data, s, context.Background())
+			if err != nil {
+				s.ChannelMessageSend(channelID, err.Error())
+			} else {
+				for _, coronaEmbed := range coronaEmbeds {
+					s.ChannelMessageSendEmbed(channelID, coronaEmbed)
+				}
+			}
 		}
 		vaccines, err := GetVaccines()
 		if err != nil {
