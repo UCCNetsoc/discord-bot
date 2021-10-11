@@ -104,8 +104,12 @@ var (
 			Name:        "online",
 			Description: "See how many people are online in minecraft.netsoc.co",
 		},
+		{
+			Name:        "who",
+			Description: "See how many people are online in minecraft.netsoc.co",
+		},
 	}
-  
+
 	committeeCommands = []discordgo.ApplicationCommand{
 		{
 			Name:        "up",
