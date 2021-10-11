@@ -34,7 +34,10 @@ func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 }
 
 func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (eventEmbeds []*discordgo.MessageEmbed, err error) {
-	upcomingEvents := api.QueryCalendarEvents()
+	upcomingEvents, err := api.QueryCalendarEvents()
+	if err != nil {
+		return nil, err
+	}
 	if len(upcomingEvents) < 1 {
 		return nil, errors.New("There are currently no events scheduled, Stay tuned!")
 	}
@@ -69,6 +72,5 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 
 		eventEmbeds = append(eventEmbeds, emb.MessageEmbed)
 	}
-	fmt.Printf("\n%+v\n\n", eventEmbeds)
 	return eventEmbeds, nil
 }
