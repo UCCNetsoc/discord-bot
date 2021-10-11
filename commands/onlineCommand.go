@@ -87,22 +87,6 @@ func who(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCrea
 	}
 }
 
-// get the names of the users who are online
-func who(ctx context.Context, s *discordgo.Session, m *discordgo.MessageCreate) {
-	response, err := Query()
-	if err != nil {
-		s.ChannelMessageSend(m.ChannelID, "Unable to check who is online at the moment. @sysadmins if issues persist")
-	} else if len(response.Players.Sample) > 0 {
-		names := []string{}
-		for _, player := range response.Players.Sample {
-			names = append(names, player.Name)
-		}
-		s.ChannelMessageSend(m.ChannelID, fmt.Sprintf("Online right now:\n`%s`", strings.Join(names, "\n")))
-	} else {
-		s.ChannelMessageSend(m.ChannelID, "There is no-one online right now")
-	}
-}
-
 // Query Server List Ping
 func Query() (Response, error) {
 	res := Response{}
