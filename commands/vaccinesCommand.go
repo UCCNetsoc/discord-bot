@@ -11,7 +11,8 @@ import (
 func vaccines(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	vaccines, err := corona.GetVaccines()
 	if err != nil {
-		log.WithContext(ctx).WithError(err).Error("Error querying vaccines from arcgis")
+		log.WithContext(ctx).WithError(err)
+		InteractionResponseError(s, i, "Error querying vaccines from arcgis API", false)
 		return
 	}
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
