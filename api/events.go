@@ -51,7 +51,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		if i == amount {
 			break
 		}
-		eventImgURL := "https://avatars.githubusercontent.com/u/6690158?s=400&u=fb42911a2e865d716c137619afdf1f7a266989cf&v=4"
+		eventImgURL := viper.GetString("google.calendar.image.default")
 		re := regexp.MustCompile(`\/file\/d\/([^\/]+)`)
 		for _, attachment := range event.Attachments {
 			if attachment.Mime[:5] == "image" {
