@@ -11,8 +11,6 @@ import (
 	"github.com/UCCNetsoc/discord-bot/embed"
 	"github.com/bwmarrin/discordgo"
 	"github.com/spf13/viper"
-	"golang.org/x/text/language"
-	"golang.org/x/text/message"
 )
 
 func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -41,7 +39,6 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 	if len(upcomingEvents) < 1 {
 		return nil, errors.New("There are currently no events scheduled, Stay tuned!")
 	}
-	p := message.NewPrinter(language.English)
 	for i, event := range upcomingEvents {
 		if i == limit {
 			break
@@ -50,7 +47,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 		emb.SetTitle(event.Summary)
 
 		if len(event.Description) > 0 {
-			emb.SetDescription(p.Sprintf("%s", event.Description))
+			emb.SetDescription(event.Description)
 		}
 		if len(event.Location) > 0 {
 			emb.AddField("Where?", event.Location)
