@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"strings"
 
 	"github.com/Strum355/log"
 	"github.com/UCCNetsoc/discord-bot/api"
@@ -47,7 +48,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 		emb.SetTitle(event.Summary)
 
 		if len(event.Description) > 0 {
-			emb.SetDescription(event.Description)
+			emb.SetDescription(strings.ReplaceAll(event.Description, `\n`, "\n"))
 		}
 		if len(event.Location) > 0 {
 			emb.AddField("Where?", event.Location)
