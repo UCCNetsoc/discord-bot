@@ -63,7 +63,7 @@ func setWebook() {
 	})
 	resp, _ := http.Post("https://api.covid19api.com/webhook", "application/json", b)
 	b.ReadFrom(resp.Body)
-	log.Info(fmt.Sprintf("Corona webhook actiavtion: %s %d", b.String(), resp.StatusCode))
+	log.Info(fmt.Sprintf("Corona webhook activation: %s %d", b.String(), resp.StatusCode))
 }
 
 func postCorona(w http.ResponseWriter, r *http.Request) {
