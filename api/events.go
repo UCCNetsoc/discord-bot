@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -107,9 +108,9 @@ func QueryCalendarEvents() ([]gocal.Event, error) {
 	}
 
 	calEvents := c.Events
-	for i, j := 0, len(c.Events)-1; i < j; i, j = i+1, j-1 {
-		calEvents[i], calEvents[j] = calEvents[j], calEvents[i]
-	}
+	sort.SliceStable(calEvents, func(i, j int) bool {
+		return calEvents[i].Start.Before(*calEvents[j].Start)
+	})
 
 	return calEvents, nil
 }
