@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Strum355/log"
@@ -62,9 +63,10 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 				eventImgURL = fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:])
 			}
 		}
+		formattedDescription := strings.ReplaceAll(event.Description, `\\n`, "\n")
 		returnEvents = append(returnEvents, returnEvent{
 			event.Summary,
-			event.Description,
+			formattedDescription,
 			eventImgURL,
 			event.Start,
 			event.End,
