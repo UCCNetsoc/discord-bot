@@ -16,11 +16,11 @@ import (
 )
 
 type returnEvent struct {
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	ImageURL    string `json:"image_url"`
-	StartDate   *time.Time  `json:"start_date"`
-	EndDate     *time.Time  `json:"end_date"`
+	Title       string     `json:"title"`
+	Description string     `json:"description"`
+	ImageURL    string     `json:"image_url"`
+	StartDate   *time.Time `json:"start_date"`
+	EndDate     *time.Time `json:"end_date"`
 }
 
 type returnAnnouncement struct {
@@ -49,12 +49,12 @@ func Run(s *discordgo.Session) {
 	http.HandleFunc("/getMembers", getMembers)
 
 	http.HandleFunc("/corona", postCorona)
-	setWebook()
+	setWebhook()
 
 	http.ListenAndServe(fmt.Sprintf(":%d", viper.GetInt("api.port")), nil)
 }
 
-func setWebook() {
+func setWebhook() {
 	b := bytes.NewBuffer([]byte{})
 	json.NewEncoder(b).Encode(struct {
 		URL string
