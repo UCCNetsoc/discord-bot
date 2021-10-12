@@ -101,7 +101,15 @@ func QueryCalendarEvents() ([]gocal.Event, error) {
 
 	c := gocal.NewParser(r)
 	c.Start, c.End = &start, &end
-	c.Parse()
+	err = c.Parse()
+	if err != nil {
+		return nil, err
+	}
 
-	return c.Events, nil
+	calEvents := c.Events
+	for i, j := 0, len(c.Events)-1; i < j; i, j = i+1, j-1 {
+		calEvents[i], calEvents[j] = calEvents[j], calEvents[i]
+	}
+
+	return calEvents, nil
 }
