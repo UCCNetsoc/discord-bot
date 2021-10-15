@@ -15,10 +15,15 @@ import (
 )
 
 func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
-	eventEmbeds, err := upcomingEventEmbeds(ctx, s, -1)
+	calendarURL := viper.GetString("google.calendar.public.ics")
+	if i.GuildID == viper.GetString("discord.committee.server") {
+		calendarURL = viper.GetString("google.calendar.committee.ics")
+	}
+	eventEmbeds, err := upcomingEventEmbeds(ctx, s, 2, calendarURL)
 	if err != nil {
 		log.WithContext(ctx).WithError(err)
 		InteractionResponseError(s, i, err.Error(), true)
+		return
 	}
 
 	err = s.InteractionRespond(i.Interaction, &discordgo.InteractionResponse{
@@ -32,8 +37,8 @@ func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.Inter
 	}
 }
 
-func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (eventEmbeds []*discordgo.MessageEmbed, err error) {
-	upcomingEvents, err := api.QueryCalendarEvents()
+func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int, url string) (eventEmbeds []*discordgo.MessageEmbed, err error) {
+	upcomingEvents, err := api.QueryCalendarEvents(url)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +66,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int) (
 			}
 		}
 		if emb.Image == nil && viper.GetString("google.calendar.image.default") != "" {
-			emb.SetImage(viper.GetString("google.calendar.image.default"))
+			emb.SetThumbnail(viper.GetString("google.calendar.image.default"))
 		}
 
 		emb.AddField("When?", fmt.Sprintf("<t:%v:F>", event.Start.Unix()))

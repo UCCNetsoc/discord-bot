@@ -98,7 +98,7 @@ var (
 		},
 		{
 			Name:        "upcoming",
-			Description: "Gives an embed of the the next upcoming netsoc event",
+			Description: "Gives an embed of upcoming netsoc events",
 		},
 		{
 			Name:        "online",
@@ -157,6 +157,27 @@ var (
 					Description: "List all shortened URL's",
 				},
 			},
+		}, {
+			Name: "upcoming",
+			Options: []*discordgo.ApplicationCommandOption{
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "calendar",
+					Description: "Calendar",
+					Required:    true,
+					Choices: []*discordgo.ApplicationCommandOptionChoice{
+						{
+							Name:  "Public",
+							Value: "public",
+						},
+						{
+							Name:  "Committee",
+							Value: "committee",
+						},
+					},
+				},
+			},
+			Description: "Gives an embed of upcoming netsoc events",
 		},
 	}
 )

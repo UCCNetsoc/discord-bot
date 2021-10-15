@@ -41,7 +41,7 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	if found {
 		events = cachedEvents.([]gocal.Event)
 	} else {
-		events, err = QueryCalendarEvents()
+		events, err = QueryCalendarEvents(viper.GetString("google.calendar.public.ics"))
 		if err != nil {
 			http.Error(w, err.Error(), 400)
 			return
@@ -81,8 +81,8 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 	w.Write(b)
 }
 
-func QueryCalendarEvents() ([]gocal.Event, error) {
-	resp, err := http.Get(viper.GetString("google.calendar.ics"))
+func QueryCalendarEvents(url string) ([]gocal.Event, error) {
+	resp, err := http.Get(url)
 	if err != nil {
 		log.WithError(err)
 		return nil, err

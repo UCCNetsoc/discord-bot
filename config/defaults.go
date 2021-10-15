@@ -34,7 +34,8 @@ func initDefaults() {
 	viper.SetDefault("twitter.access.key", "")
 	viper.SetDefault("twitter.access.secret", "")
 	// Google Calendar
-	viper.SetDefault("google.calendar.ics", "")
+	viper.SetDefault("google.calendar.public.ics", "")
+	viper.SetDefault("google.calendar.committee.ics", "")
 	viper.SetDefault("google.calendar.image.default", "")
 	// Rest API
 	viper.SetDefault("api.port", 80)
