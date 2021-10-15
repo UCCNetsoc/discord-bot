@@ -17,7 +17,7 @@ import (
 func upcomingEvent(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	calendarURL := viper.GetString("google.calendar.public.ics")
 	if i.GuildID == viper.GetString("discord.committee.server") {
-		calendarURL = viper.GetString("google.calendar.committee.ics")
+		calendarURL = viper.GetString("google.calendar." + i.ApplicationCommandData().Options[0].StringValue() + ".ics")
 	}
 	eventEmbeds, err := upcomingEventEmbeds(ctx, s, 2, calendarURL)
 	if err != nil {
