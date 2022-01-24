@@ -3,10 +3,8 @@ package api
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -57,11 +55,20 @@ func getEvents(w http.ResponseWriter, r *http.Request) {
 		if i == amount {
 			break
 		}
+
 		eventImgURL := viper.GetString("google.calendar.image.default")
-		re := regexp.MustCompile(`\/file\/d\/([^\/]+)`)
-		for _, attachment := range event.Attachments {
-			if attachment.Mime[:5] == "image" {
-				eventImgURL = fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:])
+		if len(event.Attachments) > 0 {
+			for _, attachment := range event.Attachments {
+				if attachment.Mime[:5] == "image" {
+					if strings.Contains(attachment.Value, "drive.google.com/file/d/") {
+						id := strings.Split(attachment.Value, "/d/")[1]
+						id = strings.Split(id, "/view")[0]
+						eventImgURL = "https://drive.google.com/uc?export=download&id=" + id
+					} else if strings.Contains(attachment.Value, "drive.google.com/open?id=") {
+						id := strings.Split(attachment.Value, "open?id=")[1]
+						eventImgURL = "https://drive.google.com/uc?export=download&id=" + id
+					}
+				}
 			}
 		}
 		formattedDescription := strings.ReplaceAll(event.Description, `\n`, "\n")

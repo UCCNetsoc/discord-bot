@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"regexp"
 	"strings"
 
 	"github.com/Strum355/log"
@@ -49,6 +48,7 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int, u
 		if i == limit {
 			break
 		}
+
 		emb := embed.NewEmbed()
 		emb.SetTitle(event.Summary)
 
@@ -58,11 +58,19 @@ func upcomingEventEmbeds(ctx context.Context, s *discordgo.Session, limit int, u
 		if len(event.Location) > 0 {
 			emb.AddField("Where?", event.Location)
 		}
-		// Parse fileID from calendar event url, then use it as a param on google drive url to get raw image
-		re := regexp.MustCompile(`\/file\/d\/([^\/]+)`)
-		for _, attachment := range event.Attachments {
-			if attachment.Mime[:5] == "image" {
-				emb.SetImage(fmt.Sprintf(" https://drive.google.com/uc?id=%s", re.FindString(attachment.Value)[8:]))
+
+		if len(event.Attachments) > 0 {
+			for _, attachment := range event.Attachments {
+				if attachment.Mime[:5] == "image" {
+					if strings.Contains(attachment.Value, "drive.google.com/file/d/") {
+						id := strings.Split(attachment.Value, "/d/")[1]
+						id = strings.Split(id, "/view")[0]
+						emb.SetImage("https://drive.google.com/uc?export=download&id=" + id)
+					} else if strings.Contains(attachment.Value, "drive.google.com/open?id=") {
+						id := strings.Split(attachment.Value, "open?id=")[1]
+						emb.SetImage("https://drive.google.com/uc?export=download&id=" + id)
+					}
+				}
 			}
 		}
 		if emb.Image == nil && viper.GetString("google.calendar.image.default") != "" {
