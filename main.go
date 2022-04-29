@@ -50,7 +50,6 @@ func main() {
 
 	// Run the REST API for events/announcements in a different goroutine
 	go api.Run(session)
-	go corona.Listen(session)
 	go prometheus.CreateExporter(session)
 
 	// Update the bot status periodically
