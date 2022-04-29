@@ -1,6 +1,6 @@
 <img src="https://raw.githubusercontent.com/UCCNetsoc/wiki/master/assets/logo-service-discord-bot.svg" width="360"/>
 
-[![](https://ci.netsoc.co/api/badges/UCCNetsoc/discord-bot/status.svg)](https://ci.netsoc.co/UCCNetsoc/discord-bot)
+[![CI](https://github.com/UCCNetsoc/discord-bot/actions/workflows/main.yml/badge.svg)](https://github.com/UCCNetsoc/discord-bot/actions/workflows/main.yml)
 
 The UCC Netsoc discord bot has the following features:
 
