@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/UCCNetsoc/discord-bot/commands"
-	"github.com/UCCNetsoc/discord-bot/corona"
 
 	"github.com/UCCNetsoc/discord-bot/api"
 	"github.com/UCCNetsoc/discord-bot/prometheus"
