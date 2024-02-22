@@ -1,10 +1,10 @@
-FROM golang:1.17-alpine AS dev
+FROM golang:1.21.6-alpine AS dev
 
 WORKDIR /bot
 
 RUN apk add git
 
-RUN GO111MODULE=on go get github.com/cortesi/modd/cmd/modd
+# RUN GO111MODULE=on go get github.com/cortesi/modd/cmd/modd
 
 COPY go.mod .
 COPY go.sum .
