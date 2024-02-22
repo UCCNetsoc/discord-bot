@@ -64,7 +64,7 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		// Get other messages from public announcements.
 		for _, message := range publicAnnounce {
 			if message.Author.ID != session.State.User.ID && len(message.Content) > viper.GetInt("api.public_message_cutoff") {
-				date, err := message.Timestamp.Parse()
+				date, err := time.Parse(time.RFC3339, message.Timestamp.String())
 				if err != nil {
 					log.WithError(err).Error("Message time parse fail")
 					return

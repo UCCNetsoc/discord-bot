@@ -22,7 +22,7 @@ func nitroAnnounce(s *discordgo.Session, m *discordgo.MessageCreate) {
 
 func boostersCommand(ctx context.Context, s *discordgo.Session, i *discordgo.InteractionCreate) {
 	servers := viper.Get("discord.servers").(*config.Servers)
-	if err := s.RequestGuildMembers(servers.PublicServer, "", 0, false); err != nil {
+	if err := s.RequestGuildMembers(servers.PublicServer, "", 0, "", false); err != nil {
 		log.WithContext(ctx).WithError(err).Error("Couldn't query server members")
 		return
 	}
@@ -33,7 +33,7 @@ func boostersCommand(ctx context.Context, s *discordgo.Session, i *discordgo.Int
 	}
 	boosters := []*discordgo.Member{}
 	for _, member := range guild.Members {
-		if len(member.PremiumSince) > 0 {
+		if member.PremiumSince != nil && !member.PremiumSince.IsZero() {
 			boosters = append(boosters, member)
 		}
 	}

@@ -63,8 +63,8 @@ func checkStatuses(s *discordgo.Session, i *discordgo.InteractionCreate, sites [
 		emb = emb.AddField(title, fmt.Sprintf("Up: %v\nLatency: %dms\nError: %+v", result.Success, result.Time, result.Error))
 	}
 
-	_, err = s.InteractionResponseEdit(s.State.User.ID, i.Interaction, &discordgo.WebhookEdit{
-		Embeds: []*discordgo.MessageEmbed{emb.MessageEmbed},
+	_, err = s.InteractionResponseEdit(i.Interaction, &discordgo.WebhookEdit{
+		Embeds: &[]*discordgo.MessageEmbed{emb.MessageEmbed},
 	})
 	if err != nil {
 		log.WithError(err)
