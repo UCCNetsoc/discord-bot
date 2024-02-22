@@ -55,8 +55,8 @@ func getAnnouncements(w http.ResponseWriter, r *http.Request) {
 		announcements = cachedAnnouncements.([]*Announcement)
 	} else {
 		announcements = []*Announcement{}
-		publiChannelID := viper.Get("discord.channels").(*config.Channels).PublicAnnouncements
-		publicAnnounce, err := session.ChannelMessages(publiChannelID, 100, "", "", "")
+		publicChannelID := viper.Get("discord.channels").(*config.Channels).PublicAnnouncements
+		publicAnnounce, err := session.ChannelMessages(publicChannelID, 100, "", "", "")
 		if err != nil {
 			log.WithError(err).Error("Error querying announcements for api")
 			return
